@@ -158,12 +158,62 @@ local function is_liquid_source(name)
 	local def = core.registered_nodes[name]
 	return def and def.liquidtype == "source"
 end
+-- Define which nodes are considered "sticky"
+local sticky_nodes = {
+	["mesecons_stickyblocks:sticky_block_all"] = true
+}
+
+-- Function to check if a node is sticky
+local function is_sticky_node(name) return sticky_nodes[name] == true end
+
+-- Get all 6 adjacent positions
+local function get_adjacent_positions(pos)
+	return {{
+		x = pos.x + 1,
+		y = pos.y,
+		z = pos.z
+	}, {
+		x = pos.x - 1,
+		y = pos.y,
+		z = pos.z
+	}, {
+		x = pos.x,
+		y = pos.y + 1,
+		z = pos.z
+	}, {
+		x = pos.x,
+		y = pos.y - 1,
+		z = pos.z
+	}, {
+		x = pos.x,
+		y = pos.y,
+		z = pos.z + 1
+	}, {
+		x = pos.x,
+		y = pos.y,
+		z = pos.z - 1
+	}}
+end
+
+-- Function to check if a position is stuck to a sticky neighbor
+local function is_stuck_to_sticky(pos)
+	for _, adj_pos in ipairs(get_adjacent_positions(pos)) do
+		local node = minetest.get_node(adj_pos)
+		if is_sticky_node(node.name) then
+			return true
+		end
+	end
+	return false
+end
 function BlockDigger.should_dig(node, pos)
 	if node.name == "air" then
 		return false
 	end
 	if table.contains(light_nodes, node.name) then
 		return true
+	end
+	if not is_sticky_node(node.name) and is_stuck_to_sticky(pos) then
+		return false
 	end
 	local above = vector.offset(pos, 0, 1, 0)
 	local above_node = core.get_node(above)
