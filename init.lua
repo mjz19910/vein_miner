@@ -7,6 +7,8 @@ local S = minetest.get_translator("vein_miner")
 
 -- Maximum number of nodes that can be vein mined at once
 local MAX_MINED_NODES = 188
+-- Maximum light scan distance
+local light_scan_dist = 1
 
 -- PERMISSIONS
 -- If true, prevent registered nodes in rNodes from being veinmined.
@@ -197,7 +199,6 @@ end
 -- 	return true
 -- end
 
-local light_scan_dist = 1
 local light_scan_boost = 0
 
 local function is_node_vein_diggable(nodeName, wieldedName)
