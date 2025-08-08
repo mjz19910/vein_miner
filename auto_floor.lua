@@ -30,36 +30,44 @@ table.insert_all(support_dirs, cardinal_dirs)
 table.insert_all(support_dirs, diagonal_dirs)
 local vertical_offsets = {down, up, up * 2}
 
+local function is_node_supporting(node)
+	if node == nil then
+		return false
+	end
+	if node.name == "ignore" then
+		return false
+	end
+	local def = registered_nodes[node.name]
+	if def and not def.floodable and node.name ~= "air" then
+		return true
+	end
+end
+
 local function is_supported(pos)
 	for _, dir in ipairs(support_dirs) do
 		for _, vert in ipairs(vertical_offsets) do
 			local sup_pos = pos + dir + vert
 			local node = get_node_or_nil(sup_pos)
-			local def = node and registered_nodes[node.name]
-			if def and not def.floodable and node.name ~= "air" then
+			if is_node_supporting(node) then
 				return true
 			end
 		end
 	end
 	local npos = pos + new_vec(1, 0, 0)
 	local node1 = get_node_or_nil(npos)
-	local def1 = node1 and registered_nodes[node1.name]
 	local npos = pos + new_vec(-1, 0, 0)
 	local node2 = get_node_or_nil(npos)
-	local def2 = node2 and registered_nodes[node2.name]
-	local east_support = def1 and not def1.floodable and node1.name ~= "air"
-	local west_support = def2 and not def2.floodable and node2.name ~= "air"
+	local east_support = is_node_supporting(node1)
+	local west_support = is_node_supporting(node2)
 	if east_support and west_support then
 		return true
 	end
 	local npos = pos + new_vec(0, 0, 1)
 	local node1 = get_node_or_nil(npos)
-	local def1 = node1 and registered_nodes[node1.name]
 	local npos = pos + new_vec(0, 0, -1)
 	local node2 = get_node_or_nil(npos)
-	local def2 = node2 and registered_nodes[node2.name]
-	local north_support = def1 and not def1.floodable and node1.name ~= "air"
-	local south_support = def2 and not def2.floodable and node2.name ~= "air"
+	local north_support = is_node_supporting(node1)
+	local south_support = is_node_supporting(node2)
 	if north_support and south_support then
 		return true
 	end
