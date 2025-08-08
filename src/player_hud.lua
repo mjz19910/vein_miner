@@ -12,7 +12,7 @@ function player_hud.init_player(player)
 
 	hud_data[name] = {
 		nodes_mined = player:hud_add({
-			hud_elem_type = "text",
+			type = "text",
 			position = {
 				x = 0.5,
 				y = 0.1
@@ -34,7 +34,7 @@ function player_hud.init_player(player)
 			z_index = 100
 		}),
 		mining_mode = player:hud_add({
-			hud_elem_type = "text",
+			type = "text",
 			position = {
 				x = 0.5,
 				y = 0.15
