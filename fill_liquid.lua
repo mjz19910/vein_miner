@@ -24,6 +24,84 @@ local function maybe_enqueue(qx, qy, qz, q_tail, visited, x, y, z)
 	return q_tail
 end
 
+local function expand_axis_from_center(args, axis, limit, skip_flag)
+	local region = args.region -- { min = vector, max = vector }
+	local area = args.area
+	local data = args.data
+	local replace = args.replace -- cids_replace table
+
+	local size = region.max[axis] - region.min[axis] + 1
+	if size >= limit then
+		skip_flag[1] = true
+		return false
+	end
+
+	local expanded = false
+	while size < limit do
+		local did_expand = false
+
+		-- Positive direction
+		local new_max = region.max[axis] + 1
+		local found_positive = false
+		for y = region.min.y, region.max.y do
+			for z = region.min.z, region.max.z do
+				local pos = {x = 0, y = 0, z = 0}
+				pos[axis] = new_max
+				pos.y = y
+				pos.z = (axis == "x") and z or region.min.z + (z - region.min.z)
+				local idx = area:index(pos.x, pos.y, pos.z)
+				if replace[data[idx]] then
+					found_positive = true
+					break
+				end
+			end
+			if found_positive then
+				break
+			end
+		end
+		if found_positive then
+			region.max[axis] = new_max
+			did_expand = true
+		end
+
+		-- Negative direction
+		local new_min = region.min[axis] - 1
+		local found_negative = false
+		for y = region.min.y, region.max.y do
+			for z = region.min.z, region.max.z do
+				local pos = {x = 0, y = 0, z = 0}
+				pos[axis] = new_min
+				pos.y = y
+				pos.z = (axis == "x") and z or region.min.z + (z - region.min.z)
+				local idx = area:index(pos.x, pos.y, pos.z)
+				if replace[data[idx]] then
+					found_negative = true
+					break
+				end
+			end
+			if found_negative then
+				break
+			end
+		end
+		if found_negative then
+			region.min[axis] = new_min
+			did_expand = true
+		end
+
+		if not did_expand then
+			break
+		end
+
+		size = region.max[axis] - region.min[axis] + 1
+		expanded = true
+	end
+
+	if not expanded then
+		skip_flag[1] = true
+	end
+	return expanded
+end
+
 local function expand_axis(minp, maxp, axis, limit, skip_flag, area, data)
 	local function axis_iter(is_max)
 		local start = is_max and maxp[axis] or minp[axis]
@@ -114,6 +192,8 @@ function vein_miner.fill_liquid_at_pos(state, pos, notify_pos)
 	-- Expand bounds
 	local skip_x, skip_y, skip_z = {false}, {false}, {false}
 	local vm, emin, emax, area, data
+	local region = aabb.region(minp, maxp)
+	local axis_info = {region = region, area = area, data = data, replace = cids_replace};
 
 	local function loop_expand()
 		vm = VoxelManip()
@@ -121,10 +201,10 @@ function vein_miner.fill_liquid_at_pos(state, pos, notify_pos)
 		area = VoxelArea:new{MinEdge = emin, MaxEdge = emax}
 		data = vm:get_data()
 
-		if not skip_x[1] and expand_axis(minp, maxp, "x", 96, skip_x, area, data) then
+		if not skip_x[1] and expand_axis_from_center(axis_info, "x", 96, skip_x) then
 			return true
 		end
-		if not skip_z[1] and expand_axis(minp, maxp, "z", 96, skip_z, area, data) then
+		if not skip_z[1] and expand_axis_from_center(axis_info, "z", 96, skip_z) then
 			return true
 		end
 
@@ -143,7 +223,7 @@ function vein_miner.fill_liquid_at_pos(state, pos, notify_pos)
 							else
 								minp.y = minp.y - 1
 							end
-							if ((size_x < 32 and size_z < 32 and size_y < 256) or size_y < 32) then
+							if ((size_x < 64 and size_z < 64 and size_y < 64 * 3) or size_y < 64) then
 								return true
 							else
 								notify_limit(vector.new(x, y, z))

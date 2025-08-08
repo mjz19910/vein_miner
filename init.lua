@@ -4,6 +4,7 @@ dofile(modpath .. "/auto_floor.lua")
 
 vein_miner = {deque = {}}
 dofile(minetest.get_modpath("vein_miner") .. "/deque.lua")
+dofile(modpath .. "/src/aabb.lua")
 dofile(modpath .. "/fill_liquid.lua")
 
 local fill_liquid_at_pos = vein_miner.fill_liquid_at_pos
@@ -106,7 +107,6 @@ local player_hud = dofile(modpath .. "/src/player_hud.lua")
 local log_work_start = false
 
 dofile(modpath .. "/src/config.lua")
-dofile(modpath .. "/src/aabb.lua")
 dofile(modpath .. "/src/helpers.lua")
 dofile(modpath .. "/src/player_config.lua")
 
