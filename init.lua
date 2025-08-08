@@ -98,7 +98,7 @@ end)
 
 local modpath = core.get_modpath("vein_miner")
 
-local player_hud = dofile(modpath .. "/src/hud.lua")
+local player_hud = dofile(modpath .. "/src/player_hud.lua")
 
 local log_work_start = false
 
