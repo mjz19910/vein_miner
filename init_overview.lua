@@ -90,7 +90,6 @@ local function vein_miner_step(state) end
 local function show_layer_bounds(miny, maxy) end
 local function node_sound_defaults(tbl) end
 local function node_sound_stone_defaults(tbl) end
-local function register_lit_cobble(light_level) end
 
 core.register_on_mods_loaded(function() end)
 core.register_on_dignode(function(pos, oldnode, player) end)
@@ -173,6 +172,7 @@ core.override_item("", {
 	range = 7
 })
 
+local function register_lit_cobble(light_level) end
 
 mine_only_groups.lit_cobble = {}
 
