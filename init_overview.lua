@@ -3,6 +3,10 @@ function vector.midpoint(a, b) end
 
 core.check_for_falling = function(pos) end
 
+local CFG = vein_miner.CFG
+
+local mine_only_groups = CFG.MINE_ONLY_GROUPS
+
 function vein_miner.state.new(pos, player, player_name, wielded) end
 
 local sticky_nodes = CFG.sticky_nodes
@@ -93,3 +97,116 @@ core.register_on_dignode(function(pos, oldnode, player) end)
 core.register_on_joinplayer(function(player) end)
 core.register_on_leaveplayer(function(player) end)
 core.register_globalstep(function(dtime) end)
+
+core.register_chatcommand("toggle_light_debug", {
+	description = "Toggle debug view for light scan regions",
+	func = function(name)
+		-- (omitted)
+	end
+})
+
+core.register_privilege("vein_miner_config", {
+	description = "Can configure vein miner",
+	give_to_singleplayer = false
+})
+core.register_chatcommand("mining_mode", {
+	description = "Change configured mining range (8 or 32 at y > -32)",
+	params = "[small|large]",
+	privs = {
+		vein_miner_config = true
+	},
+	func = function(name, param)
+		-- (omitted)
+	end
+})
+core.register_chatcommand("mine", {
+	description = "Change configured mining layer",
+	params = "[get [min|max] | set [min|max <y>] | up [min|max|both] | down [min|max|both] | reset]",
+	privs = {},
+	func = function(name, param)
+		-- (omitted)
+	end
+})
+
+core.register_chatcommand("yaw", {
+	description = "Change player yaw",
+	params = "[get | set <yaw>]",
+	privs = {},
+	func = function(name, param)
+		local player = core.get_player_by_name(name)
+		if not player then
+			return false, "Player not found."
+		end
+
+		local args = param:split(" ")
+		local cmd = args[1]
+		if cmd == "get" or cmd == nil or cmd == "" then
+			local yaw = player:get_look_horizontal()
+			return true, ("Your current yaw is %.1f degrees"):format(math.deg(yaw))
+		elseif cmd == "set" then
+			local yaw = 0
+			if args[2] ~= nil then
+				yaw = math.rad(tonumber(args[2]))
+			end
+			player:set_look_horizontal(yaw)
+			return true, ("Yaw set to %.1f degrees"):format(math.deg(yaw))
+		end
+	end
+})
+
+core.register_chatcommand("pos", {
+	description = "Show your position with 3 decimal places",
+	privs = {},
+	func = function(name)
+		local player = core.get_player_by_name(name)
+		if not player then
+			return false, "Player not found."
+		end
+
+		local pos = player:get_pos()
+		local msg = string.format("Your position is: (%.3f, %.3f, %.3f)", pos.x, pos.y, pos.z)
+		return true, msg
+	end
+})
+
+core.override_item("", {
+	range = 7
+})
+
+
+mine_only_groups.lit_cobble = {}
+
+for i = 1, 14 do
+	register_lit_cobble(i)
+end
+
+core.register_craft({
+	type = "shapeless",
+	output = "vein_miner:lit_cobble_1",
+	recipe = {"default:cobble", "default:mese_crystal_fragment"}
+})
+
+core.register_craft({
+	type = "shapeless",
+	output = "default:cobble 2",
+	recipe = {"default:cobble", "vein_miner:lit_cobble_1"},
+	replacements = {{"vein_miner:lit_cobble_1", "default:mese_crystal_fragment"}}
+})
+
+core.register_craft({
+	type = "shapeless",
+	output = "vein_miner:lit_cobble_1",
+	recipe = {"default:cobble", "vein_miner:lit_cobble_2"},
+	replacements = {{"default:cobble", "default:cobble"}}
+})
+
+core.register_craft({
+	type = "shapeless",
+	output = "vein_miner:lit_cobble_2 2",
+	recipe = {"vein_miner:lit_cobble_1", "vein_miner:lit_cobble_1"}
+})
+
+core.register_craft({
+	output = "vein_miner:lit_cobble_2",
+	recipe = {{"vein_miner:lit_cobble_1"}}
+})
