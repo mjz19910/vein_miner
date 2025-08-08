@@ -1,7 +1,6 @@
 local liquid_set = {["default:water_source"] = true, ["default:water_flowing"] = true, ["default:lava_source"] = true,
 	["default:lava_flowing"] = true}
 
--- === Module-scope constants ===
 local cid = core.get_content_id
 local cid_air = cid("air")
 local cid_wall = cid("wool:green")
@@ -11,7 +10,6 @@ local cids_replace = {[cid("default:water_source")] = true, [cid("default:water_
 
 local cids_source = {[cid("default:water_source")] = true, [cid("default:lava_source")] = true}
 
--- === Module-scope helpers ===
 local function push(qx, qy, qz, q_tail, x, y, z)
 	qx[q_tail], qy[q_tail], qz[q_tail] = x, y, z
 	return q_tail + 1
@@ -132,9 +130,7 @@ function vein_miner.fill_liquid_at_pos(state, pos, notify_pos)
 
 		if not skip_y[1] then
 			local size_x, size_z, size_y = maxp.x - minp.x, maxp.z - minp.z, maxp.y - minp.y
-			local function notify_limit(pos)
-				notify_pos(state, pos)
-			end
+			local function notify_limit(pos) notify_pos(state, pos) end
 
 			for _, direction in ipairs({"up", "down"}) do
 				local y = (direction == "up") and maxp.y or minp.y

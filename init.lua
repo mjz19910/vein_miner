@@ -4,7 +4,7 @@ dofile(modpath .. "/auto_floor.lua")
 
 vein_miner = {deque = {}}
 dofile(minetest.get_modpath("vein_miner") .. "/deque.lua")
-dofile(modpath .. "/liquid_filler.lua")
+dofile(modpath .. "/fill_liquid.lua")
 
 local fill_liquid_at_pos = vein_miner.fill_liquid_at_pos
 
