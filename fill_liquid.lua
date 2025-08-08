@@ -136,6 +136,74 @@ local function expand_axis(minp, maxp, axis, limit, skip_flag, area, data)
 	return false
 end
 
+local function expand_vertical_axis(args, skip_y, notify_pos)
+	local region = args.region -- { min = vector, max = vector }
+	local area = args.area
+	local data = args.data
+	local replace = args.replace -- cids_replace table
+	local state = args.state -- for notify_pos()
+
+	local size_x, size_z, size_y = region.max.x - region.min.x, region.max.z - region.min.z, region.max.y - region.min.y
+
+	local function notify_limit(pos) notify_pos(state, pos) end
+
+	if skip_y[1] then
+		return false
+	end
+
+	local expanded = false
+
+	-- Try expand downward by one
+	do
+		local y = region.min.y - 1
+		for z = region.min.z, region.max.z do
+			for x = region.min.x, region.max.x do
+				local idx = area:index(x, y, z)
+				if replace[data[idx]] then
+					region.min.y = y
+					notify_limit(vector.new(x, y, z)) -- notify the liquid node position on min face
+					expanded = true
+					break
+				end
+			end
+			if expanded then
+				break
+			end
+		end
+	end
+
+	-- Try expand upward by one
+	if not skip_y[1] then
+		local y = region.max.y + 1
+		for z = region.min.z, region.max.z do
+			for x = region.min.x, region.max.x do
+				local idx = area:index(x, y, z)
+				if replace[data[idx]] then
+					region.max.y = y
+					notify_limit(vector.new(x, y, z)) -- notify liquid node pos on max face
+					expanded = true
+					break
+				end
+			end
+			if expanded then
+				break
+			end
+		end
+	end
+
+	-- Check size limits and notify if exceeded
+	if expanded then
+		local new_size_y = region.max.y - region.min.y
+		if not ((size_x < 64 and size_z < 64 and new_size_y < 64 * 3) or new_size_y < 64) then
+			skip_y[1] = true
+			return false
+		end
+		return true
+	end
+
+	return false
+end
+
 -- === Main function ===
 function vein_miner.fill_liquid_at_pos(state, pos, notify_pos)
 	if not liquid_set[core.get_node(pos).name] then
@@ -207,33 +275,8 @@ function vein_miner.fill_liquid_at_pos(state, pos, notify_pos)
 		if not skip_z[1] and expand_axis_from_center(axis_info, "z", 96, skip_z) then
 			return true
 		end
-
-		if not skip_y[1] then
-			local size_x, size_z, size_y = maxp.x - minp.x, maxp.z - minp.z, maxp.y - minp.y
-			local function notify_limit(pos) notify_pos(state, pos) end
-
-			for _, direction in ipairs({"up", "down"}) do
-				local y = (direction == "up") and maxp.y or minp.y
-				for z = minp.z, maxp.z do
-					for x = minp.x, maxp.x do
-						local idx = area:index(x, y, z)
-						if cids_replace[data[idx]] then
-							if direction == "up" then
-								maxp.y = maxp.y + 1
-							else
-								minp.y = minp.y - 1
-							end
-							if ((size_x < 64 and size_z < 64 and size_y < 64 * 3) or size_y < 64) then
-								return true
-							else
-								notify_limit(vector.new(x, y, z))
-								skip_y[1] = true
-								break
-							end
-						end
-					end
-				end
-			end
+		if not skip_y[1] and expand_vertical_axis(axis_info, skip_y, notify_pos) then
+			return true
 		end
 		return false
 	end
