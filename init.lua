@@ -158,41 +158,15 @@ local function is_liquid_source(name)
 	local def = core.registered_nodes[name]
 	return def and def.liquidtype == "source"
 end
--- Define which nodes are considered "sticky"
-local sticky_nodes = {
-	["mesecons_stickyblocks:sticky_block_all"] = true
-}
+local sticky_nodes = CFG.sticky_nodes
 
 -- Function to check if a node is sticky
 local function is_sticky_node(name) return sticky_nodes[name] == true end
 
 -- Get all 6 adjacent positions
 local function get_adjacent_positions(pos)
-	return {{
-		x = pos.x + 1,
-		y = pos.y,
-		z = pos.z
-	}, {
-		x = pos.x - 1,
-		y = pos.y,
-		z = pos.z
-	}, {
-		x = pos.x,
-		y = pos.y + 1,
-		z = pos.z
-	}, {
-		x = pos.x,
-		y = pos.y - 1,
-		z = pos.z
-	}, {
-		x = pos.x,
-		y = pos.y,
-		z = pos.z + 1
-	}, {
-		x = pos.x,
-		y = pos.y,
-		z = pos.z - 1
-	}}
+	return {vector.offset(pos, 1, 0, 0), vector.offset(pos, -1, 0, 0), vector.offset(pos, 0, 1, 0), vector.offset(pos, 0, -1, 0),
+         vector.offset(pos, 0, 0, 1), vector.offset(pos, 0, 0, -1)}
 end
 
 -- Function to check if a position is stuck to a sticky neighbor

@@ -89,8 +89,11 @@ vein_miner.CFG = {
 	--[[grayscale]] --
 	"#ffffff", "#cccccc", "#999999", --
 	"#666666", "#333333", "#000000" --
+	},
+	-- Define which nodes are considered "sticky"
+	sticky_nodes = {
+		["mesecons_stickyblocks:sticky_block_all"] = true
 	}
-
 }
 local function i_vec_dirs(arg) table.insert_all(vein_miner.CFG.VEC_DIRS, arg) end
 -- self
