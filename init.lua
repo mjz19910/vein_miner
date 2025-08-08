@@ -1,3 +1,7 @@
+local modpath = minetest.get_modpath("vein_miner")
+
+dofile(modpath .. "/auto_floor.lua")
+
 vein_miner = {
 	deque = {}
 }
@@ -95,8 +99,6 @@ minetest.register_on_mods_loaded(function()
 
 	light_scan_dist = tonumber(core.settings:get("vein_miner_light_scan_distance"))
 end)
-
-local modpath = core.get_modpath("vein_miner")
 
 local player_hud = dofile(modpath .. "/src/player_hud.lua")
 
@@ -1245,11 +1247,16 @@ local function process_node_group(state, node_name, node, repeat_count)
 end
 
 local function iter_node_groups(state, iter_nodes)
+	local player_name = state.player_name
 	state.prev_pos = nil
 	local i = 0
 	::again::
 	for node_name, node in pairs(iter_nodes) do
 		local dug_nodes = process_node_group(state, node_name, node, i)
+		local player = state.player
+		if player then
+			player_hud.update_nodes_mined(player, state.mined_nodes + state.cur_mined_nodes)
+		end
 		if dug_nodes > 0 and i < 32 then
 			i = i + 1
 			goto again
@@ -1406,13 +1413,6 @@ local function dig_pos_process_queue_item(state, item, player_name)
 		iter_node_groups(state, core.find_nodes_in_area(minvec, maxvec, falling_target_nodes, true))
 	end
 	iter_node_groups(state, core.find_nodes_in_area(minvec, maxvec, target_nodes, true))
-
-	local player = state.player
-	if player then
-		player_hud.update_nodes_mined(player, state.mined_nodes)
-		local mode = p_config.data[player_name].mode or "small"
-		player_hud.update_mode(player, mode)
-	end
 
 	core.fix_light(minvec, maxvec)
 
