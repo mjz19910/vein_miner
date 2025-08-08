@@ -4,6 +4,9 @@ dofile(modpath .. "/auto_floor.lua")
 
 vein_miner = {deque = {}}
 dofile(minetest.get_modpath("vein_miner") .. "/deque.lua")
+dofile(modpath .. "/liquid_filler.lua")
+
+local fill_liquid_at_pos = vein_miner.fill_liquid_at_pos
 
 local S = minetest.get_translator("vein_miner")
 
@@ -341,242 +344,9 @@ local function add_pos_to_queue(state, node_name, pos, options)
 	state.queue:push_right({node_name = node_name, pos = pos, options = get_scan_options(node_name, options)})
 end
 
-local function filter_liquid(state, pos)
+local function handle_pos_notify(state, pos)
 	local node = core.get_node(pos)
-	if not liquid_set[node.name] then
-		return
-	end
-
-	-- CONFIG
-	local LIMIT = 64 * 6
-
-	-- STATE
-	local visited = {}
-	local qx, qy, qz = {}, {}, {}
-	local q_head, q_tail = 1, 1
-	local queue_count = 0
-
-	local minx, miny, minz = pos.x, pos.y, pos.z
-	local maxx, maxy, maxz = pos.x, pos.y, pos.z
-
-	-- QUEUE UTILS
-	local function push(x, y, z)
-		qx[q_tail], qy[q_tail], qz[q_tail] = x, y, z
-		q_tail = q_tail + 1
-	end
-
-	local function maybe_enqueue(x, y, z)
-		local hash = core.hash_node_position({x = x, y = y, z = z})
-		if not visited[hash] then
-			visited[hash] = true
-			push(x, y, z)
-		end
-	end
-
-	-- SEED
-	visited[core.hash_node_position(pos)] = true
-	push(pos.x, pos.y, pos.z)
-
-	-- FLOOD-FILL
-	while q_head < q_tail do
-		local x, y, z = qx[q_head], qy[q_head], qz[q_head]
-		q_head = q_head + 1
-
-		local node = core.get_node(vector.new(x, y, z))
-		if not liquid_set[node.name] then
-			goto continue
-		end
-
-		queue_count = queue_count + 1
-		if queue_count > LIMIT then
-			goto continue
-		end
-
-		-- bounds
-		if x < minx then
-			minx = x
-		elseif x > maxx then
-			maxx = x
-		end
-		if y < miny then
-			miny = y
-		elseif y > maxy then
-			maxy = y
-		end
-		if z < minz then
-			minz = z
-		elseif z > maxz then
-			maxz = z
-		end
-
-		maybe_enqueue(x + 1, y, z)
-		maybe_enqueue(x - 1, y, z)
-		maybe_enqueue(x, y, z + 1)
-		maybe_enqueue(x, y, z - 1)
-
-		::continue::
-	end
-
-	if next(visited) == nil then
-		return
-	end
-
-	local minp = vector.new(minx, miny, minz)
-	local maxp = vector.new(maxx, maxy, maxz)
-
-	-- SETUP VM + CONTENT IDS
-	local vm = VoxelManip()
-	local cid = core.get_content_id
-	local cid_air = cid("air")
-	local cid_wall = cid("wool:green")
-
-	local cids_replace = {[cid("default:water_source")] = true, [cid("default:water_flowing")] = true, [cid("default:lava_source")] = true,
-		[cid("default:lava_flowing")] = true}
-
-	local cids_source = {[cid("default:water_source")] = true, [cid("default:lava_source")] = true}
-
-	local emin, emax
-	local area
-	local data
-
-	-- EXPAND LOGIC
-	local function expand_axis(minp, maxp, axis, limit, skip_flag)
-		local function axis_iter(start, is_max)
-			local pos = vector.new()
-			pos[axis] = start
-			for a = minp[axis], maxp[axis] do
-				for b = minp.y, maxp.y do
-					pos[axis] = a
-					pos.y = b
-					local idx = area:index(pos.x, pos.y, pos.z)
-					if cids_replace[data[idx]] then
-						if is_max then
-							maxp[axis] = maxp[axis] + 1
-						else
-							minp[axis] = minp[axis] - 1
-						end
-						if (maxp[axis] - minp[axis]) < limit then
-							return true
-						end
-						skip_flag[1] = true
-						return false
-					end
-				end
-			end
-			return false
-		end
-
-		if axis_iter(minp[axis], false) or axis_iter(maxp[axis], true) then
-			return true
-		end
-
-		return false
-	end
-
-	-- Axis expansion with feedback loop
-	local skip_x, skip_y, skip_z = {false}, {false}, {false}
-	local function loop_expand()
-		local size = maxp - minp
-		log_action(("filter liquid bounds %s %s %s"):format(tostring(size), tostring(minp), tostring(maxp)))
-
-		emin, emax = vm:read_from_map(minp, maxp)
-		area = VoxelArea:new{MinEdge = emin, MaxEdge = emax}
-		data = vm:get_data()
-
-		if not skip_x[1] and expand_axis(minp, maxp, "x", 128, skip_x) then
-			return true
-		end
-		if not skip_z[1] and expand_axis(minp, maxp, "z", 128, skip_z) then
-			return true
-		end
-		if not skip_y[1] then
-			local size_x = maxp.x - minp.x
-			local size_z = maxp.z - minp.z
-			local size_y = maxp.y - minp.y
-
-			local function notify_limit(pos)
-				local node = core.get_node(pos)
-				add_pos_to_queue(state, node.name, pos)
-			end
-
-			for _, direction in ipairs({"up", "down"}) do
-				local y = (direction == "up") and maxp.y or minp.y
-				for z = minp.z, maxp.z do
-					for x = minp.x, maxp.x do
-						local idx = area:index(x, y, z)
-						if cids_replace[data[idx]] then
-							if direction == "up" then
-								maxp.y = maxp.y + 1
-							else
-								minp.y = minp.y - 1
-							end
-
-							if ((size_x < 32 and size_z < 32 and size_y < 256) or size_y < 32) then
-								return true
-							else
-								notify_limit(vector.new(x, y, z))
-								skip_y[1] = true
-								break
-							end
-						end
-					end
-				end
-			end
-		end
-
-		return false
-	end
-
-	while loop_expand() do
-	end
-
-	log_error("final filter liquid bounds " .. tostring(maxp - minp) .. " " .. tostring(minp))
-
-	-- FINAL VOXEL REPLACE + WALLING
-	minp = vector.subtract(minp, 2)
-	maxp = vector.add(maxp, 2)
-
-	emin, emax = vm:read_from_map(minp, maxp)
-	area = VoxelArea:new{MinEdge = emin, MaxEdge = emax}
-	data = vm:get_data()
-
-	for z = minp.z + 2, maxp.z - 2 do
-		for y = minp.y + 2, maxp.y - 2 do
-			for x = minp.x + 2, maxp.x - 2 do
-				local i = area:index(x, y, z)
-				if cids_replace[data[i]] then
-					data[i] = cid_air
-				end
-			end
-		end
-	end
-
-	for z = minp.z + 1, maxp.z - 1 do
-		for y = minp.y + 1, maxp.y - 1 do
-			for x = minp.x + 1, maxp.x - 1 do
-				local i = area:index(x, y, z)
-				if data[i] ~= cid_air then
-					goto continue_wall
-				end
-
-				for _, off in ipairs({{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}}) do
-					local ni = area:index(x + off[1], y + off[2], z + off[3])
-					if cids_source[data[ni]] then
-						data[ni] = cid_wall
-					end
-				end
-
-				::continue_wall::
-			end
-		end
-	end
-
-	vm:set_data(data)
-	vm:write_to_map()
-	vm:update_liquids()
-	vm:update_map()
-
-	log_action("filter liquid map updated")
+	add_pos_to_queue(state, node.name, pos)
 end
 
 local function can_player_fit(pos)
@@ -1114,7 +884,7 @@ local function process_node_group(state, node_name, node, repeat_count)
 	local mined_nodes_count = 0
 	if is_liquid(node_name, "water") or is_liquid(node_name, "lava") then
 		for index, pos in pairs(node) do
-			filter_liquid(state, pos)
+			fill_liquid_at_pos(state, pos, handle_pos_notify)
 			mined_nodes_count = mined_nodes_count + 1
 		end
 		if repeat_count <= 2 then
@@ -1260,7 +1030,7 @@ local function dig_pos_process_queue_item(state, item, player_name)
 	end
 
 	if is_liquid(node_name, "water") or is_liquid(node_name, "lava") then
-		filter_liquid(state, pos)
+		fill_liquid_at_pos(state, pos, handle_pos_notify)
 		return
 	end
 	if options.light then
