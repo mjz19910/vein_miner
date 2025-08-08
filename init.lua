@@ -2,9 +2,7 @@ local modpath = minetest.get_modpath("vein_miner")
 
 dofile(modpath .. "/auto_floor.lua")
 
-vein_miner = {
-	deque = {}
-}
+vein_miner = {deque = {}}
 dofile(minetest.get_modpath("vein_miner") .. "/deque.lua")
 
 local S = minetest.get_translator("vein_miner")
@@ -144,15 +142,10 @@ local vein_miner_current_state = {}
 
 local BlockDigger = {}
 local check_for_falling_neighbors = {vector.new(-1, -1, 0), vector.new(1, -1, 0), vector.new(0, -1, -1), vector.new(0, -1, 1),
-                                     vector.new(0, -1, 0), vector.new(-1, 0, 0), vector.new(1, 0, 0), vector.new(0, 0, -1),
-                                     vector.new(0, 0, 1), vector.new(0, 1, 0)}
+	vector.new(0, -1, 0), vector.new(-1, 0, 0), vector.new(1, 0, 0), vector.new(0, 0, -1), vector.new(0, 0, 1), vector.new(0, 1, 0)}
 local possible_flow_directions = {vector.new(-1, 0, 0), vector.new(1, 0, 0), vector.new(0, 0, -1), vector.new(0, 0, 1), vector.new(0, 1, 0)}
-local liquid_set = {
-	["default:water_source"] = true,
-	["default:water_flowing"] = true,
-	["default:lava_source"] = true,
-	["default:lava_flowing"] = true
-}
+local liquid_set = {["default:water_source"] = true, ["default:water_flowing"] = true, ["default:lava_source"] = true,
+	["default:lava_flowing"] = true}
 -- A tiny helper so we don’t repeat the same table‐look‑ups
 local function is_falling(name)
 	local def = core.registered_nodes[name]
@@ -170,7 +163,7 @@ local function is_sticky_node(name) return sticky_nodes[name] == true end
 -- Get all 6 adjacent positions
 local function get_adjacent_positions(pos)
 	return {vector.offset(pos, 1, 0, 0), vector.offset(pos, -1, 0, 0), vector.offset(pos, 0, 1, 0), vector.offset(pos, 0, -1, 0),
-         vector.offset(pos, 0, 0, 1), vector.offset(pos, 0, 0, -1)}
+		vector.offset(pos, 0, 0, 1), vector.offset(pos, 0, 0, -1)}
 end
 
 -- Function to check if a position is stuck to a sticky neighbor
@@ -345,11 +338,7 @@ local function add_pos_to_queue(state, node_name, pos, options)
 		return
 	end
 	state.queued_set[h] = true
-	state.queue:push_right({
-		node_name = node_name,
-		pos = pos,
-		options = get_scan_options(node_name, options)
-	})
+	state.queue:push_right({node_name = node_name, pos = pos, options = get_scan_options(node_name, options)})
 end
 
 local function filter_liquid(state, pos)
@@ -377,11 +366,7 @@ local function filter_liquid(state, pos)
 	end
 
 	local function maybe_enqueue(x, y, z)
-		local hash = core.hash_node_position({
-			x = x,
-			y = y,
-			z = z
-		})
+		local hash = core.hash_node_position({x = x, y = y, z = z})
 		if not visited[hash] then
 			visited[hash] = true
 			push(x, y, z)
@@ -445,17 +430,10 @@ local function filter_liquid(state, pos)
 	local cid_air = cid("air")
 	local cid_wall = cid("wool:green")
 
-	local cids_replace = {
-		[cid("default:water_source")] = true,
-		[cid("default:water_flowing")] = true,
-		[cid("default:lava_source")] = true,
-		[cid("default:lava_flowing")] = true
-	}
+	local cids_replace = {[cid("default:water_source")] = true, [cid("default:water_flowing")] = true, [cid("default:lava_source")] = true,
+		[cid("default:lava_flowing")] = true}
 
-	local cids_source = {
-		[cid("default:water_source")] = true,
-		[cid("default:lava_source")] = true
-	}
+	local cids_source = {[cid("default:water_source")] = true, [cid("default:lava_source")] = true}
 
 	local emin, emax
 	local area
@@ -502,10 +480,7 @@ local function filter_liquid(state, pos)
 		log_action(("filter liquid bounds %s %s %s"):format(tostring(size), tostring(minp), tostring(maxp)))
 
 		emin, emax = vm:read_from_map(minp, maxp)
-		area = VoxelArea:new{
-			MinEdge = emin,
-			MaxEdge = emax
-		}
+		area = VoxelArea:new{MinEdge = emin, MaxEdge = emax}
 		data = vm:get_data()
 
 		if not skip_x[1] and expand_axis(minp, maxp, "x", 128, skip_x) then
@@ -562,10 +537,7 @@ local function filter_liquid(state, pos)
 	maxp = vector.add(maxp, 2)
 
 	emin, emax = vm:read_from_map(minp, maxp)
-	area = VoxelArea:new{
-		MinEdge = emin,
-		MaxEdge = emax
-	}
+	area = VoxelArea:new{MinEdge = emin, MaxEdge = emax}
 	data = vm:get_data()
 
 	for z = minp.z + 2, maxp.z - 2 do
@@ -671,12 +643,7 @@ local function on_light_source(pos)
 	return nil
 end
 
-local function async_wait(time)
-	coroutine.yield({
-		wait = true,
-		time = time
-	})
-end
+local function async_wait(time) coroutine.yield({wait = true, time = time}) end
 
 local function mark_near_light(state, node_name, pos)
 	if not is_valid_pos_to_iter(pos, state.player_name) then
@@ -710,15 +677,8 @@ function vector.midpoint(a, b)
 end
 
 local function notify_pos(pos, color, size, expire_time)
-	core.add_particle({
-		pos = pos,
-		expirationtime = expire_time or 30,
-		size = size or 6,
-		collisiondetection = false,
-		vertical = false,
-		texture = "bubble.png^[colorize:" .. color .. ":160",
-		glow = 15
-	})
+	core.add_particle({pos = pos, expirationtime = expire_time or 30, size = size or 6, collisiondetection = false, vertical = false,
+		texture = "bubble.png^[colorize:" .. color .. ":160", glow = 15})
 end
 local function wait_for_player_near_pos(player, target_pos)
 	local out_of_range = vector.distance(player:get_pos(), target_pos) > 220
@@ -834,39 +794,22 @@ end
 
 local light_region_debug = {}
 
-core.register_chatcommand("toggle_light_debug", {
-	description = "Toggle debug view for light scan regions",
-	func = function(name)
-		light_region_debug[name] = not light_region_debug[name]
-		if light_region_debug[name] then
-			return true, "Light region debug ON"
-		else
-			return true, "Light region debug OFF"
-		end
+core.register_chatcommand("toggle_light_debug", {description = "Toggle debug view for light scan regions", func = function(name)
+	light_region_debug[name] = not light_region_debug[name]
+	if light_region_debug[name] then
+		return true, "Light region debug ON"
+	else
+		return true, "Light region debug OFF"
 	end
-})
+end})
 
 local function place_mese_particle(pos, size)
-	core.add_particle({
-		pos = pos,
-		velocity = vector.new(0, 0, 0),
-		acceleration = vector.new(0, 0, 0),
-		expirationtime = 4,
-		size = size,
-		texture = "default_mese_block.png",
-		glow = 15
-	})
+	core.add_particle({pos = pos, velocity = vector.new(0, 0, 0), acceleration = vector.new(0, 0, 0), expirationtime = 4, size = size,
+		texture = "default_mese_block.png", glow = 15})
 end
 local function place_particle(pos, size, texture)
-	core.add_particle({
-		pos = pos,
-		velocity = vector.new(0, 0, 0),
-		acceleration = vector.new(0, 0, 0),
-		expirationtime = 4,
-		size = size,
-		texture = texture,
-		glow = 15
-	})
+	core.add_particle({pos = pos, velocity = vector.new(0, 0, 0), acceleration = vector.new(0, 0, 0), expirationtime = 4, size = size,
+		texture = texture, glow = 15})
 end
 
 local function clamp_max(vmin, vmax, step)
@@ -1041,14 +984,10 @@ local function scan_nearby_lights(state, pos, node_name, options, show_log)
 		end
 	end
 	if newly_scanned then
-		aabb.subtract_and_accumulate(r, regions, {
-			volume_threshold = 80000,
-			max_distance = 26,
-			on_flush = function(r)
-				normal_scan(r)
-				table.insert(regions, r)
-			end
-		})
+		aabb.subtract_and_accumulate(r, regions, {volume_threshold = 80000, max_distance = 26, on_flush = function(r)
+			normal_scan(r)
+			table.insert(regions, r)
+		end})
 	end
 	local GAP_THRESHOLD = 160000
 	local MAX_GAP_DIST = 11
@@ -1190,6 +1129,12 @@ local function process_node_group(state, node_name, node, repeat_count)
 	if not dp.diggable then
 		return 0
 	end
+	local function dig(pos, node)
+		core.node_dig(pos, node, state.player)
+		state.wielded:add_wear(dp.wear)
+		state.cur_mined_nodes = state.cur_mined_nodes + 1
+		mined_nodes_count = mined_nodes_count + 1
+	end
 	local wear_limit = 65535 - dp.wear
 	for index, pos in pairs(node) do
 		if state.wielded:get_wear() < wear_limit then
@@ -1210,24 +1155,18 @@ local function process_node_group(state, node_name, node, repeat_count)
 			end
 			local options = get_scan_options(node_name, {})
 			if options.light then
-				state.pending_light_notify:push_left({
-					pos = pos,
-					queue_left = state.queue:length()
-				})
+				state.pending_light_notify:push_left({pos = pos, queue_left = state.queue:length()})
 				state.found_light_count = state.found_light_count - 1
 			end
 			if not options.light or is_floating(pos, node.name) then
-				core.node_dig(pos, node, state.player)
-				mined_nodes_count = mined_nodes_count + 1
+				dig(pos, node)
 			end
 			if options.light then
 				local nat_light = core.get_natural_light(pos, 0.5)
-				if nat_light > 0 then
-					core.node_dig(pos, node, state.player)
-					mined_nodes_count = mined_nodes_count + 1
+				if nat_light > 5 then
+					dig(pos, node)
 				end
 			end
-			state.wielded:add_wear(dp.wear)
 			do
 				local tool = state.player:get_wielded_item()
 				if tool:get_wear() ~= state.wielded:get_wear() then
@@ -1237,7 +1176,6 @@ local function process_node_group(state, node_name, node, repeat_count)
 					update_wielded_item(state.player, state.wielded)
 				end
 			end
-			state.cur_mined_nodes = state.cur_mined_nodes + 1
 			state.prev_pos = pos
 			state.prev_sector = area_sector
 		end
@@ -1326,10 +1264,7 @@ local function dig_pos_process_queue_item(state, item, player_name)
 		return
 	end
 	if options.light then
-		state.pending_light_notify:push_left({
-			pos = pos,
-			queue_left = state.queue:length()
-		})
+		state.pending_light_notify:push_left({pos = pos, queue_left = state.queue:length()})
 	end
 
 	local vec_max = vector.add(vec_size, -1)
@@ -1353,10 +1288,7 @@ local function dig_pos_process_queue_item(state, item, player_name)
 	table.insert_all(target_nodes, mine_only_groups.stone)
 	table.insert_all(target_nodes, mine_only_groups.stone_like)
 	table.insert_all(target_nodes, mine_only_groups.stone_with_ore)
-	local target_flags = {
-		liquid = true,
-		falling = true
-	}
+	local target_flags = {liquid = true, falling = true}
 	local node_result = handle_unexpected_target_nodes(target_nodes, node_name)
 	if node_result == "error" then
 		if not known_unhandled_nodes[node_name] then
@@ -1492,6 +1424,8 @@ local function dig_pos(state)
 	end
 end
 
+local clear_mined_nodes_job = nil
+
 local function dig_finish(state)
 	for v in state.pending_light_scan:iter_right() do
 		scan_nearby_lights(state, v[1], v[2], v[3], true)
@@ -1499,7 +1433,20 @@ local function dig_finish(state)
 	if state.total_action_count > 0 then
 		log_warning("vein miner complete in " .. state.total_action_count .. " steps\n" .. '***')
 	elseif state.work_done then
-		log_warning("vein miner complete\n" .. '***')
+		if state.mined_nodes > 0 then
+			log_warning("vein miner complete\n" .. '***')
+		else
+			log_warning("vein miner complete")
+		end
+	end
+	if clear_mined_nodes_job ~= nil then
+		clear_mined_nodes_job:cancel()
+		clear_mined_nodes_job = nil
+	end
+	local player = state.player
+
+	if player then
+		clear_mined_nodes_job = core.after(2.5, function() player_hud.update_nodes_mined(player, 0) end)
 	end
 end
 
@@ -1568,17 +1515,8 @@ end
 vein_miner.state = {}
 
 function vein_miner.state.new(pos, player, player_name, wielded)
-	local state = {
-		pos = pos,
-		player = player,
-		player_name = player_name,
-		wielded = wielded,
-		falling_check_nodes = vein_miner.deque.new(),
-		queue = vein_miner.deque.new(),
-		queued_set = {},
-		total_action_count = 0,
-		found_light_count = 0
-	}
+	local state = {pos = pos, player = player, player_name = player_name, wielded = wielded, falling_check_nodes = vein_miner.deque.new(),
+		queue = vein_miner.deque.new(), queued_set = {}, total_action_count = 0, found_light_count = 0}
 
 	return state
 end
@@ -1622,50 +1560,38 @@ core.register_on_dignode(function(pos, oldnode, player)
 	end
 	local queue = state.queue
 	local qs = state.queued_set
-	add_pos_to_queue(state, node_name, pos, {
-		user = true
-	})
+	add_pos_to_queue(state, node_name, pos, {user = true})
 end)
 
-core.register_privilege("vein_miner_config", {
-	description = "Can configure vein miner",
-	give_to_singleplayer = false
-})
+core.register_privilege("vein_miner_config", {description = "Can configure vein miner", give_to_singleplayer = false})
 
-core.register_chatcommand("mining_mode", {
-	description = "Change configured mining range (8 or 32 at y > -32)",
-	params = "[small|large]",
-	privs = {
-		vein_miner_config = true
-	},
-	func = function(name, param)
-		local player = core.get_player_by_name(name)
-		if not player then
-			return false, "Player not found."
-		end
+core.register_chatcommand("mining_mode",
+	{description = "Change configured mining range (8 or 32 at y > -32)", params = "[small|large]", privs = {vein_miner_config = true},
+		func = function(name, param)
+			local player = core.get_player_by_name(name)
+			if not player then
+				return false, "Player not found."
+			end
 
-		param = param:lower()
-		if p_config.data[name] == nil then
-			p_config.data[name] = {}
-		end
+			param = param:lower()
+			if p_config.data[name] == nil then
+				p_config.data[name] = {}
+			end
 
-		local config = p_config.data[name]
+			local config = p_config.data[name]
 
-		if param == "" or param == nil then
-			return true, "Mining mode is " .. config.mode .. " range."
-		elseif param == "small" then
-			config.mode = "small"
-			player_hud.update_mode(player, "small")
-			return true, "Mining mode set to small range."
-		elseif param == "large" then
-			config.mode = "large"
-			player_hud.update_mode(player, "large")
-			return true, "Mining mode set to large range."
-		else
-			return false, "Invalid parameter. Use: /mining_mode small OR /mining_mode large"
-		end
-	end
-})
+			if param == "" or param == nil then
+				return true, "Mining mode is " .. config.mode .. " range."
+			elseif param == "small" then
+				config.mode = "small"
+				return true, "Mining mode set to small range."
+			elseif param == "large" then
+				config.mode = "large"
+				return true, "Mining mode set to large range."
+			else
+				return false, "Invalid parameter. Use: /mining_mode small OR /mining_mode large"
+			end
+		end})
 
 local function show_layer_bounds(miny, maxy)
 	local y_range = "y=" .. (miny + 1) .. ".." .. maxy
@@ -1673,11 +1599,8 @@ local function show_layer_bounds(miny, maxy)
 	return y_range .. " " .. layer_info
 end
 
-core.register_chatcommand("mine", {
-	description = "Change configured mining layer",
-	params = "[get [min|max] | set [min|max <y>] | up [min|max|both] | down [min|max|both] | reset]",
-	privs = {},
-	func = function(name, param)
+core.register_chatcommand("mine", {description = "Change configured mining layer",
+	params = "[get [min|max] | set [min|max <y>] | up [min|max|both] | down [min|max|both] | reset]", privs = {}, func = function(name, param)
 		local player = core.get_player_by_name(name)
 		if not player then
 			return false, "Player not found."
@@ -1776,8 +1699,7 @@ core.register_chatcommand("mine", {
 		else
 			return false, "Usage: /mine [get [min|max] | set [min|max <y>] | up [min|max|both] | down [min|max|both] | reset]"
 		end
-	end
-})
+	end})
 
 local falling_check_delay = 0.5
 
@@ -1828,94 +1750,60 @@ core.register_globalstep(function(dtime)
 	dtime_time = dtime_time + dtime
 end)
 
-core.register_chatcommand("yaw", {
-	description = "Change player yaw",
-	params = "[get | set <yaw>]",
-	privs = {},
-	func = function(name, param)
-		local player = core.get_player_by_name(name)
-		if not player then
-			return false, "Player not found."
-		end
-
-		local args = param:split(" ")
-		local cmd = args[1]
-		if cmd == "get" or cmd == nil or cmd == "" then
-			local yaw = player:get_look_horizontal()
-			return true, ("Your current yaw is %.1f degrees"):format(math.deg(yaw))
-		elseif cmd == "set" then
-			local yaw = 0
-			if args[2] ~= nil then
-				yaw = math.rad(tonumber(args[2]))
-			end
-			player:set_look_horizontal(yaw)
-			return true, ("Yaw set to %.1f degrees"):format(math.deg(yaw))
-		end
+core.register_chatcommand("yaw", {description = "Change player yaw", params = "[get | set <yaw>]", privs = {}, func = function(name, param)
+	local player = core.get_player_by_name(name)
+	if not player then
+		return false, "Player not found."
 	end
-})
 
-core.register_chatcommand("pos", {
-	description = "Show your position with 3 decimal places",
-	privs = {},
-	func = function(name)
-		local player = core.get_player_by_name(name)
-		if not player then
-			return false, "Player not found."
+	local args = param:split(" ")
+	local cmd = args[1]
+	if cmd == "get" or cmd == nil or cmd == "" then
+		local yaw = player:get_look_horizontal()
+		return true, ("Your current yaw is %.1f degrees"):format(math.deg(yaw))
+	elseif cmd == "set" then
+		local yaw = 0
+		if args[2] ~= nil then
+			yaw = math.rad(tonumber(args[2]))
 		end
-
-		local pos = player:get_pos()
-		local msg = string.format("Your position is: (%.3f, %.3f, %.3f)", pos.x, pos.y, pos.z)
-		return true, msg
+		player:set_look_horizontal(yaw)
+		return true, ("Yaw set to %.1f degrees"):format(math.deg(yaw))
 	end
-})
+end})
 
-core.override_item("", {
-	range = 7
-})
+core.register_chatcommand("pos", {description = "Show your position with 3 decimal places", privs = {}, func = function(name)
+	local player = core.get_player_by_name(name)
+	if not player then
+		return false, "Player not found."
+	end
+
+	local pos = player:get_pos()
+	local msg = string.format("Your position is: (%.3f, %.3f, %.3f)", pos.x, pos.y, pos.z)
+	return true, msg
+end})
+
+core.override_item("", {range = 7})
 
 local function node_sound_defaults(tbl)
 	tbl = tbl or {}
-	tbl.footstep = tbl.footstep or {
-		name = "",
-		gain = 1.0
-	}
-	tbl.dug = tbl.dug or {
-		name = "default_dug_node",
-		gain = 0.25
-	}
-	tbl.place = tbl.place or {
-		name = "default_place_node_hard",
-		gain = 1.0
-	}
+	tbl.footstep = tbl.footstep or {name = "", gain = 1.0}
+	tbl.dug = tbl.dug or {name = "default_dug_node", gain = 0.25}
+	tbl.place = tbl.place or {name = "default_place_node_hard", gain = 1.0}
 	return tbl
 end
 
 local function node_sound_stone_defaults(tbl)
 	tbl = tbl or {}
-	tbl.footstep = tbl.footstep or {
-		name = "default_hard_footstep",
-		gain = 0.2
-	}
-	tbl.dug = tbl.dug or {
-		name = "default_hard_footstep",
-		gain = 1.0
-	}
+	tbl.footstep = tbl.footstep or {name = "default_hard_footstep", gain = 0.2}
+	tbl.dug = tbl.dug or {name = "default_hard_footstep", gain = 1.0}
 	node_sound_defaults(tbl)
 	return tbl
 end
 local function register_lit_cobble(light_level)
 	local node_name = "vein_miner:lit_cobble_" .. light_level
-	core.register_node(node_name, {
-		description = ("Lit Cobblestone (Level=%d)"):format(light_level),
-		tiles = {"default_cobble.png"},
-		groups = {
-			cracky = 3,
-			stone = 2
-		},
-		light_source = light_level,
-		drop = node_name,
-		sounds = node_sound_stone_defaults()
-	})
+	core.register_node(node_name,
+		{description = ("Lit Cobblestone (Level=%d)"):format(light_level), tiles = {"default_cobble.png"}, groups = {cracky = 3, stone = 2},
+			light_source = light_level, drop = node_name, sounds = node_sound_stone_defaults()})
 
 	table.insert(mine_only_groups.lit_cobble, node_name)
 	mine_only_group_sets[node_name] = "lit_cobble"
@@ -1928,36 +1816,18 @@ for i = 1, 14 do
 	register_lit_cobble(i)
 end
 
-core.register_craft({
-	type = "shapeless",
-	output = "vein_miner:lit_cobble_1",
-	recipe = {"default:cobble", "default:mese_crystal_fragment"}
-})
+core.register_craft({type = "shapeless", output = "vein_miner:lit_cobble_1", recipe = {"default:cobble", "default:mese_crystal_fragment"}})
 
-core.register_craft({
-	type = "shapeless",
-	output = "default:cobble 2",
-	recipe = {"default:cobble", "vein_miner:lit_cobble_1"},
-	replacements = {{"vein_miner:lit_cobble_1", "default:mese_crystal_fragment"}}
-})
+core.register_craft({type = "shapeless", output = "default:cobble 2", recipe = {"default:cobble", "vein_miner:lit_cobble_1"},
+	replacements = {{"vein_miner:lit_cobble_1", "default:mese_crystal_fragment"}}})
 
-core.register_craft({
-	type = "shapeless",
-	output = "vein_miner:lit_cobble_1",
-	recipe = {"default:cobble", "vein_miner:lit_cobble_2"},
-	replacements = {{"default:cobble", "default:cobble"}}
-})
+core.register_craft({type = "shapeless", output = "vein_miner:lit_cobble_1", recipe = {"default:cobble", "vein_miner:lit_cobble_2"},
+	replacements = {{"default:cobble", "default:cobble"}}})
 
-core.register_craft({
-	type = "shapeless",
-	output = "vein_miner:lit_cobble_2 2",
-	recipe = {"vein_miner:lit_cobble_1", "vein_miner:lit_cobble_1"}
-})
+core.register_craft({type = "shapeless", output = "vein_miner:lit_cobble_2 2",
+	recipe = {"vein_miner:lit_cobble_1", "vein_miner:lit_cobble_1"}})
 
-core.register_craft({
-	output = "vein_miner:lit_cobble_2",
-	recipe = {{"vein_miner:lit_cobble_1"}}
-})
+core.register_craft({output = "vein_miner:lit_cobble_2", recipe = {{"vein_miner:lit_cobble_1"}}})
 
 -- Register to handle players
 
@@ -1985,8 +1855,6 @@ core.register_on_joinplayer(function(player)
 
 	-- Init the player hud
 	player_hud.init_player(player)
-
-	player_hud.update_mode(player, config.mode)
 end)
 
 core.register_on_leaveplayer(function(player)
