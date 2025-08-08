@@ -11,10 +11,10 @@ local MAX_MINED_NODES = 188
 local light_scan_dist = 1
 
 -- PERMISSIONS
--- If true, prevent registered nodes in rNodes from being veinmined.
--- If false, prevent unregistered nodes in rNodes from being veinmined.
+-- If true, prevent registered nodes in rNodes from being vein mined.
+-- If false, prevent unregistered nodes in rNodes from being vein mined.
 local nodeBlacklist = false
--- Blacklisted or whitelisted nodes for veinmining
+-- Blacklisted or whitelisted nodes for vein mining
 local rNodes = {}
 
 -- Whether or not to use a blacklist instead of a whitelist for tools
@@ -257,14 +257,14 @@ local function is_node_vein_diggable(nodeName, wieldedName)
 
 	-- check nodes
 	if next(rNodes) then
-		local isNodeInRnodes = (rNodes[nodeName] ~= nil) and true or false
-		nodeCheck = (isNodeInRnodes ~= nodeBlacklist)
+		local isNodeInRNodes = (rNodes[nodeName] ~= nil) and true or false
+		nodeCheck = (isNodeInRNodes ~= nodeBlacklist)
 	end
 
 	-- check tools
 	if next(rTools) then
-		local isToolInRtools = (rTools[wieldedName] ~= nil) and true or false
-		toolCheck = (isToolInRtools ~= toolBlacklist)
+		local isToolInRTools = (rTools[wieldedName] ~= nil) and true or false
+		toolCheck = (isToolInRTools ~= toolBlacklist)
 	end
 
 	return nodeCheck and toolCheck
@@ -1520,7 +1520,6 @@ local function dig_finish(state)
 	end
 end
 
-local is_vein_mineing = false
 local next_loop_action_divisor = --[[2000]] 4000;
 
 local function after_delay(data, fn, state)

@@ -142,7 +142,7 @@ end
 local function register_wires_group()
 	local nid = {}
 	while true do
-		-- Create group specifiction and nodeid string (see note above for details)
+		-- Create group specification and nodeid string (see note above for details)
 		local nodeid = (nid[0] or "0") .. (nid[1] or "0") .. (nid[2] or "0") .. (nid[3] or "0") .. (nid[4] or "0") .. (nid[5] or "0") ..
 			               (nid[6] or "0") .. (nid[7] or "0")
 
