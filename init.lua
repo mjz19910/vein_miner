@@ -1407,6 +1407,13 @@ local function dig_pos_process_queue_item(state, item, player_name)
 	end
 	iter_node_groups(state, core.find_nodes_in_area(minvec, maxvec, target_nodes, true))
 
+	local player = state.player
+	if player then
+		player_hud.update_nodes_mined(player, state.mined_nodes)
+		local mode = p_config.data[player_name].mode or "small"
+		player_hud.update_mode(player, mode)
+	end
+
 	core.fix_light(minvec, maxvec)
 
 	for v in state.pending_light_notify:iter_right() do
@@ -1648,9 +1655,11 @@ core.register_chatcommand("mining_mode", {
 			return true, "Mining mode is " .. config.mode .. " range."
 		elseif param == "small" then
 			config.mode = "small"
+			player_hud.update_mode(player, "small")
 			return true, "Mining mode set to small range."
 		elseif param == "large" then
 			config.mode = "large"
+			player_hud.update_mode(player, "large")
 			return true, "Mining mode set to large range."
 		else
 			return false, "Invalid parameter. Use: /mining_mode small OR /mining_mode large"
@@ -1976,6 +1985,8 @@ core.register_on_joinplayer(function(player)
 
 	-- Init the player hud
 	player_hud.init_player(player)
+
+	player_hud.update_mode(player, config.mode)
 end)
 
 core.register_on_leaveplayer(function(player)
