@@ -1,11 +1,17 @@
 local VoxelArea = VoxelArea
--- local minetest = minetest
+local minetest = minetest
+local core = core
+local table = table
+local vector = vector
+local ipairs = ipairs
+local math = math
 
 local CFG = vein_miner.CFG
 
 local DELAY_SECONDS = 0.5
 local MAX_CHUNK_SIZE = 8 * 2
 local MAP_BLOCKSIZE = 8
+local MAX_EXPAND = 12 -- nodes to expand by when out of bounds neighbor found
 
 local cardinal_dirs = CFG.cardinal_dirs
 
@@ -32,24 +38,60 @@ local function is_blocking_flow(data, area, liquids, pos)
 end
 
 ---@param vm VoxelManip
----@param start_list Vector[] -- multiple starting nodes
+---@param current_area VoxelArea
+---@param pos Vector
+---@param walls_to_remove table<integer, boolean>
+---@return VoxelArea
+local function expand_area_conditionally(vm, current_area, pos, walls_to_remove)
+	local vector = vector
+	local min_edge = current_area.MinEdge
+	local max_edge = current_area.MaxEdge
+
+	local expand_min = vector.new(math.min(min_edge.x, pos.x - MAX_EXPAND), math.min(min_edge.y, pos.y - MAX_EXPAND),
+		math.min(min_edge.z, pos.z - MAX_EXPAND))
+	local expand_max = vector.new(math.max(max_edge.x, pos.x + MAX_EXPAND), math.max(max_edge.y, pos.y + MAX_EXPAND),
+		math.max(max_edge.z, pos.z + MAX_EXPAND))
+
+	if expand_min.x == min_edge.x and expand_min.y == min_edge.y and expand_min.z == min_edge.z and expand_max.x == max_edge.x and expand_max.y ==
+		max_edge.y and expand_max.z == max_edge.z then
+		return current_area -- no expansion needed
+	end
+
+	vm:read_from_map(expand_min, expand_max)
+	local area_check = VoxelArea:new{
+		MinEdge = expand_min,
+		MaxEdge = expand_max,
+	}
+	local data_check = vm:get_data()
+
+	for z = expand_min.z, expand_max.z do
+		for y = expand_min.y, expand_max.y do
+			for x = expand_min.x, expand_max.x do
+				local pos_check = vector.new(x, y, z)
+				local vi = area_check:indexp(pos_check)
+				if walls_to_remove[data_check[vi]] then
+					return area_check
+				end
+			end
+		end
+	end
+
+	return current_area -- no walls found, skip expansion
+end
+
+---@param vm VoxelManip
+---@param start_pos Vector
 ---@param walls_to_remove table<integer, boolean>
 ---@param liquids table<integer, boolean>
 ---@param area VoxelArea
 ---@param data integer[]
----@return integer removed_count, Chunk[] new_chunks
-local function remove_nonblocking_walls_dfs(vm, start_list, walls_to_remove, liquids, area, data)
+---@return integer removed_count
+local function remove_nonblocking_walls_dfs(vm, start_pos, walls_to_remove, liquids, area, data)
 	local removed_count = 0
-	local stack = {}
-	for _, pos in ipairs(start_list) do
-		table.insert(stack, pos)
-	end
-
+	local stack = {start_pos}
 	local visited = {}
-	local function pos_hash(pos) return core.hash_node_position(pos) end
 
-	---@type Chunk[]
-	local new_chunks = {}
+	local function pos_hash(pos) return core.hash_node_position(pos) end
 
 	while #stack > 0 do
 		local pos = table.remove(stack)
@@ -57,52 +99,41 @@ local function remove_nonblocking_walls_dfs(vm, start_list, walls_to_remove, liq
 		if visited[h] then
 			goto continue
 		end
+		if not area:containsp(pos) then
+			-- Out of current area, check if we can expand
+			vm:write_to_map() -- save changes before expanding
+			area = expand_area_conditionally(vm, area, pos, walls_to_remove)
+			data = vm:get_data()
+			if not area:containsp(pos) then
+				-- Even after expansion pos not in area, skip
+				goto continue
+			end
+		end
 
 		visited[h] = true
 
-		-- Check if pos inside current area
-		if area:containsp(pos) then
-			local vi = area:indexp(pos)
-			local cid = data[vi]
-			if walls_to_remove[cid] and not is_blocking_flow(data, area, liquids, pos) then
-				data[vi] = minetest.CONTENT_AIR
-				removed_count = removed_count + 1
-			end
+		local vi = area:indexp(pos)
+		local cid = data[vi]
 
-			-- Explore neighbors
-			for _, dir in ipairs(cardinal_dirs) do
-				local npos = vector.add(pos, dir)
-				if not visited[pos_hash(npos)] then
-					if area:containsp(npos) then
-						local nvi = area:indexp(npos)
-						if nvi and nvi >= 1 and nvi <= #data then
-							local ncid = data[nvi]
-							if walls_to_remove[ncid] then
-								table.insert(stack, npos)
-							end
-						end
-					else
-						-- Out of bounds neighbor: if it's a wall node, add a new chunk around it
-						local vm_tmp = minetest.get_voxel_manip()
-						local chunk_min = vector.subtract(npos, 6)
-						local chunk_max = vector.add(npos, 6)
-						vm_tmp:read_from_map(chunk_min, chunk_max)
-						local area_tmp = VoxelArea:new({
-							MinEdge = chunk_min,
-							MaxEdge = chunk_max,
-						})
-						local data_tmp = vm_tmp:get_data()
+		if walls_to_remove[cid] and not is_blocking_flow(data, area, liquids, pos) then
+			data[vi] = minetest.CONTENT_AIR
+			removed_count = removed_count + 1
+		end
 
-						if area_tmp:containsp(npos) then
-							local vi_tmp = area_tmp:indexp(npos)
-							if walls_to_remove[data_tmp[vi_tmp]] then
-								table.insert(new_chunks, {
-									area = area_tmp,
-									start_list = {npos},
-								})
-							end
-						end
+		for _, dir in ipairs(cardinal_dirs) do
+			local npos = vector.add(pos, dir)
+			local nh = pos_hash(npos)
+			if not visited[nh] then
+				if area:containsp(npos) then
+					local nvi = area:indexp(npos)
+					local ncid = data[nvi]
+					if walls_to_remove[ncid] then
+						table.insert(stack, npos)
 					end
+				else
+					-- Out of area neighbors will trigger expansion next iteration
+					-- but only add if possibly a wall (no CID check since no data)
+					table.insert(stack, npos)
 				end
 			end
 		end
@@ -110,7 +141,7 @@ local function remove_nonblocking_walls_dfs(vm, start_list, walls_to_remove, liq
 		::continue::
 	end
 
-	return removed_count, new_chunks
+	return removed_count
 end
 
 ---@param chunk Chunk
@@ -168,12 +199,20 @@ local function split_area_into_chunks_with_start(chunk_area, walls_to_remove, vm
 	local min = chunk_area.MinEdge
 	local max = chunk_area.MaxEdge
 
-	for x = min.x, max.x, MAX_CHUNK_SIZE do
-		for y = min.y, max.y, MAX_CHUNK_SIZE do
-			for z = min.z, max.z, MAX_CHUNK_SIZE do
+	local xsz = min.x - max.x
+	local ysz = min.y - max.y
+	local zsz = min.z - max.z
+
+	local x_chunk_sz = math.min(MAX_CHUNK_SIZE, math.floor(xsz / 2))
+	local y_chunk_sz = math.min(MAX_CHUNK_SIZE, math.floor(ysz / 2))
+	local z_chunk_sz = math.min(MAX_CHUNK_SIZE, math.floor(zsz / 2))
+
+	for x = min.x, max.x, x_chunk_sz do
+		for y = min.y, max.y, y_chunk_sz do
+			for z = min.z, max.z, z_chunk_sz do
 				local chunk_min = vector.new(x, y, z)
-				local chunk_max = vector.new(math.min(x + MAX_CHUNK_SIZE - 1, max.x), math.min(y + MAX_CHUNK_SIZE - 1, max.y),
-					math.min(z + MAX_CHUNK_SIZE - 1, max.z))
+				local chunk_max = vector.new(math.min(x + x_chunk_sz - 1, max.x), math.min(y + y_chunk_sz - 1, max.y),
+					math.min(z + z_chunk_sz - 1, max.z))
 
 				vm:read_from_map(chunk_min, chunk_max)
 				local area = VoxelArea:new({
@@ -289,7 +328,7 @@ local function do_remove_nonblocking_walls(itemstack, user, pointed_thing)
 	send_message_to_user(name, "chunk_areas=" .. core.serialize(chunk_areas))
 
 	if #chunks == 0 then
-		minetest.chat_send_player(user:get_player_name(), "No removable walls found nearby.")
+		send_message_to_user(name, "No removable walls found nearby.")
 		return itemstack
 	end
 
