@@ -1,12 +1,14 @@
+-- voxel_utils.lua
+-- Utility functions for voxel manipulation in Luanti mods
+local voxel_utils = {}
+
 local core = core or minetest
 local vector_new = vector.new
 local hash_node_position = core.hash_node_position
 local get_position_from_hash = core.get_position_from_hash
 local get_name_from_content_id = minetest.get_name_from_content_id
-
--- voxel_utils.lua
--- Utility functions for voxel manipulation in Luanti mods
-local voxel_utils = {}
+local table = table
+local ipairs = ipairs
 
 ---Convert position to VoxelArea index
 ---@param area VoxelArea
