@@ -1,3 +1,10 @@
+local offset = vector.offset
+local ipairs = ipairs
+local vector = vector
+local core = core
+local next = next
+local table = table
+
 dofile(minetest.get_modpath("vein_miner") .. "/utils.lua")
 
 ---@type VeinMinerGlobal
@@ -14,7 +21,10 @@ require("mods.vein_miner.aabb")
 require("mods.vein_miner.liquid_filler")
 require("mods.vein_miner.remove_walls")
 local player_hud = require("mods.vein_miner.src.player_hud")
-require("mods.vein_miner.src.player_config")
+local p_config = require("mods.vein_miner.src.player_config")
+require("mods.vein_miner.late_utils")
+
+local utils = utils
 
 local fill_liquid_at_pos = vein_miner.fill_liquid_at_pos
 
@@ -156,36 +166,7 @@ local liquid_set = {
 	["default:lava_source"] = true,
 	["default:lava_flowing"] = true,
 }
--- A tiny helper so we don’t repeat the same table‐look‑ups
-local function is_falling(name)
-	local def = core.registered_nodes[name]
-	return def and ((def.groups and def.groups.falling_node) or def.liquidtype == "source" or def.liquidtype == "flowing")
-end
-local function is_liquid_source(name)
-	local def = core.registered_nodes[name]
-	return def and def.liquidtype == "source"
-end
-local sticky_nodes = CFG.sticky_nodes
 
--- Function to check if a node is sticky
-local function is_sticky_node(name) return sticky_nodes[name] == true end
-
--- Get all 6 adjacent positions
-local function get_adjacent_positions(pos)
-	return {vector.offset(pos, 1, 0, 0), vector.offset(pos, -1, 0, 0), vector.offset(pos, 0, 1, 0), vector.offset(pos, 0, -1, 0),
-		vector.offset(pos, 0, 0, 1), vector.offset(pos, 0, 0, -1)}
-end
-
--- Function to check if a position is stuck to a sticky neighbor
-local function is_stuck_to_sticky(pos)
-	for _, adj_pos in ipairs(get_adjacent_positions(pos)) do
-		local node = minetest.get_node(adj_pos)
-		if is_sticky_node(node.name) then
-			return true
-		end
-	end
-	return false
-end
 function BlockDigger.should_dig(node, pos)
 	if node.name == "air" then
 		return false
@@ -193,27 +174,27 @@ function BlockDigger.should_dig(node, pos)
 	if table.contains(light_nodes, node.name) then
 		return true
 	end
-	if not is_sticky_node(node.name) and is_stuck_to_sticky(pos) then
+	if not utils.is_sticky_node(node.name) and utils.is_stuck_to_sticky(pos) then
 		return false
 	end
-	local above = vector.offset(pos, 0, 1, 0)
+	local above = offset(pos, 0, 1, 0)
 	local above_node = core.get_node(above)
 	if above_node.name == "default:snow" then
 		return true -- falling block that we want to fall
 	end
-	if is_falling(above_node.name) then
+	if utils.is_falling(above_node.name) then
 		return false
 	end
 	for _, off in ipairs(possible_flow_directions) do
 		local npos = vector.add(pos, off)
-		if is_liquid_source(core.get_node(npos).name) then
+		if utils.is_liquid_source(core.get_node(npos).name) then
 			return false -- digging here may cause liquid to flow
 		end
 	end
 	for _, off in ipairs(check_for_falling_neighbors) do
 		local npos = vector.add(pos, off)
 		local above_node = core.get_node(npos)
-		if is_falling(above_node.name) then
+		if utils.is_falling(above_node.name) then
 			local below = vector.offset(npos, 0, -1, 0)
 			local below_node = core.get_node(below)
 			if below_node.name == "air" or liquid_set[below_node.name] then
@@ -243,15 +224,6 @@ local function is_node_vein_diggable(nodeName, wieldedName)
 	end
 
 	return nodeCheck and toolCheck
-end
-
-function table.contains(table, element)
-	for _, value in pairs(table) do
-		if value == element then
-			return true
-		end
-	end
-	return false
 end
 
 -- Update wielded item
@@ -286,34 +258,6 @@ local function handle_unexpected_target_nodes(target_nodes, node_name)
 	return "continue"
 end
 
-local node_scan_options_cache = {}
-local function get_real_scan_options(node_name, options)
-	options = options or {}
-	if table.contains(light_nodes, node_name) then
-		options.light = true
-	end
-	local def = ItemStack(node_name):get_definition()
-	if def.liquidtype == "source" then
-		options.liquid = true
-	end
-	if def.liquidtype == "flowing" then
-		options.liquid = true
-	end
-	return options
-end
-local function get_scan_options(node_name, options)
-	options = options or {}
-	if options.user then
-		return get_real_scan_options(node_name, options)
-	end
-	if node_scan_options_cache[node_name] ~= nil then
-		return node_scan_options_cache[node_name]
-	end
-	options = get_real_scan_options(node_name)
-	node_scan_options_cache[node_name] = options
-	return options
-end
-
 for i, dir in pairs(vec_dirs) do
 	for j, dir2 in pairs(vec_dirs) do
 		local dir_res = dir + dir2
@@ -334,38 +278,6 @@ local function is_valid_pos_to_iter(pos, player_name)
 		return true
 	end
 	return false
-end
-
-local function add_pos_to_queue(state, node_name, pos, options)
-	local h = core.hash_node_position(pos)
-	if state.queued_set[h] then
-		return
-	end
-	state.queued_set[h] = true
-	state.queue:push_right({
-		node_name = node_name,
-		pos = pos,
-		options = get_scan_options(node_name, options),
-	})
-end
-
-local function handle_pos_notify(state, pos)
-	local node = core.get_node(pos)
-	add_pos_to_queue(state, node.name, pos)
-end
-
-local function can_player_fit(pos)
-	local pos_node = core.get_node(pos)
-	local above = vector.offset(pos, 0, 1, 0)
-	local above_node = core.get_node(above)
-	return pos_node.name == "air" and above_node.name == "air"
-end
-
-local function check_pos(pos)
-	if can_player_fit(pos) then
-		return pos
-	end
-	return nil
 end
 
 local function on_found_empty_space(dir)
@@ -418,13 +330,6 @@ local function on_light_source(pos)
 	return nil
 end
 
-local function async_wait(time)
-	coroutine.yield({
-		wait = true,
-		time = time,
-	})
-end
-
 local function mark_near_light(state, node_name, pos)
 	if not is_valid_pos_to_iter(pos, state.player_name) then
 		return false
@@ -450,10 +355,6 @@ local function count_found_nodes(iter, orig_pos, player_name)
 		::skip::
 	end
 	return count
-end
-
-function vector.midpoint(a, b)
-	return vector.new(math.floor((a.x + b.x) / 2 + 0.5), math.floor((a.y + b.y) / 2 + 0.5), math.floor((a.z + b.z) / 2 + 0.5))
 end
 
 local function notify_pos(pos, color, size, expire_time)
