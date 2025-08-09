@@ -10,7 +10,7 @@ local function is_blocking_flow(data, area, liquids, pos)
 
 	for _, dir in ipairs(cardinal_dirs) do
 		local npos = pos + dir
-		if area:contains(npos) then
+		if area:containsp(npos) then
 			local neighbor_cid = data[area:indexp(npos)]
 			if liquids[neighbor_cid] then
 				return true
