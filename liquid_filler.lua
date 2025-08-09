@@ -121,10 +121,12 @@ local liquid_set = {
 	["default:lava_flowing"] = true,
 }
 
-local cid_air, cid_wool_green
+local cid_air
+local cid_wool_green
 
-local cids_source, cids_flowing
 local cids_replace = {}
+local cids_source = {}
+local cids_flowing = {}
 
 ---@param fmt string
 ---@vararg any
@@ -226,18 +228,27 @@ function State:new(vm, cid_wall)
 	local self = setmetatable({
 		vm = vm,
 		cid_wall = cid_wall,
+		cid_air = cid_air,
 		cids_replace = cids_replace,
 		cids_source = cids_source,
 		cids_flowing = cids_flowing,
+		data = nil,
+		area = nil,
+		region = nil,
 	}, State)
 	return self
 end
 
 ---@param region Region
 function State:reload_region(region)
+	if self.data ~= nil then
+		self.vm:set_data(self.data)
+		self.vm:write_to_map()
+	end
 	local area, data = read_voxels_from_map(self.vm, region)
 	self.area = area
 	self.data = data
+	self.region = region
 end
 
 ---@param state State
@@ -548,18 +559,13 @@ end
 ---@param pos Vector
 ---@param region Region
 ---@return boolean
-local function is_on_edge(pos, region)
-	local count = 0
-	if pos.x == region.min.x or pos.x == region.max.x then
-		count = count + 1
-	end
-	if pos.y == region.min.y or pos.y == region.max.y then
-		count = count + 1
-	end
-	if pos.z == region.min.z or pos.z == region.max.z then
-		count = count + 1
-	end
-	return count == 2
+local function is_vis_pos(pos, region)
+	local min, max = region.min, region.max
+
+	local on_x_edge = (pos.x == min.x or pos.x == max.x)
+	local on_y_edge = (pos.y == min.y or pos.y == max.y)
+	local on_z_edge = (pos.z == min.z or pos.z == max.z)
+	return on_x_edge or on_y_edge or on_z_edge
 end
 
 ---@param region Region
@@ -569,7 +575,7 @@ local function visualize_region_particles(region, params)
 
 	for pos in iter_region_positions(region) do
 		local min, max = region.min, region.max
-		if is_on_edge(pos, region) then
+		if is_vis_pos(pos, region) then
 			minetest.add_particle({
 				pos = pos,
 				velocity = vec_new(0, 0, 0),
@@ -647,7 +653,7 @@ end
 ---@param region Region
 local function remove_unnecessary_walls(state, region)
 	local visited = {}
-	local wall_search_region = region:shrink_clone(1)
+	local wall_search_region = region:shrink_clone(2)
 
 	-- First, mark all walls adjacent to liquid as necessary
 	for pos in iter_region_positions(wall_search_region) do
@@ -661,7 +667,7 @@ local function remove_unnecessary_walls(state, region)
 		local hash = hash_pos(pos)
 		if is_wall(state, pos) and not visited[hash] then
 			local idx = state.area:indexp(pos)
-			state.data[idx] = state.cid_air
+			state.data[idx] = cid_air
 		end
 	end
 end
@@ -784,7 +790,7 @@ local function clear_liquids(state, region)
 	for pos in iter_region_positions(region) do
 		local idx = state.area:indexp(pos)
 		if state.cids_replace[state.data[idx]] then
-			state.data[idx] = state.cid_air
+			state.data[idx] = cid_air
 		end
 	end
 end
@@ -794,7 +800,7 @@ end
 local function build_walls(state, region)
 	for pos in iter_region_positions(region) do
 		local idx = state.area:indexp(pos)
-		if state.data[idx] ~= state.cid_air then
+		if state.data[idx] ~= cid_air then
 			goto continue_wall
 		end
 		for _, offset in ipairs(cardinal_dirs) do
@@ -819,22 +825,6 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 		return
 	end
 
-	local entry = get_cached_wall_entry(pos)
-	if entry then
-		verbose_log("Using cached wall state for position %s", pos_str(pos))
-		local state, region = entry.state, entry.region
-		-- previous vm is closed?
-		-- state.vm = VoxelManip()
-		state:reload_region(region)
-
-		verbose_log("Clearing liquids inside region (cached)")
-		clear_liquids(state, region:shrink_clone(2))
-
-		verbose_log("Building walls inside region (cached)")
-		build_walls(state, region:shrink_clone(1))
-		return
-	end
-
 	local LIMIT = 64 * 6
 	verbose_log("Starting flood fill with limit %d", LIMIT)
 	local region = flood_fill_liquid(pos, LIMIT)
@@ -851,30 +841,32 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 	expand_liquid_bounds(state, region, notify_pos, vein_miner_state)
 	verbose_log("Expanded liquid bounds: min=%s max=%s", pos_str(region.min), pos_str(region.max))
 
-	region:shrink(2)
+	region:grow(2)
 	verbose_log("Region grown by 2 blocks: min=%s max=%s", pos_str(region.min), pos_str(region.max))
 	state:reload_region(region)
 
 	verbose_log("Clearing liquids inside region")
-	clear_liquids(state, region:grow_clone(2))
+	clear_liquids(state, region:shrink_clone(2))
 
 	verbose_log("Building walls inside region")
-	build_walls(state, region:grow_clone(1))
+	build_walls(state, region:shrink_clone(1))
 
-	region:grow(2 + 1)
-	verbose_log("Region grown by 1 block: min=%s max=%s", pos_str(region.min), pos_str(region.max))
+	if false then
+		region:grow(2 + 1)
+		state:reload_region(region)
+		verbose_log("Region grown by 1 block: min=%s max=%s", pos_str(region.min), pos_str(region.max))
+
+		verbose_log("Removing unnecessary walls")
+		remove_unnecessary_walls(state, region)
+
+		cache_wall_region(region, state)
+
+		remove_overlapping_wall_regions(wall_region_cache)
+		verbose_log("Removed overlapping wall regions from cache")
+	end
+
+	-- reload to save
 	state:reload_region(region)
-
-	verbose_log("Removing unnecessary walls")
-	remove_unnecessary_walls(state, region)
-
-	cache_wall_region(region, state)
-
-	remove_overlapping_wall_regions(wall_region_cache)
-	verbose_log("Removed overlapping wall regions from cache")
-
-	state.vm:set_data(state.data)
-	state.vm:write_to_map()
 	state.vm:update_liquids()
 	state.vm:close()
 
