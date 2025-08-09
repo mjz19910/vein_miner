@@ -7,8 +7,8 @@ local ItemStack = ItemStack
 local core = core
 local ipairs = ipairs
 local offset = vector.offset
-local insert = vector.insert
 local p = vector.new
+local insert = table.insert
 
 local node_scan_options_cache = {}
 local function get_real_scan_options(node_name, options)

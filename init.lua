@@ -37,7 +37,7 @@ require("mods.vein_miner.liquid_filler")
 require("mods.vein_miner.remove_walls")
 local player_hud = require("mods.vein_miner.player_hud")
 local p_config = require("mods.vein_miner.player_config")
-utils.merge(require("mods.vein_miner.late_utils"))
+utils:merge(require("mods.vein_miner.late_utils"))
 local BlockDigger = require("mods.vein_miner.block_digger")
 
 local fill_liquid_at_pos = vein_miner.fill_liquid_at_pos
@@ -913,11 +913,11 @@ local function dig_pos_process_queue_item(state, item, player_name)
 		state.found_light_count = state.found_light_count + 1
 	end
 
-	if not has_empty_main_inv_slot(state.player) then
+	if not utils.has_empty_main_inv_slot(state.player) then
 		core.chat_send_player(state.player_name, "Waiting for empty inventory slot for digging")
 	end
-	while not has_empty_main_inv_slot(state.player) do
-		async_wait(3)
+	while not utils.has_empty_main_inv_slot(state.player) do
+		utils.async_wait(3)
 	end
 	if target_flags.liquid then
 		iter_node_groups(state, core.find_nodes_in_area(minvec, maxvec, water_targets, true))
@@ -1150,7 +1150,7 @@ core.register_on_dignode(function(pos, oldnode, player)
 	end
 	local queue = state.queue
 	local qs = state.queued_set
-	add_pos_to_queue(state, node_name, pos, {
+	utils.add_pos_to_queue(state, node_name, pos, {
 		user = true,
 	})
 end)
