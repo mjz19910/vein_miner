@@ -1,3 +1,9 @@
+local core = core or minetest
+local vector_new = vector.new
+local hash_node_position = core.hash_node_position
+local get_position_from_hash = core.get_position_from_hash
+local get_name_from_content_id = minetest.get_name_from_content_id
+
 -- voxel_utils.lua
 -- Utility functions for voxel manipulation in Luanti mods
 local voxel_utils = {}
@@ -6,7 +12,7 @@ local voxel_utils = {}
 ---@param area VoxelArea
 ---@param pos Vector
 ---@return integer
-function voxel_utils.pos_to_index(area, pos) return area:index(pos.x, pos.y, pos.z) end
+function voxel_utils.pos_to_index(area, pos) return area:indexp(pos) end
 
 ---Convert index to position
 ---@param area VoxelArea
@@ -48,7 +54,7 @@ end
 function voxel_utils.get_node_at_pos(vm, data, area, pos)
 	local index = area:index(pos.x, pos.y, pos.z)
 	local c = data[index]
-	return minetest.get_name_from_content_id(c)
+	return core.get_name_from_content_id(c)
 end
 
 ---Set node content id at a position
@@ -74,24 +80,26 @@ function voxel_utils.safe_set_node(data, area, pos, content_id)
 	end
 	return false
 end
-
----Get neighboring positions (6-directional)
----@param pos Vector
----@return Vector[]
-function voxel_utils.get_neighbors(pos)
-	return {vector.new(pos.x + 1, pos.y, pos.z), vector.new(pos.x - 1, pos.y, pos.z), vector.new(pos.x, pos.y + 1, pos.z),
-		vector.new(pos.x, pos.y - 1, pos.z), vector.new(pos.x, pos.y, pos.z + 1), vector.new(pos.x, pos.y, pos.z - 1)}
-end
+(function()
+	local p = vector_new
+	---Get neighboring positions (6-directional)
+	---@param pos Vector
+	---@return Vector[]
+	function voxel_utils.get_neighbors(pos)
+		return {p(pos.x + 1, pos.y, pos.z), p(pos.x - 1, pos.y, pos.z), p(pos.x, pos.y + 1, pos.z), p(pos.x, pos.y - 1, pos.z),
+			p(pos.x, pos.y, pos.z + 1), p(pos.x, pos.y, pos.z - 1)}
+	end
+end)()
 
 ---Fast integer hash for a node position using the engine's built-in method
 ---@param pos Vector
 ---@return integer
-function voxel_utils.pos_hash(pos) return core.hash_node_position(pos) end
+function voxel_utils.pos_hash(pos) return hash_node_position(pos) end
 
 ---Inverse of pos_hash
 ---@param hash integer
 ---@return Vector
-function voxel_utils.pos_unhash(hash) return core.get_position_from_hash(hash) end
+function voxel_utils.pos_unhash(hash) return get_position_from_hash(hash) end
 
 ---Flood fill a voxel region starting at pos
 ---@param vm VoxelManip
