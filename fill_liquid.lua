@@ -489,7 +489,8 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 	local skip_x, skip_y, skip_z = {false}, {false}, {false}
 	local vm = VoxelManip()
 	local area, data = read_voxels_from_map(vm, region)
-	local state = {vm = VoxelManip(), area = area, data = data, region = region, replace = cids_replace}
+	local state = {vm = VoxelManip(), area = area, data = data, region = region, replace = cids_replace, cids_source = cids_source,
+		cids_flowing = cids_flowing}
 
 	local function loop_expand()
 		local area, data = read_voxels_from_map(vm, region)
