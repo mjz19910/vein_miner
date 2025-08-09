@@ -6,7 +6,7 @@ local next = next
 
 -- local builtin lua tables
 local table = table
--- local vector = vector
+local vector = vector
 local coroutine = coroutine
 
 -- local builtin lua table functions
@@ -15,6 +15,8 @@ local vec_new = vector.new
 local zero = vector.zero
 local co_wrap = coroutine.wrap
 local co_yield = coroutine.yield
+local min = math.min
+local max = math.max
 
 -- minetest tables
 local core = core
@@ -476,7 +478,7 @@ end
 -- Remove walls not marked as necessary by DFS
 local function remove_unnecessary_walls(state, region)
 	local visited = {}
-	local wall_search_region = region:shrink(1)
+	local wall_search_region = region:shrink_clone(1)
 
 	-- First, mark all walls adjacent to liquid as necessary
 	for pos in iter_region_positions(wall_search_region) do
@@ -555,9 +557,9 @@ local function flood_fill_liquid(start_pos, limit)
 			goto continue
 		end
 
-		minx, maxx = math.min(minx, x), math.max(maxx, x)
-		miny, maxy = math.min(miny, y), math.max(maxy, y)
-		minz, maxz = math.min(minz, z), math.max(maxz, z)
+		minx, maxx = min(minx, x), max(maxx, x)
+		miny, maxy = min(miny, y), max(maxy, y)
+		minz, maxz = min(minz, z), max(maxz, z)
 
 		q_tail = maybe_enqueue(qx, qy, qz, q_tail, visited, x + 1, y, z)
 		q_tail = maybe_enqueue(qx, qy, qz, q_tail, visited, x - 1, y, z)
@@ -653,13 +655,13 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 	-- Expand bounds
 	expand_liquid_bounds(state, region, notify_pos, vein_miner_state)
 
-	region = region:grow(2)
+	region:grow(2)
 	state:reload_region(region)
 
 	clear_liquids(state, region)
 	build_walls(state, region)
 
-	region = region:grow(1)
+	region:grow(1)
 	state:reload_region(region)
 
 	remove_unnecessary_walls(state, region)
