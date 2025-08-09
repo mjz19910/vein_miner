@@ -1,10 +1,11 @@
 local ipairs = ipairs
 
 local table = table
--- local vector = vector
+local vector = vector
 
 local insert_all = table.insert_all
 local vnew = vector.new
+local zero = vector.zero
 
 local core = core
 local minetest = minetest
@@ -115,11 +116,7 @@ local function expand_axis_from_center(state, axis, limit, skip_flag)
 		local found_positive = false
 		for y = region.min.y, region.max.y do
 			for z = region.min.z, region.max.z do
-				local pos = {
-					x = 0,
-					y = 0,
-					z = 0,
-				}
+				local pos = zero()
 				pos[axis] = new_max
 				pos.y = y
 				pos.z = (axis == "x") and z or region.min.z + (z - region.min.z)
