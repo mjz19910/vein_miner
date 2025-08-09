@@ -77,25 +77,6 @@ local minetest = minetest
 ---@field contains fun(self:VoxelArea, x:integer, y:integer, z:integer): boolean
 ---@field containsp fun(self:VoxelArea, pos:Vector): boolean
 local VoxelArea = VoxelArea
----@class VoxelManip
----@field read_from_map fun(self:VoxelManip, p1:Vector, p2:Vector): Vector, Vector		Reads region from map; returns min and max edges
----@field initialize fun(self:VoxelManip, p1:Vector, p2:Vector, fill_node?: table): Vector, Vector	Initializes region optionally filling with node; returns min and max edges
----@field get_data fun(self:VoxelManip, buffer?: table): integer[]	Returns node content IDs; optional buffer table
----@field set_data fun(self:VoxelManip, data: integer[]) Sets node content IDs
----@field write_to_map fun(self:VoxelManip, update_light?: boolean) Writes changes back to map; optionally updates lighting (default true)
----@field get_node_at fun(self:VoxelManip, pos:Vector): table Gets node at position
----@field set_node_at fun(self:VoxelManip, pos:Vector, node: table): boolean Sets node at position; returns success
----@field update_liquids fun(self:VoxelManip) Updates flowing liquids
----@field calc_lighting fun(self:VoxelManip, pmin?: Vector, pmax?: Vector, propagate_shadow?: boolean)  Calculates lighting (mapgen VM only)
----@field set_lighting fun(self:VoxelManip, light_table: table, pmin?: Vector, pmax?: Vector)  Sets lighting (mapgen VM only)
----@field get_light_data fun(self:VoxelManip, buffer?: table): integer[] Gets light data; optional buffer
----@field set_light_data fun(self:VoxelManip, data: integer[]) Sets light data
----@field get_param2_data fun(self:VoxelManip, buffer?: table): integer[] Gets param2 data; optional buffer
----@field set_param2_data fun(self:VoxelManip, data: integer[]) Sets param2 data
----@field update_map fun(self:VoxelManip) Updates the map (no-op)
----@field was_modified fun(self:VoxelManip): boolean Returns whether data was modified
----@field get_emerged_area fun(self:VoxelManip): Vector, Vector Returns min and max edges of emerged area
----@field close fun(self:VoxelManip) Disposes object (not allowed on mapgen VMs)
 ---@type fun(): VoxelManip
 local VoxelManip = VoxelManip
 
