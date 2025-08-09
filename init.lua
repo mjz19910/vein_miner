@@ -14,6 +14,7 @@ local utils = dofile(minetest.get_modpath("vein_miner") .. "/utils.lua")
 vein_miner = {
 	deque = {},
 }
+local vein_miner = vein_miner
 local require = utils.require
 require("mods.vein_miner.deque")
 require("mods.vein_miner.auto_floor")
