@@ -118,7 +118,7 @@ local function remove_all_walls_in_area(user, chunk_area)
 			for x = min.x, max.x do
 				local pos = vector.new(x, y, z)
 				local vi = area:indexp(pos)
-				if walls_to_remove[data[vi]] and not is_blocking_flow(data, area, pos) then
+				if walls_to_remove[data[vi]] then
 					table.insert(positions_to_remove, pos)
 				end
 			end
@@ -127,9 +127,11 @@ local function remove_all_walls_in_area(user, chunk_area)
 
 	local removed_count = 0
 	for _, pos in ipairs(positions_to_remove) do
-		local vi = area:indexp(pos)
-		data[vi] = minetest.CONTENT_AIR
-		removed_count = removed_count + 1
+		if not is_blocking_flow(data, area, pos) then
+			local vi = area:indexp(pos)
+			data[vi] = minetest.CONTENT_AIR
+			removed_count = removed_count + 1
+		end
 	end
 
 	vm:set_data(data)
