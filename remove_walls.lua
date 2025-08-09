@@ -9,6 +9,23 @@ local MAP_BLOCKSIZE = 8
 
 local cardinal_dirs = CFG.cardinal_dirs
 
+local function is_blocking_flow(data, area, liquids, pos)
+	local current_cid = data[area:indexp(pos)]
+	if liquids[current_cid] then
+		return false
+	end
+	for _, dir in ipairs(cardinal_dirs) do
+		local npos = vector.add(pos, dir)
+		if area:containsp(npos) then
+			local neighbor_cid = data[area:indexp(npos)]
+			if liquids[neighbor_cid] then
+				return true
+			end
+		end
+	end
+	return false
+end
+
 ---@param vm VoxelManip
 ---@param start_list Vector[] -- multiple starting nodes
 ---@param walls_to_remove table<integer, boolean>
