@@ -632,6 +632,8 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 	if cached_state then
 		verbose_log("Using cached wall state for position %s", pos_str(pos))
 		local state, region = cached_state, cached_region
+		state:reload_region(region)
+
 		verbose_log("Clearing liquids inside region (cached)")
 		clear_liquids(state, region:shrink_clone(2))
 
