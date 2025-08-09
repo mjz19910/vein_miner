@@ -9,6 +9,8 @@ local VoxelManip = VoxelManip
 
 local new_region = aabb.region
 
+local log_action = vein_miner.h.log_action
+
 local liquid_set = {["default:water_source"] = true, ["default:water_flowing"] = true, ["default:lava_source"] = true,
 	["default:lava_flowing"] = true}
 
@@ -232,75 +234,57 @@ local function expand_vertical_axis(args, skip_y, notify_pos)
 	return false
 end
 
-local function remove_useless_walls(vm, area, data, minp, maxp, cid_wool_green, cid_air, cids_source)
-  local walls_to_remove = {}
+local function remove_useless_walls(info)
+	local state = info.state
+	local r = info.r
+	local cids_replace = info.replace
 
-  -- First pass: find useless walls
-  for z = minp.z + 1, maxp.z - 1 do
-    for y = minp.y + 1, maxp.y - 1 do
-      for x = minp.x + 1, maxp.x - 1 do
-        local i = area:index(x, y, z)
-        if data[i] == cid_wool_green then
-          local useless = true
-          for _, off in ipairs({{1,0,0},{-1,0,0},{0,1,0},{0,-1,0},{0,0,1},{0,0,-1}}) do
-            local ni = area:index(x + off[1], y + off[2], z + off[3])
-            local beyond_pos = {x = x + 2*off[1], y = y + 2*off[2], z = z + 2*off[3]}
-            -- Only check beyond if inside current bounds
-            if area:contains(beyond_pos) then
-              local beyond_idx = area:index(beyond_pos.x, beyond_pos.y, beyond_pos.z)
-              if cids_source[data[ni]] and data[beyond_idx] == cid_air then
-                useless = true
-                break
-              else
-                useless = false
-              end
-            else
-              -- We don't know beyond block because it's outside VM bounds
-              -- So be conservative and assume wall might be useful
-              useless = false
-            end
-          end
-          if useless then
-            table.insert(walls_to_remove, {x = x, y = y, z = z})
-          end
-        end
-      end
-    end
-  end
+	local vm = state.vm
+	local area = state.area
+	local data = state.data
+	local cid_air = state.cid_air
+	local cid_wall = state.cid_wall
+	local cid_source = state.cid_source
 
-  -- If no useless walls, nothing to do
-  if #walls_to_remove == 0 then return minp, maxp end
+	-- Iterate over the region interior (excluding edges)
+	for z = r.min.z + 1, r.max.z - 1 do
+		for y = r.min.y + 1, r.max.y - 1 do
+			for x = r.min.x + 1, r.max.x - 1 do
+				local idx = area:index(x, y, z)
 
-  -- Expand bounds to include walls to remove
-  local new_minp = vector.new(minp)
-  local new_maxp = vector.new(maxp)
+				-- Only consider wall nodes
+				if data[idx] == cid_wall then
+					-- Check if this wall is "useful":
+					-- If any neighbor is a source liquid, wall is useful
+					local useful = false
+					for _, off in ipairs({{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}}) do
+						local nidx = area:index(x + off[1], y + off[2], z + off[3])
+						if cid_source[data[nidx]] then
+							useful = true
+							break
+						end
+					end
 
-  for _, pos in ipairs(walls_to_remove) do
-    if pos.x < new_minp.x then new_minp.x = pos.x end
-    if pos.y < new_minp.y then new_minp.y = pos.y end
-    if pos.z < new_minp.z then new_minp.z = pos.z end
+					-- If wall is not useful, replace it with air
+					if not useful then
+						data[idx] = cid_air
+					end
+				end
+			end
+		end
+	end
 
-    if pos.x > new_maxp.x then new_maxp.x = pos.x end
-    if pos.y > new_maxp.y then new_maxp.y = pos.y end
-    if pos.z > new_maxp.z then new_maxp.z = pos.z end
-  end
+	vm:set_data(data)
+	vm:write_to_map()
+	vm:update_liquids()
+	vm:update_map()
 
-  -- Re-read voxel manip for expanded bounds to be sure all data is loaded
-  local emin, emax = vm:read_from_map(new_minp, new_maxp)
-  area = VoxelArea:new{MinEdge = emin, MaxEdge = emax}
-  data = vm:get_data()
+	log_action("Removed useless walls in region " .. tostring(r.min) .. " to " .. tostring(r.max))
+end
 
-  -- Remove useless walls in updated data
-  for _, pos in ipairs(walls_to_remove) do
-    local i = area:index(pos.x, pos.y, pos.z)
-    data[i] = cid_air
-  end
-
-  -- Update vm data
-  vm:set_data(data)
-
-  -- Return updated bounds and area, data, vm for further processing
-  return new_minp, new_maxp, area, data, vm
+local function read_voxels_from_map(vm, region)
+	local emin, emax = vm:read_from_map(region.min, region.max)
+	return VoxelArea:new{MinEdge = emin, MaxEdge = emax}
 end
 
 -- === Main function ===
@@ -357,14 +341,12 @@ function vein_miner.fill_liquid_at_pos(state, pos, notify_pos)
 
 	-- Expand bounds
 	local skip_x, skip_y, skip_z = {false}, {false}, {false}
-	local vm, emin, emax, area, data
-	local axis_info = {state = state, r = r, replace = cids_replace};
+	local axis_info = {state = state, r = r, replace = cids_replace}
 
 	local function loop_expand()
-		vm = VoxelManip()
-		emin, emax = vm:read_from_map(r.min, r.max)
-		axis_info.area = VoxelArea:new{MinEdge = emin, MaxEdge = emax}
-		axis_info.data = vm:get_data()
+		state.vm = VoxelManip()
+		state.area = read_voxels_from_map(state.vm, r)
+		state.data = state.vm:get_data()
 
 		if not skip_x[1] and expand_axis_from_center(axis_info, "x", 96, skip_x) then
 			return true
