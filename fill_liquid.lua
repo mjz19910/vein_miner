@@ -331,22 +331,7 @@ local function is_useless_wall(state, pos)
 	return true
 end
 
-local function try_remove_wall_at_edge(state, region, pos)
-	if is_useless_wall(state, pos) then
-		local min = region.min
-		local max = region.max
-		state.data[state.area:indexp(pos)] = state.cid_air
-	end
-end
-
 local function region_equals(region, b_min, b_max) return vector.equals(region.min, b_min) and vector.equals(region.max, b_max) end
-
-local function remove_useless_walls(state)
-	local region = state.region
-	for pos in iter_region_positions(region) do
-		try_remove_wall_at_edge(state, region, pos)
-	end
-end
 
 -- Returns true if position is a wall node
 local function is_wall(state, pos)
@@ -405,7 +390,50 @@ local function dfs_mark_necessary(state, start_pos, visited)
 	end
 end
 
+local function visualize_region_particles(region, params)
+	local min, max = region.min, region.max
+
+	for x = min.x, max.x do
+		for y = min.y, max.y do
+			for z = min.z, max.z do
+				local on_edge = ((x == min.x or x == max.x) and 1 or 0) + ((y == min.y or y == max.y) and 1 or 0) +
+					                ((z == min.z or z == max.z) and 1 or 0)
+
+				if on_edge == 2 then -- edges of the bounding box
+					local pos = vnew(x + 0.5, y + 0.5, z + 0.5)
+					minetest.add_particle({
+						pos = pos,
+						velocity = vnew(0, 0, 0),
+						expirationtime = params.expirationtime,
+						size = params.size,
+						texture = params.texture,
+						glow = params.glow,
+					})
+				end
+			end
+		end
+	end
+end
+
 local wall_region_cache = {} -- list of { region = {min=vec, max=vec}, state = {...} }
+
+-- Globalstep timer for particle visualization
+local timer = 0
+core.register_globalstep(function(dtime)
+	timer = timer + dtime
+	if timer >= 1 then -- every second
+		timer = 0
+		local particle_params = {
+			texture = "default_steelblock.png",
+			expirationtime = 2, -- particles last 2 seconds
+			size = 5,
+			glow = 15,
+		}
+		for _, entry in ipairs(wall_region_cache) do
+			visualize_region_particles(entry.region, particle_params)
+		end
+	end
+end)
 
 local function pos_in_region(pos, region)
 	return pos.x >= region.min.x and pos.x <= region.max.x and pos.y >= region.min.y and pos.y <= region.max.y and pos.z >= region.min.z and
@@ -431,6 +459,7 @@ end
 -- Remove walls not marked as necessary by DFS
 local function remove_unnecessary_walls(state)
 	local region = state.region
+	shrink_region(region, 1)
 	local visited = {}
 
 	-- First, mark all walls adjacent to liquid as necessary
@@ -448,6 +477,8 @@ local function remove_unnecessary_walls(state)
 			state.data[idx] = state.cid_air
 		end
 	end
+
+	expand_region(region, 1)
 end
 
 -- === Main function ===
