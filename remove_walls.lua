@@ -432,8 +432,8 @@ local function remove_walls_in_area(itemstack, user, pointed_thing)
 
 	local start_pos = pointed_thing.under
 	local chunk_area = VoxelArea:new{
-		MinEdge = vector.subtract(start_pos, 7),
-		MaxEdge = vector.add(start_pos, 7),
+		MinEdge = vector.subtract(start_pos, 48),
+		MaxEdge = vector.add(start_pos, 48),
 	}
 
 	local name = user:get_player_name()
