@@ -39,8 +39,11 @@ local function is_blocking_flow(data, area, pos)
 				return true
 			end
 		else
-			-- we don't know if it is blocking any water outside of the area
-			return true
+			local n_node = core.get_node(npos)
+			local neighbor_cid = core.get_content_id(n_node.name)
+			if liquids[neighbor_cid] then
+				return true
+			end
 		end
 	end
 	return false
