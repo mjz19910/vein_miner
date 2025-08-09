@@ -52,4 +52,4 @@
 
 ---@class Chunk
 ---@field area VoxelArea
----@field start_pos Vector
+---@field start_list Vector[]
