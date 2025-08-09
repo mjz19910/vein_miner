@@ -53,7 +53,7 @@ local cids_replace = {}
 
 local function verbose_log(fmt, ...)
 	if minetest.settings:get_bool("vein_miner_verbose_logging", false) then
-		core.log("verbose", ("[liquid_filler.lua] " .. fmt):format(...))
+		core.log("action", ("[liquid_filler.lua] " .. fmt):format(...))
 	end
 end
 
