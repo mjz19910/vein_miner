@@ -62,7 +62,7 @@ local function remove_nonblocking_walls_dfs(vm, start_pos, walls_to_remove, liqu
 		local vi = area:indexp(pos)
 		local cid = data[vi]
 		if walls_to_remove[cid] and not is_blocking_flow(data, area, liquids, pos) then
-			core.log("warning", "Removing node at " .. pos_str(pos) .. " cid " .. cid)
+			core.log("warning", "Removing node at " .. pos_str(pos) .. " " .. core.get_name_from_content_id(cid))
 			data[vi] = minetest.CONTENT_AIR
 			removed_count = removed_count + 1
 		end
