@@ -261,22 +261,6 @@ local function expand_area(p1, p2, expand_blocks)
 	local new_p1 = vector.subtract(p1, expand_size)
 	local new_p2 = vector.add(p2, expand_size)
 
-	-- Clamp to max size 48
-	local size_x = new_p2.x - new_p1.x + 1
-	local size_y = new_p2.y - new_p1.y + 1
-	local size_z = new_p2.z - new_p1.z + 1
-
-	-- If size > MAX_CHUNK_SIZE, clamp
-	if size_x > MAX_CHUNK_SIZE then
-		new_p2.x = new_p1.x + MAX_CHUNK_SIZE - 1
-	end
-	if size_y > MAX_CHUNK_SIZE then
-		new_p2.y = new_p1.y + MAX_CHUNK_SIZE - 1
-	end
-	if size_z > MAX_CHUNK_SIZE then
-		new_p2.z = new_p1.z + MAX_CHUNK_SIZE - 1
-	end
-
 	return new_p1, new_p2
 end
 
@@ -311,7 +295,7 @@ local function do_remove_nonblocking_walls(itemstack, user, pointed_thing)
 	local base_p1 = vector.new(start_pos.x, start_pos.y, start_pos.z)
 	local base_p2 = vector.new(start_pos.x, start_pos.y, start_pos.z)
 
-	local min, max = expand_area(base_p1, base_p2, 2)
+	local min, max = expand_area(base_p1, base_p2, 3)
 	local chunk_area = VoxelArea:new{
 		MinEdge = min,
 		MaxEdge = max,
