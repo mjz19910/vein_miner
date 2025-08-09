@@ -75,9 +75,6 @@ core.register_on_mods_loaded(function()
 	cid_wool_green = cid("wool:green")
 end)
 
-local State = {}
-State.__index = State
-
 local vec_add = vector.add
 local vec_sub = vector.subtract
 
@@ -116,6 +113,9 @@ local function read_voxels_from_map(vm, region)
 	local data = vm:get_data()
 	return area, data
 end
+
+local State = {}
+State.__index = State
 
 function State:reload_region(region)
 	local area, data = read_voxels_from_map(self.vm, region)
