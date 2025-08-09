@@ -54,11 +54,17 @@ local function maybe_enqueue(qx, qy, qz, q_tail, visited, x, y, z)
 	return q_tail
 end
 
-local function expand_axis_from_center(args, axis, limit, skip_flag)
-	local r = args.r -- { min = vector, max = vector }
-	local area = args.area
-	local data = args.data
-	local replace = args.replace -- cids_replace table
+local function read_voxels_from_map(state, region)
+	local emin, emax = state.vm:read_from_map(region.min, region.max)
+	state.area = VoxelArea:new{MinEdge = emin, MaxEdge = emax}
+	state.data = state.vm:get_data()
+end
+
+local function expand_axis_from_center(state, axis, limit, skip_flag)
+	local r = state.r -- { min = vector, max = vector }
+	local area = state.area
+	local data = state.data
+	local replace = state.replace -- cids_replace table
 
 	local size = r.max[axis] - r.min[axis] + 1
 	if size >= limit then
@@ -132,50 +138,15 @@ local function expand_axis_from_center(args, axis, limit, skip_flag)
 	return expanded
 end
 
-local function expand_axis(minp, maxp, axis, limit, skip_flag, area, data)
-	local function axis_iter(is_max)
-		local start = is_max and maxp[axis] or minp[axis]
-		for a = minp[axis], maxp[axis] do
-			for b = minp.y, maxp.y do
-				local pos = {x = 0, y = 0, z = 0}
-				pos[axis] = a
-				pos.y = b
-				pos.x = pos.x or minp.x
-				pos.z = pos.z or minp.z
-				local idx = area:index(pos.x, pos.y, pos.z)
-				if cids_replace[data[idx]] then
-					if is_max then
-						maxp[axis] = maxp[axis] + 1
-					else
-						minp[axis] = minp[axis] - 1
-					end
-					if (maxp[axis] - minp[axis]) < limit then
-						return true
-					end
-					skip_flag[1] = true
-					return false
-				end
-			end
-		end
-		return false
-	end
-
-	if axis_iter(false) or axis_iter(true) then
-		return true
-	end
-	return false
-end
-
-local function expand_vertical_axis(args, skip_y, notify_pos)
-	local r = args.r -- { min = vector, max = vector }
-	local area = args.area
-	local data = args.data
-	local replace = args.replace -- cids_replace table
-	local state = args.state -- for notify_pos()
+local function expand_vertical_axis(state, skip_y, notify_pos, vein_miner_state)
+	local r = state.r -- { min = vector, max = vector }
+	local area = state.area
+	local data = state.data
+	local replace = state.replace -- cids_replace table
 
 	local size_x, size_z, size_y = r.max.x - r.min.x, r.max.z - r.min.z, r.max.y - r.min.y
 
-	local function notify_limit(pos) notify_pos(state, pos) end
+	local function notify_limit(pos) notify_pos(vein_miner_state, pos) end
 
 	if skip_y[1] then
 		return false
@@ -234,61 +205,85 @@ local function expand_vertical_axis(args, skip_y, notify_pos)
 	return false
 end
 
-local function remove_useless_walls(info)
-	local state = info.state
-	local r = info.r
-	local cids_replace = info.replace
+local function expand_region_to_include(state, pos)
+	local r = state.r
 
-	local vm = state.vm
-	local area = state.area
-	local data = state.data
-	local cid_air = state.cid_air
-	local cid_wall = state.cid_wall
-	local cid_source = state.cid_source
+	-- Expand region bounds
+	r.min.x = math.min(r.min.x, pos.x)
+	r.min.y = math.min(r.min.y, pos.y)
+	r.min.z = math.min(r.min.z, pos.z)
 
-	-- Iterate over the region interior (excluding edges)
-	for z = r.min.z + 1, r.max.z - 1 do
-		for y = r.min.y + 1, r.max.y - 1 do
-			for x = r.min.x + 1, r.max.x - 1 do
-				local idx = area:index(x, y, z)
+	r.max.x = math.max(r.max.x, pos.x)
+	r.max.y = math.max(r.max.y, pos.y)
+	r.max.z = math.max(r.max.z, pos.z)
 
-				-- Only consider wall nodes
-				if data[idx] == cid_wall then
-					-- Check if this wall is "useful":
-					-- If any neighbor is a source liquid, wall is useful
-					local useful = false
-					for _, off in ipairs({{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}}) do
-						local nidx = area:index(x + off[1], y + off[2], z + off[3])
-						if cid_source[data[nidx]] then
-							useful = true
-							break
-						end
-					end
+	-- Re-read voxel data and update area
+	local emin, emax = state.vm:read_from_map(r.min, r.max)
+	state.area = VoxelArea:new{MinEdge = emin, MaxEdge = emax}
+	state.data = state.vm:get_data()
+end
 
-					-- If wall is not useful, replace it with air
-					if not useful then
-						data[idx] = cid_air
-					end
+local function ensure_pos_in_area(state, pos)
+	local region = state.region
+
+	if not state.area:contains(pos) then
+		expand_region_to_include(state, pos)
+	end
+end
+
+-- Helper iterator over positions inside the region
+local function iter_region_positions(r)
+	local minx, maxx = r.min.x, r.max.x
+	local miny, maxy = r.min.y, r.max.y
+	local minz, maxz = r.min.z, r.max.z
+
+	return coroutine.wrap(function()
+		for z = minz, maxz do
+			for y = miny, maxy do
+				for x = minx, maxx do
+					coroutine.yield(vector.new(x, y, z))
 				end
 			end
 		end
-	end
-
-	vm:set_data(data)
-	vm:write_to_map()
-	vm:update_liquids()
-	vm:update_map()
-
-	log_action("Removed useless walls in region " .. tostring(r.min) .. " to " .. tostring(r.max))
+	end)
 end
 
-local function read_voxels_from_map(vm, region)
-	local emin, emax = vm:read_from_map(region.min, region.max)
-	return VoxelArea:new{MinEdge = emin, MaxEdge = emax}
+local function is_useless_wall(state, pos)
+	local idx = state.area:indexp(pos)
+	if state.data[idx] ~= state.cid_wall then
+		return false
+	end
+
+	for _, off in ipairs({{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}}) do
+		local neighbor_pos = pos + off
+		ensure_pos_in_area(state, pos + off * 2)
+		local nidx = state.area:indexp(neighbor_pos)
+		if state.replace[state.data[nidx]] then
+			return false
+		end
+	end
+
+	return true
+end
+
+local function try_remove_wall_at_edge(state, pos)
+	if is_useless_wall(state, pos) then
+		local r = state.r
+		if pos.x == r.min.x or pos.x == r.max.x or pos.y == r.min.y or pos.y == r.max.y or pos.z == r.min.z or pos.z == r.max.z then
+			ensure_pos_in_area(state, pos)
+		end
+		state.data[state.area:indexp(pos)] = state.cid_air
+	end
+end
+
+local function remove_useless_walls(state)
+	for pos in iter_region_positions(state.r) do
+		try_remove_wall_at_edge(state, pos)
+	end
 end
 
 -- === Main function ===
-function vein_miner.fill_liquid_at_pos(state, pos, notify_pos)
+function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 	if not liquid_set[core.get_node(pos).name] then
 		return
 	end
@@ -341,20 +336,18 @@ function vein_miner.fill_liquid_at_pos(state, pos, notify_pos)
 
 	-- Expand bounds
 	local skip_x, skip_y, skip_z = {false}, {false}, {false}
-	local axis_info = {state = state, r = r, replace = cids_replace}
+	local state = {vm = VoxelManip(), r = r, replace = cids_replace}
 
 	local function loop_expand()
-		state.vm = VoxelManip()
-		state.area = read_voxels_from_map(state.vm, r)
-		state.data = state.vm:get_data()
+		read_voxels_from_map(state, r)
 
-		if not skip_x[1] and expand_axis_from_center(axis_info, "x", 96, skip_x) then
+		if not skip_x[1] and expand_axis_from_center(state, "x", 96, skip_x) then
 			return true
 		end
-		if not skip_z[1] and expand_axis_from_center(axis_info, "z", 96, skip_z) then
+		if not skip_z[1] and expand_axis_from_center(state, "z", 96, skip_z) then
 			return true
 		end
-		if not skip_y[1] and expand_vertical_axis(axis_info, skip_y, notify_pos) then
+		if not skip_y[1] and expand_vertical_axis(state, skip_y, notify_pos, vein_miner_state) then
 			return true
 		end
 		return false
@@ -367,17 +360,15 @@ function vein_miner.fill_liquid_at_pos(state, pos, notify_pos)
 	r.min = vector.subtract(r.min, 2)
 	r.max = vector.add(r.max, 2)
 
-	emin, emax = vm:read_from_map(r.min, r.max)
-	area = VoxelArea:new{MinEdge = emin, MaxEdge = emax}
-	data = vm:get_data()
+	read_voxels_from_map(state, r)
 
 	-- Clear liquids
 	for z = r.min.z + 2, r.max.z - 2 do
 		for y = r.min.y + 2, r.max.y - 2 do
 			for x = r.min.x + 2, r.max.x - 2 do
-				local i = area:index(x, y, z)
-				if cids_replace[data[i]] then
-					data[i] = cid_air
+				local i = state.area:index(x, y, z)
+				if cids_replace[state.data[i]] then
+					state.data[i] = cid_air
 				end
 			end
 		end
@@ -387,14 +378,14 @@ function vein_miner.fill_liquid_at_pos(state, pos, notify_pos)
 	for z = r.min.z + 1, r.max.z - 1 do
 		for y = r.min.y + 1, r.max.y - 1 do
 			for x = r.min.x + 1, r.max.x - 1 do
-				local i = area:index(x, y, z)
-				if data[i] ~= cid_air then
+				local i = state.area:index(x, y, z)
+				if state.data[i] ~= cid_air then
 					goto continue_wall
 				end
 				for _, off in ipairs({{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}}) do
-					local ni = area:index(x + off[1], y + off[2], z + off[3])
-					if cids_source[data[ni]] then
-						data[ni] = cid_wool_green -- wall
+					local ni = state.area:index(x + off[1], y + off[2], z + off[3])
+					if cids_source[state.data[ni]] then
+						state.data[ni] = cid_wool_green -- wall
 					end
 				end
 				::continue_wall::
@@ -402,8 +393,10 @@ function vein_miner.fill_liquid_at_pos(state, pos, notify_pos)
 		end
 	end
 
-	vm:set_data(data)
-	vm:write_to_map()
-	vm:update_liquids()
-	vm:update_map()
+	remove_useless_walls(state)
+
+	state.vm:set_data(state.data)
+	state.vm:write_to_map()
+	state.vm:update_liquids()
+	state.vm:update_map()
 end
