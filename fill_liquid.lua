@@ -26,6 +26,8 @@ local liquid_set = {["default:water_source"] = true, ["default:water_flowing"] =
 local cid = core.get_content_id
 local cid_air, cid_wool_green
 
+local cid_wall
+
 local cids_source, cids_flowing
 local cids_replace = {}
 
@@ -47,6 +49,8 @@ core.register_on_mods_loaded(function()
 
 	cid_air = cid("air")
 	cid_wool_green = cid("wool:green")
+
+	cid_wall = cid_wool_green
 end)
 
 local function push(qx, qy, qz, q_tail, x, y, z)
@@ -216,7 +220,7 @@ local function expand_vertical_axis(state, skip_y, notify_pos, vein_miner_state)
 	return false
 end
 
-local EXPAND_AMOUNT = 5
+local EXPAND_AMOUNT = 1
 
 local function expand_region_to_include(state, pos)
 	local vm = state.vm
@@ -225,17 +229,11 @@ local function expand_region_to_include(state, pos)
 	-- Log warning about expansion
 	core.log("warning", ("Expanding voxel area bounds to include position %s"):format(tostring(pos)))
 
-	-- Expand bounds by 5 blocks where pos is outside
+	-- Expand bounds by EXPAND_AMOUNT blocks where pos is outside
 	if pos.x < region.min.x then
 		region.min.x = pos.x - EXPAND_AMOUNT
 	elseif pos.x > region.max.x then
 		region.max.x = pos.x + EXPAND_AMOUNT
-	end
-
-	if pos.y < region.min.y then
-		region.min.y = pos.y - EXPAND_AMOUNT
-	elseif pos.y > region.max.y then
-		region.max.y = pos.y + EXPAND_AMOUNT
 	end
 
 	if pos.z < region.min.z then
@@ -323,7 +321,7 @@ local function remove_useless_walls(state)
 	::retry::
 	for pos in iter_region_positions(region) do
 		local expanded = try_remove_wall_at_edge(state, region, pos)
-		if retry_count < 16 and expanded then
+		if retry_count < 20 and expanded then
 			retry_count = retry_count + 1
 			goto retry
 		end
@@ -333,7 +331,7 @@ end
 -- Returns true if position is a wall node
 local function is_wall(state, pos)
 	local idx = state.area:indexp(pos)
-	return state.data[idx] == state.cid_wool_green
+	return state.data[idx] == cid_wall
 end
 
 -- Returns true if position is a liquid node (source or flowing)
@@ -374,10 +372,8 @@ local function dfs_mark_necessary(state, start_pos, visited)
 
 		-- Explore neighbors
 		for _, off in ipairs(cardinal_dirs) do
-			local npos = vector.add(pos, vector.new(off[1], off[2], off[3]))
-			-- Make sure npos is inside the region, expand if needed
-			ensure_pos_in_area(state, npos)
-			local in_region = state.area:contains(npos)
+			local npos = pos + off
+			local in_region = state.area:containsp(npos)
 			if in_region and not visited[core.hash_node_position(npos)] then
 				stack[#stack + 1] = npos
 			end
@@ -430,6 +426,16 @@ end
 -- === Main function ===
 function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 	if not liquid_set[core.get_node(pos).name] then
+		return
+	end
+
+	-- Try find cached wall state first:
+	local cached_state = get_cached_wall_state(pos)
+	if cached_state then
+		local region = cached_state.region
+		region.min = vector.subtract(region.min, 1)
+		region.max = vector.add(region.max, 1)
+		remove_unnecessary_walls(cached_state)
 		return
 	end
 
@@ -505,7 +511,6 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 	while loop_expand() do
 	end
 
-	-- Replace and wall liquids
 	region.min = vector.subtract(region.min, 2)
 	region.max = vector.add(region.max, 2)
 
@@ -536,7 +541,7 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 			local neighbor_pos = pos + off
 			local ni = state.area:indexp(neighbor_pos)
 			if cids_source[state.data[ni]] then
-				state.data[ni] = cid_wool_green -- place wall here
+				state.data[ni] = cid_wall
 			end
 		end
 
@@ -546,7 +551,13 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 	region.min = vector.subtract(region.min, 1)
 	region.max = vector.add(region.max, 1)
 
+	local area, data = read_voxels_from_map(vm, region)
+	state.area = area
+	state.data = data
+
 	remove_unnecessary_walls(state)
+
+	cache_wall_region(region, state)
 
 	state.vm:set_data(state.data)
 	state.vm:write_to_map()
