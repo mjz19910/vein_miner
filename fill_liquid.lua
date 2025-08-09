@@ -37,8 +37,6 @@ local liquid_set = {
 local cid = core.get_content_id
 local cid_air, cid_wool_green
 
-local cid_wall
-
 local cids_source, cids_flowing
 local cids_replace = {}
 
@@ -66,9 +64,17 @@ core.register_on_mods_loaded(function()
 
 	cid_air = cid("air")
 	cid_wool_green = cid("wool:green")
-
-	cid_wall = cid_wool_green
 end)
+
+local function expand_region(region, amount)
+	region.min = vector.subtract(region.min, amount)
+	region.max = vector.add(region.max, amount)
+end
+
+local function shrink_region(region, amount)
+	region.min = vector.add(region.min, amount)
+	region.max = vector.subtract(region.max, amount)
+end
 
 local function push(qx, qy, qz, q_tail, x, y, z)
 	qx[q_tail], qy[q_tail], qz[q_tail] = x, y, z
@@ -103,7 +109,7 @@ local function expand_axis_from_center(state, axis, limit, skip_flag)
 	local region = state.region -- { min = vector, max = vector }
 	local area = state.area
 	local data = state.data
-	local replace = state.replace -- cids_replace table
+	local cids_replace = state.cids_replace
 
 	local size = region.max[axis] - region.min[axis] + 1
 	if size >= limit then
@@ -129,7 +135,7 @@ local function expand_axis_from_center(state, axis, limit, skip_flag)
 				pos.y = y
 				pos.z = (axis == "x") and z or region.min.z + (z - region.min.z)
 				local idx = area:index(pos.x, pos.y, pos.z)
-				if replace[data[idx]] then
+				if cids_replace[data[idx]] then
 					found_positive = true
 					break
 				end
@@ -157,7 +163,7 @@ local function expand_axis_from_center(state, axis, limit, skip_flag)
 				pos.y = y
 				pos.z = (axis == "x") and z or region.min.z + (z - region.min.z)
 				local idx = area:index(pos.x, pos.y, pos.z)
-				if replace[data[idx]] then
+				if cids_replace[data[idx]] then
 					found_negative = true
 					break
 				end
@@ -189,7 +195,7 @@ local function expand_vertical_axis(state, skip_y, notify_pos, vein_miner_state)
 	local region = state.region -- { min = vector, max = vector }
 	local area = state.area
 	local data = state.data
-	local replace = state.replace -- cids_replace table
+	local cids_replace = state.cids_replace
 
 	local size_x, size_z, size_y = region.max.x - region.min.x, region.max.z - region.min.z, region.max.y - region.min.y
 
@@ -207,7 +213,7 @@ local function expand_vertical_axis(state, skip_y, notify_pos, vein_miner_state)
 		for z = region.min.z, region.max.z do
 			for x = region.min.x, region.max.x do
 				local idx = area:index(x, y, z)
-				if replace[data[idx]] then
+				if cids_replace[data[idx]] then
 					region.min.y = y
 					notify_limit(vector.new(x, y, z)) -- notify the liquid node position on min face
 					expanded = true
@@ -226,7 +232,7 @@ local function expand_vertical_axis(state, skip_y, notify_pos, vein_miner_state)
 		for z = region.min.z, region.max.z do
 			for x = region.min.x, region.max.x do
 				local idx = area:index(x, y, z)
-				if replace[data[idx]] then
+				if cids_replace[data[idx]] then
 					region.max.y = y
 					notify_limit(vector.new(x, y, z)) -- notify liquid node pos on max face
 					expanded = true
@@ -311,102 +317,53 @@ local function is_useless_wall(state, pos)
 	local did_expand = false
 	local idx = state.area:indexp(pos)
 	if state.data[idx] ~= state.cid_wall then
-		return false, did_expand
+		return false
 	end
 
 	for _, off in ipairs(cardinal_dirs) do
 		local neighbor_pos = pos + off
-		local expanded = ensure_pos_in_area(state, neighbor_pos)
-		if expanded then
-			did_expand = true
-		end
 		local nidx = state.area:indexp(neighbor_pos)
-		if state.replace[state.data[nidx]] then
-			return false, did_expand
+		if state.cids_replace[state.data[nidx]] then
+			return false
 		end
 	end
 
-	return true, did_expand
+	return true
 end
 
 local function try_remove_wall_at_edge(state, region, pos)
-	local is_useless, did_expand = is_useless_wall(state, pos)
-	if is_useless then
+	if is_useless_wall(state, pos) then
 		local min = region.min
 		local max = region.max
-		if pos.x == min.x or pos.x == max.x or pos.y == min.y or pos.y == max.y or pos.z == min.z or pos.z == max.z then
-			local expanded = ensure_pos_in_area(state, pos)
-			if expanded then
-				did_expand = true
-			end
-		end
 		state.data[state.area:indexp(pos)] = state.cid_air
 	end
-	return did_expand
 end
 
 local function region_equals(region, b_min, b_max) return vector.equals(region.min, b_min) and vector.equals(region.max, b_max) end
 
 local function remove_useless_walls(state)
 	local region = state.region
-	local retry_count = 0
-	::retry::
 	for pos in iter_region_positions(region) do
-		local expanded = try_remove_wall_at_edge(state, region, pos)
-		if retry_count < 20 and expanded then
-			retry_count = retry_count + 1
-			goto retry
-		end
+		try_remove_wall_at_edge(state, region, pos)
 	end
 end
 
 -- Returns true if position is a wall node
 local function is_wall(state, pos)
 	local idx = state.area:indexp(pos)
-	return state.data[idx] == cid_wall
+	return state.data[idx] == state.cid_wall
 end
 
 -- Returns true if position is a liquid node (source or flowing)
 local function is_liquid(state, pos)
 	local idx = state.area:indexp(pos)
-	return state.replace[state.data[idx]] == true
+	return state.cids_replace[state.data[idx]] == true
 end
 
 -- Checks if wall at pos is adjacent to liquid; if yes, it’s necessary
 local function is_wall_adjacent_to_liquid(state, pos)
-	for _, off in ipairs({
-		{
-			1,
-			0,
-			0,
-		},
-		{
-			-1,
-			0,
-			0,
-		},
-		{
-			0,
-			1,
-			0,
-		},
-		{
-			0,
-			-1,
-			0,
-		},
-		{
-			0,
-			0,
-			1,
-		},
-		{
-			0,
-			0,
-			-1,
-		},
-	}) do
-		local npos = vector.add(pos, vector.new(off[1], off[2], off[3]))
+	for _, off in ipairs(cardinal_dirs) do
+		local npos = pos + off
 		ensure_pos_in_area(state, npos)
 		if is_liquid(state, npos) then
 			return true
@@ -571,7 +528,7 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 		data = data,
 		region = region,
 		cid_wall = cid_wool_green,
-		replace = cids_replace,
+		cids_replace = cids_replace,
 		cids_source = cids_source,
 		cids_flowing = cids_flowing,
 	}
@@ -626,7 +583,7 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 			local neighbor_pos = pos + off
 			local ni = state.area:indexp(neighbor_pos)
 			if cids_source[state.data[ni]] then
-				state.data[ni] = cid_wall
+				state.data[ni] = state.cid_wall
 			end
 		end
 
