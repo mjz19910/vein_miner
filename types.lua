@@ -48,3 +48,9 @@
 ---@class Chunk
 ---@field area VoxelArea
 ---@field start_list Vector[]
+
+---@class VeinMinerConfig
+---@field cardinal_dirs Vector[]
+
+---@class VeinMinerGlobal
+---@field CFG VeinMinerConfig

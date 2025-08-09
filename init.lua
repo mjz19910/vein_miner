@@ -2,6 +2,7 @@ local modpath = minetest.get_modpath("vein_miner")
 
 dofile(modpath .. "/auto_floor.lua")
 
+---@type VeinMinerGlobal
 vein_miner = {
 	deque = {},
 }
