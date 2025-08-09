@@ -1,7 +1,7 @@
 local CFG = vein_miner.CFG
 local light_nodes = CFG.LIGHT_NODES
 local sticky_nodes = CFG.sticky_nodes
-local utils = utils
+local utils = {}
 local contains = table.contains
 local ItemStack = ItemStack
 local core = core
@@ -64,3 +64,5 @@ function utils.is_stuck_to_sticky(pos)
 	end
 	return false
 end
+
+return utils

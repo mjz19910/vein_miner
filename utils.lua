@@ -1,8 +1,5 @@
 -- utils.lua
-utils = {}
-
 local core = core
-local utils = utils
 local dofile = dofile
 local vector = vector
 local table = table
@@ -11,6 +8,7 @@ local floor = math.floor
 local p = vector.new
 local coroutine = coroutine
 local yield = coroutine.yield
+local pairs = pairs
 
 function table.contains(table, element)
 	for _, value in pairs(table) do
@@ -25,7 +23,10 @@ function vector.midpoint(a, b) return p(floor((a.x + b.x) / 2 + 0.5), floor((a.y
 
 local modpath = core.get_modpath("vein_miner")
 
+local utils = {}
+
 function utils.load(path) return dofile(modpath .. "/" .. path) end
+
 function utils.require(modpath)
 	local relative_path = modpath:gsub("^mods%.vein_miner%.", ""):gsub("%.", "/") .. ".lua"
 	return utils.load(relative_path)
@@ -69,3 +70,11 @@ function utils.handle_pos_notify(state, pos)
 	local node = core.get_node(pos)
 	utils.add_pos_to_queue(state, node.name, pos)
 end
+
+function utils.merge(other)
+	for k, v in pairs(other) do
+		self[k] = v
+	end
+end
+
+return utils

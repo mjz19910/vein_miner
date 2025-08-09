@@ -2,10 +2,12 @@ local offset = vector.offset
 local ipairs = ipairs
 local vector = vector
 local core = core
+local minetest = minetest
 local next = next
 local table = table
+local dofile = dofile
 
-dofile(minetest.get_modpath("vein_miner") .. "/utils.lua")
+local utils = dofile(minetest.get_modpath("vein_miner") .. "/utils.lua")
 
 ---@type VeinMinerGlobal
 vein_miner = {
@@ -22,9 +24,7 @@ require("mods.vein_miner.liquid_filler")
 require("mods.vein_miner.remove_walls")
 local player_hud = require("mods.vein_miner.player_hud")
 local p_config = require("mods.vein_miner.player_config")
-require("mods.vein_miner.late_utils")
-
-local utils = utils
+utils.merge(require("mods.vein_miner.late_utils"))
 
 local fill_liquid_at_pos = vein_miner.fill_liquid_at_pos
 
