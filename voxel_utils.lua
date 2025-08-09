@@ -113,18 +113,17 @@ function voxel_utils.pos_unhash(hash) return get_position_from_hash(hash) end
 function voxel_utils.flood_fill(vm, data, area, start_pos, predicate, fill_content_id)
 	local to_visit = {start_pos}
 	local visited = {}
-	local pos_key = voxel_utils.pos_hash
 
 	while #to_visit > 0 do
 		local pos = table.remove(to_visit)
-		local key = pos_key(pos)
+		local key = hash_node_position(pos)
 		if not visited[key] and voxel_utils.is_inside_area(area, pos) then
 			visited[key] = true
 			local node_name = voxel_utils.get_node_at_pos(vm, data, area, pos)
 			if predicate(node_name) then
 				voxel_utils.set_node_at_pos(data, area, pos, fill_content_id)
 				for _, npos in ipairs(voxel_utils.get_neighbors(pos)) do
-					if not visited[pos_key(npos)] then
+					if not visited[hash_node_position(npos)] then
 						table.insert(to_visit, npos)
 					end
 				end
