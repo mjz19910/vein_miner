@@ -1,26 +1,41 @@
-local ipairs = ipairs
-
+-- local builtin lua tables
 local table = table
 local vector = vector
+local coroutine = coroutine
 
+-- local builtin lua table functions
 local insert_all = table.insert_all
-local vnew = vector.new
+local vec_new = vector.new
 local zero = vector.zero
+local co_wrap = coroutine.wrap
+local co_yield = coroutine.yield
 
+-- local builtin lua functions
+local ipairs = ipairs
+
+-- minetest tables
 local core = core
 local minetest = minetest
 local VoxelArea = VoxelArea
 local VoxelManip = VoxelManip
 
+-- minetest table functions
+local pos_str = core.pos_to_string
+local cid = core.get_content_id
+
+-- vein_miner tables
 local vein_miner = vein_miner
 local aabb = aabb
+local helpers = vein_miner.h
 
+-- vein_miner table functions
 local new_region = aabb.region
 
-local log_action = vein_miner.h.log_action
-local pos_str = core.pos_to_string
+-- vein_miner table functions
+local log_action = helpers.log_action
 
-local cardinal_dirs = {vnew(1, 0, 0), vnew(-1, 0, 0), vnew(0, 1, 0), vnew(0, -1, 0), vnew(0, 0, 1), vnew(0, 0, -1)}
+-- constants
+local cardinal_dirs = {vec_new(1, 0, 0), vec_new(-1, 0, 0), vec_new(0, 1, 0), vec_new(0, -1, 0), vec_new(0, 0, 1), vec_new(0, 0, -1)}
 local liquid_set = {
 	["default:water_source"] = true,
 	["default:water_flowing"] = true,
@@ -28,7 +43,6 @@ local liquid_set = {
 	["default:lava_flowing"] = true,
 }
 
-local cid = core.get_content_id
 local cid_air, cid_wool_green
 
 local cids_source, cids_flowing
@@ -60,14 +74,17 @@ core.register_on_mods_loaded(function()
 	cid_wool_green = cid("wool:green")
 end)
 
+local vec_add = vector.add
+local vec_sub = vector.subtract
+
 local function expand_region(region, amount)
-	region.min = vector.subtract(region.min, amount)
-	region.max = vector.add(region.max, amount)
+	region.min = vec_sub(region.min, amount)
+	region.max = vec_add(region.max, amount)
 end
 
 local function shrink_region(region, amount)
-	region.min = vector.add(region.min, amount)
-	region.max = vector.subtract(region.max, amount)
+	region.min = vec_add(region.min, amount)
+	region.max = vec_sub(region.max, amount)
 end
 
 local function push(qx, qy, qz, q_tail, x, y, z)
@@ -76,7 +93,7 @@ local function push(qx, qy, qz, q_tail, x, y, z)
 end
 
 local function maybe_enqueue(qx, qy, qz, q_tail, visited, x, y, z)
-	local hash = core.hash_node_position(vnew(x, y, z))
+	local hash = core.hash_node_position(vec_new(x, y, z))
 	if not visited[hash] then
 		visited[hash] = true
 		return push(qx, qy, qz, q_tail, x, y, z)
@@ -85,7 +102,6 @@ local function maybe_enqueue(qx, qy, qz, q_tail, visited, x, y, z)
 end
 
 local function read_voxels_from_map(vm, region)
-	assert(vm and region and region.min and region.max, "Invalid arguments to read_voxels_from_map")
 	local emin, emax = vm:read_from_map(region.min, region.max)
 	local area = VoxelArea:new{
 		MinEdge = emin,
@@ -96,7 +112,7 @@ local function read_voxels_from_map(vm, region)
 end
 
 local function expand_axis_from_center(state, axis, limit, skip_flag)
-	local region = state.region -- { min = vector, max = vector }
+	local region = state.region
 	local area = state.area
 	local data = state.data
 	local cids_replace = state.cids_replace
@@ -140,7 +156,7 @@ local function expand_axis_from_center(state, axis, limit, skip_flag)
 		local found_negative = false
 		for y = region.min.y, region.max.y do
 			for z = region.min.z, region.max.z do
-				local pos = vector.zero()
+				local pos = zero()
 				pos[axis] = new_min
 				pos.y = y
 				pos.z = (axis == "x") and z or region.min.z + (z - region.min.z)
@@ -197,7 +213,7 @@ local function expand_vertical_axis(state, skip_y, notify_pos, vein_miner_state)
 				local idx = area:index(x, y, z)
 				if cids_replace[data[idx]] then
 					region.min.y = y
-					notify_limit(vector.new(x, y, z)) -- notify the liquid node position on min face
+					notify_limit(vec_new(x, y, z)) -- notify the liquid node position on min face
 					expanded = true
 					break
 				end
@@ -216,7 +232,7 @@ local function expand_vertical_axis(state, skip_y, notify_pos, vein_miner_state)
 				local idx = area:index(x, y, z)
 				if cids_replace[data[idx]] then
 					region.max.y = y
-					notify_limit(vector.new(x, y, z)) -- notify liquid node pos on max face
+					notify_limit(vec_new(x, y, z)) -- notify liquid node pos on max face
 					expanded = true
 					break
 				end
@@ -247,7 +263,7 @@ local function expand_region_to_include(state, pos)
 	local region = state.region
 
 	-- Log warning about expansion
-	core.log("warning", ("Expanding voxel area bounds to include position %s"):format(tostring(pos)))
+	core.log("warning", ("Expanding voxel area bounds to include position %s"):format(pos_str(pos)))
 
 	-- Expand bounds by EXPAND_AMOUNT blocks where pos is outside
 	if pos.x < region.min.x then
@@ -284,11 +300,11 @@ local function iter_region_positions(region)
 	local miny, maxy = region.min.y, region.max.y
 	local minz, maxz = region.min.z, region.max.z
 
-	return coroutine.wrap(function()
+	return co_wrap(function()
 		for z = minz, maxz do
 			for y = miny, maxy do
 				for x = minx, maxx do
-					coroutine.yield(vnew(x, y, z))
+					co_yield(vec_new(x, y, z))
 				end
 			end
 		end
@@ -380,10 +396,10 @@ local function visualize_region_particles(region, params)
 					                ((z == min.z or z == max.z) and 1 or 0)
 
 				if on_edge == 2 then -- edges of the bounding box
-					local pos = vnew(x + 0.5, y + 0.5, z + 0.5)
+					local pos = vec_new(x + 0.5, y + 0.5, z + 0.5)
 					minetest.add_particle({
 						pos = pos,
-						velocity = vnew(0, 0, 0),
+						velocity = vec_new(0, 0, 0),
 						expirationtime = params.expirationtime,
 						size = params.size,
 						texture = params.texture,
@@ -491,7 +507,7 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 		local x, y, z = qx[q_head], qy[q_head], qz[q_head]
 		q_head = q_head + 1
 
-		if not liquid_set[core.get_node(vnew(x, y, z)).name] then
+		if not liquid_set[core.get_node(vec_new(x, y, z)).name] then
 			goto continue
 		end
 
@@ -517,7 +533,7 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 		return
 	end
 
-	local region = new_region(vnew(minx, miny, minz), vnew(maxx, maxy, maxz))
+	local region = new_region(vec_new(minx, miny, minz), vec_new(maxx, maxy, maxz))
 
 	-- Expand bounds
 	local skip_x, skip_y, skip_z = {false}, {false}, {false}
