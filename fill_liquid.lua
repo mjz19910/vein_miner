@@ -2,6 +2,7 @@
 local ipairs = ipairs
 local pairs = pairs
 local setmetatable = setmetatable
+local next = next
 
 -- local builtin lua tables
 local table = table
@@ -120,7 +121,6 @@ function State:new(vm, region, cid_wall)
 	local area, data = read_voxels_from_map(vm, region)
 	local self = setmetatable({
 		vm = vm,
-		region = region,
 		area = area,
 		data = data,
 		cid_wall = cid_wall,
@@ -131,14 +131,13 @@ function State:new(vm, region, cid_wall)
 	return self
 end
 
-function State:reload_region()
-	local area, data = read_voxels_from_map(self.vm, self.region)
+function State:reload_region(region)
+	local area, data = read_voxels_from_map(self.vm, region)
 	self.area = area
 	self.data = data
 end
 
-local function expand_axis_from_center(state, axis, limit, skip_flag)
-	local region = state.region
+local function expand_axis_from_center(state, region, axis, limit, skip_flag)
 	local area = state.area
 	local data = state.data
 	local cids_replace = state.cids_replace
@@ -215,8 +214,7 @@ local function expand_axis_from_center(state, axis, limit, skip_flag)
 	return expanded
 end
 
-local function expand_vertical_axis(state, skip_y, notify_pos, vein_miner_state)
-	local region = state.region -- { min = vector, max = vector }
+local function expand_vertical_axis(state, region, skip_y, notify_pos, vein_miner_state)
 	local area = state.area
 	local data = state.data
 	local cids_replace = state.cids_replace
@@ -284,9 +282,8 @@ end
 
 local EXPAND_AMOUNT = 1
 
-local function expand_region_to_include(state, pos)
+local function expand_region_to_include(state, region, pos)
 	local vm = state.vm
-	local region = state.region
 
 	-- Log warning about expansion
 	core.log("warning", ("Expanding voxel area bounds to include position %s"):format(pos_str(pos)))
@@ -480,28 +477,25 @@ local function cache_wall_region(region, state)
 end
 
 -- Remove walls not marked as necessary by DFS
-local function remove_unnecessary_walls(state)
-	local region = state.region
-	shrink_region(region, 1)
+local function remove_unnecessary_walls(state, region)
 	local visited = {}
+	local wall_search_region = region:shrink(1)
 
 	-- First, mark all walls adjacent to liquid as necessary
-	for pos in iter_region_positions(region) do
+	for pos in iter_region_positions(wall_search_region) do
 		if is_wall(state, pos) and is_wall_adjacent_to_liquid(state, pos) then
 			dfs_mark_necessary(state, pos, visited)
 		end
 	end
 
 	-- Then, remove walls that are not visited (not necessary)
-	for pos in iter_region_positions(region) do
+	for pos in iter_region_positions(wall_search_region) do
 		local hash = hash_pos(pos)
 		if is_wall(state, pos) and not visited[hash] then
 			local idx = state.area:indexp(pos)
 			state.data[idx] = state.cid_air
 		end
 	end
-
-	expand_region(region, 1)
 end
 
 local function aabb_overlap(r1, r2)
@@ -539,31 +533,18 @@ local function remove_overlapping_wall_regions(cache)
 	end
 end
 
--- === Main function ===
-function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
-	if not liquid_set[core.get_node(pos).name] then
-		return
-	end
-
-	local cached_state = get_cached_wall_state(pos)
-	if cached_state then
-		return
-	end
-
-	local LIMIT = 64 * 6
+local function flood_fill_liquid(start_pos, limit)
 	local visited = {}
 	local qx, qy, qz = {}, {}, {}
 	local q_head, q_tail = 1, 1
-	local queue_count = 0
+	local count = 0
 
-	local minx, miny, minz = pos.x, pos.y, pos.z
-	local maxx, maxy, maxz = pos.x, pos.y, pos.z
+	local minx, miny, minz = start_pos.x, start_pos.y, start_pos.z
+	local maxx, maxy, maxz = start_pos.x, start_pos.y, start_pos.z
 
-	-- Seed queue
-	visited[hash_pos(pos)] = true
-	q_tail = push(qx, qy, qz, q_tail, pos.x, pos.y, pos.z)
+	visited[hash_pos(start_pos)] = true
+	q_tail = push(qx, qy, qz, q_tail, start_pos.x, start_pos.y, start_pos.z)
 
-	-- Flood-fill
 	while q_head < q_tail do
 		local x, y, z = qx[q_head], qy[q_head], qz[q_head]
 		q_head = q_head + 1
@@ -572,12 +553,11 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 			goto continue
 		end
 
-		queue_count = queue_count + 1
-		if queue_count > LIMIT then
+		count = count + 1
+		if count > limit then
 			goto continue
 		end
 
-		-- Track bounds
 		minx, maxx = math.min(minx, x), math.max(maxx, x)
 		miny, maxy = math.min(miny, y), math.max(maxy, y)
 		minz, maxz = math.min(minz, z), math.max(maxz, z)
@@ -591,65 +571,100 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 	end
 
 	if next(visited) == nil then
-		return
+		return nil
 	end
 
-	-- Expand bounds
+	return new_region(vec_new(minx, miny, minz), vec_new(maxx, maxy, maxz))
+end
+
+local function expand_liquid_bounds(state, region, notify_pos, vein_miner_state)
+	local vm = state.vm
+
 	local skip_x, skip_y, skip_z = {false}, {false}, {false}
-	local state = State:new(VoxelManip(), new_region(vec_new(minx, miny, minz), vec_new(maxx, maxy, maxz)), cid_wool_green)
 
-	local function loop_expand()
-		if not skip_x[1] and expand_axis_from_center(state, "x", 96, skip_x) then
-			return true
+	while true do
+		state:reload_region(region)
+
+		if not skip_x[1] and expand_axis_from_center(state, region, "x", 96, skip_x) then
+			goto continue
 		end
-		if not skip_z[1] and expand_axis_from_center(state, "z", 96, skip_z) then
-			return true
+		if not skip_z[1] and expand_axis_from_center(state, region, "z", 96, skip_z) then
+			goto continue
 		end
-		if not skip_y[1] and expand_vertical_axis(state, skip_y, notify_pos, vein_miner_state) then
-			return true
+		if not skip_y[1] and expand_vertical_axis(state, region, skip_y, notify_pos, vein_miner_state) then
+			goto continue
 		end
-		return false
+		break
+		::continue::
 	end
+end
 
-	while loop_expand() do
-		state:reload_region()
-	end
+local function clear_liquids(state, region)
+	local clear_region = new_region(vector.add(region.min, 2), vector.subtract(region.max, 2))
 
-	state.region = state.region:grow(2)
-	state:reload_region()
-
-	-- Clear liquids
-	for pos in iter_region_positions(state.region:shrink(2)) do
-		local i = state.area:indexp(pos)
-		if cids_replace[state.data[i]] then
-			state.data[i] = cid_air
+	for pos in iter_region_positions(clear_region) do
+		local idx = state.area:indexp(pos)
+		if state.cids_replace[state.data[idx]] then
+			state.data[idx] = state.cid_air
 		end
 	end
+end
 
-	-- Build walls
-	for pos in iter_region_positions(state.region:shrink(1)) do
-		local i = state.area:indexp(pos)
-		if state.data[i] ~= cid_air then
+local function build_walls(state, region)
+	local wall_region = new_region(vector.add(region.min, 1), vector.subtract(region.max, 1))
+
+	for pos in iter_region_positions(wall_region) do
+		local idx = state.area:indexp(pos)
+		if state.data[idx] ~= state.cid_air then
 			goto continue_wall
 		end
 
-		for _, off in ipairs(cardinal_dirs) do
-			local neighbor_pos = pos + off
-			local ni = state.area:indexp(neighbor_pos)
-			if cids_source[state.data[ni]] then
-				state.data[ni] = state.cid_wall
+		for _, offset in ipairs(cardinal_dirs) do
+			local neighbor_pos = pos + offset
+			local nidx = state.area:indexp(neighbor_pos)
+			if state.cids_source[state.data[nidx]] then
+				state.data[nidx] = state.cid_wall
 			end
 		end
 
 		::continue_wall::
 	end
+end
 
-	state.region = state.region:grow(1)
-	state:reload_region()
+-- === Main function ===
+function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
+	if not liquid_set[core.get_node(pos).name] then
+		return
+	end
+
+	local cached_state = get_cached_wall_state(pos)
+	if cached_state then
+		return
+	end
+
+	local LIMIT = 64 * 6
+	local region = flood_fill_liquid(pos, LIMIT)
+	if not region then
+		return
+	end
+
+	local state = State:new(VoxelManip(), cid_wool_green)
+
+	-- Expand bounds
+	expand_liquid_bounds(state, region, notify_pos, vein_miner_state)
+
+	region = region:grow(2)
+	state:reload_region(region)
+
+	clear_liquids(state, region)
+	build_walls(state, region)
+
+	region = region:grow(1)
+	state:reload_region(region)
 
 	remove_unnecessary_walls(state)
 
-	cache_wall_region(state.region, state)
+	cache_wall_region(region, state)
 	remove_overlapping_wall_regions(wall_region_cache)
 
 	state.vm:set_data(state.data)
