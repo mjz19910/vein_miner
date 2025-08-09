@@ -50,7 +50,7 @@ local walls_to_remove = {}
 ---@param current_area VoxelArea
 ---@param pos Vector
 ---@return VoxelArea
-local function expand_area_conditionally(vm, current_area, pos)
+local function expand_area_conditionally(vm, data, current_area, pos)
 	local vector = vector
 	local min_edge = current_area.MinEdge
 	local max_edge = current_area.MaxEdge
@@ -64,6 +64,9 @@ local function expand_area_conditionally(vm, current_area, pos)
 		max_edge.y and expand_max.z == max_edge.z then
 		return current_area -- no expansion needed
 	end
+
+	vm:set_data(data)
+	vm:write_to_map() -- save changes before expanding
 
 	vm:read_from_map(expand_min, expand_max)
 	local area_check = VoxelArea:new{
@@ -107,8 +110,7 @@ local function remove_nonblocking_walls_dfs(vm, start_pos, area, data)
 		end
 		if not area:containsp(pos) then
 			-- Out of current area, check if we can expand
-			vm:write_to_map() -- save changes before expanding
-			area = expand_area_conditionally(vm, area, pos)
+			area = expand_area_conditionally(vm, data, area, pos)
 			data = vm:get_data()
 			if not area:containsp(pos) then
 				-- Even after expansion pos not in area, skip
@@ -147,7 +149,7 @@ local function remove_nonblocking_walls_dfs(vm, start_pos, area, data)
 		::continue::
 	end
 
-	return removed_count
+	return removed_count, area, data
 end
 
 ---@param chunk Chunk
@@ -177,8 +179,10 @@ local function process_chunks_delayed(chunks, vm, user)
 		vm:read_from_map(area.MinEdge, area.MaxEdge)
 		local data = vm:get_data()
 
-		local removed_count = remove_nonblocking_walls_dfs(vm, chunk.start_list[1], area, data)
+		local removed_count, new_area, new_data = remove_nonblocking_walls_dfs(vm, chunk.start_list[1], area, data)
 		removed_total = removed_total + removed_count
+		area = new_area
+		data = new_data
 
 		vm:set_data(data)
 		vm:write_to_map()
