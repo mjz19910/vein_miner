@@ -424,7 +424,7 @@ core.register_globalstep(function(dtime)
 	if timer >= 1 then -- every second
 		timer = 0
 		local particle_params = {
-			texture = "default_steelblock.png",
+			texture = "default_diamond.png",
 			expirationtime = 2, -- particles last 2 seconds
 			size = 5,
 			glow = 15,
@@ -487,13 +487,8 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 		return
 	end
 
-	-- Try find cached wall state first:
 	local cached_state = get_cached_wall_state(pos)
 	if cached_state then
-		local region = cached_state.region
-		region.min = vector.subtract(region.min, 1)
-		region.max = vector.add(region.max, 1)
-		remove_unnecessary_walls(cached_state)
 		return
 	end
 
