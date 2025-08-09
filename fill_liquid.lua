@@ -75,11 +75,7 @@ local function push(qx, qy, qz, q_tail, x, y, z)
 end
 
 local function maybe_enqueue(qx, qy, qz, q_tail, visited, x, y, z)
-	local hash = core.hash_node_position({
-		x = x,
-		y = y,
-		z = z,
-	})
+	local hash = core.hash_node_position(vnew(x, y, z))
 	if not visited[hash] then
 		visited[hash] = true
 		return push(qx, qy, qz, q_tail, x, y, z)
