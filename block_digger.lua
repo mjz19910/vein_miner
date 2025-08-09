@@ -30,10 +30,12 @@ function BlockDigger.should_dig(node, pos)
 	if utils.is_falling(above_node.name) then
 		return false
 	end
-	for _, off in ipairs(possible_flow_directions) do
-		local npos = pos + off
-		if utils.is_liquid_source(core.get_node(npos).name) then
-			return false -- digging here may cause liquid to flow
+	if false then
+		for _, off in ipairs(possible_flow_directions) do
+			local npos = pos + off
+			if utils.is_liquid_source(core.get_node(npos).name) then
+				return false -- digging here may cause liquid to flow
+			end
 		end
 	end
 	for _, off in ipairs(check_for_falling_neighbors) do

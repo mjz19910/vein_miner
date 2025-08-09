@@ -40,7 +40,7 @@ end
 
 function utils.is_falling(name)
 	local def = core.registered_nodes[name]
-	return def and ((def.groups and def.groups.falling_node) or def.liquidtype == "source" or def.liquidtype == "flowing")
+	return def and def.groups and def.groups.falling_node
 end
 function utils.is_liquid_source(name)
 	local def = core.registered_nodes[name]

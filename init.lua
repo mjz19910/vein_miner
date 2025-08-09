@@ -685,6 +685,9 @@ local is_liquid = vein_miner.h.is_liquid
 local function process_node_group(state, node_name, node, repeat_count)
 	local mined_nodes_count = 0
 	if is_liquid(node_name, "water") or is_liquid(node_name, "lava") then
+		if true then
+			return 0, true
+		end
 		for index, pos in pairs(node) do
 			fill_liquid_at_pos(state, pos, utils.handle_pos_notify)
 			mined_nodes_count = mined_nodes_count + 1
@@ -765,7 +768,10 @@ local function iter_node_groups(state, iter_nodes)
 	local i = 0
 	::again::
 	for node_name, node in pairs(iter_nodes) do
-		local dug_nodes = process_node_group(state, node_name, node, i)
+		local dug_nodes, next_group = process_node_group(state, node_name, node, i)
+		if next_group then
+			goto continue
+		end
 		local player = state.player
 		if player then
 			player_hud.update_nodes_mined(player, state.mined_nodes + state.cur_mined_nodes)
@@ -774,6 +780,7 @@ local function iter_node_groups(state, iter_nodes)
 			i = i + 1
 			goto again
 		end
+		::continue::
 	end
 end
 local function notify_missing_light(pos, attach_dir, expire_time)
