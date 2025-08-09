@@ -13,14 +13,18 @@ local tonumber = tonumber
 local pairs = pairs
 local string = string
 local math = math
+local ItemStack = ItemStack
+local coroutine = coroutine
 local offset = vector.offset
 local string_match = string.match
 local floor = math.floor
 local ceil = math.ceil
+local yield = coroutine.yield
 
 ---@type VeinMinerGlobal
 vein_miner = {
 	deque = {},
+	utils = utils,
 }
 local vein_miner = vein_miner
 require("mods.vein_miner.deque")
@@ -34,6 +38,7 @@ require("mods.vein_miner.remove_walls")
 local player_hud = require("mods.vein_miner.player_hud")
 local p_config = require("mods.vein_miner.player_config")
 utils.merge(require("mods.vein_miner.late_utils"))
+local BlockDigger = require("mods.vein_miner.block_digger")
 
 local fill_liquid_at_pos = vein_miner.fill_liquid_at_pos
 
@@ -140,6 +145,7 @@ local CFG = vein_miner.CFG
 
 local ignored_nodes = CFG.IGNORED_NODES
 local light_nodes = CFG.LIGHT_NODES
+utils.light_nodes = light_nodes
 local mine_only_groups = CFG.MINE_ONLY_GROUPS
 local mine_only_cur_set = {}
 for k, v in pairs(CFG.MINE_ONLY_CUR_SET) do
@@ -161,7 +167,6 @@ local function light_scan_reset(name) light_scan_data[name] = {} end
 
 local vein_miner_current_state = {}
 
-local BlockDigger = {}
 local check_for_falling_neighbors = {vector.new(-1, -1, 0), vector.new(1, -1, 0), vector.new(0, -1, -1), vector.new(0, -1, 1),
 	vector.new(0, -1, 0), vector.new(-1, 0, 0), vector.new(1, 0, 0), vector.new(0, 0, -1), vector.new(0, 0, 1), vector.new(0, 1, 0)}
 local possible_flow_directions = {vector.new(-1, 0, 0), vector.new(1, 0, 0), vector.new(0, 0, -1), vector.new(0, 0, 1), vector.new(0, 1, 0)}
@@ -171,44 +176,6 @@ local liquid_set = {
 	["default:lava_source"] = true,
 	["default:lava_flowing"] = true,
 }
-
-function BlockDigger.should_dig(node, pos)
-	if node.name == "air" then
-		return false
-	end
-	if table.contains(light_nodes, node.name) then
-		return true
-	end
-	if not utils.is_sticky_node(node.name) and utils.is_stuck_to_sticky(pos) then
-		return false
-	end
-	local above = offset(pos, 0, 1, 0)
-	local above_node = core.get_node(above)
-	if above_node.name == "default:snow" then
-		return true -- falling block that we want to fall
-	end
-	if utils.is_falling(above_node.name) then
-		return false
-	end
-	for _, off in ipairs(possible_flow_directions) do
-		local npos = vector.add(pos, off)
-		if utils.is_liquid_source(core.get_node(npos).name) then
-			return false -- digging here may cause liquid to flow
-		end
-	end
-	for _, off in ipairs(check_for_falling_neighbors) do
-		local npos = vector.add(pos, off)
-		local above_node = core.get_node(npos)
-		if utils.is_falling(above_node.name) then
-			local below = vector.offset(npos, 0, -1, 0)
-			local below_node = core.get_node(below)
-			if below_node.name == "air" or liquid_set[below_node.name] then
-				return false -- this falling node is unsupported
-			end
-		end
-	end
-	return true -- safe to mine
-end
 
 local light_scan_boost = 0
 
@@ -506,71 +473,6 @@ local function notify_pos(pos, color, size, expire_time)
 		glow = 15,
 	})
 end
-local function clamp_max(vmin, vmax, step)
-	local range = vmax - vmin
-	local count = math.ceil(range / step)
-	return vmin + count * step, range, count
-end
-
-local function linspace_inclusive(vmin, vmax, step)
-	-- Returns a list starting at vmin and ending at vmax, with intervals ≤ step
-	local result = {}
-	local range = vmax - vmin
-	local steps = math.max(1, math.ceil(range / step))
-
-	for i = 0, steps do
-		local t = i / steps
-		table.insert(result, vmin + t * range)
-	end
-
-	return result
-end
-
-local function linspace_side(start_pos, end_pos, step)
-	-- Generate points from start_pos to end_pos inclusive, stepping by step
-	local points = {}
-	local dir = (end_pos >= start_pos) and 1 or -1
-	local dist = math.abs(end_pos - start_pos)
-	local count = math.max(1, math.ceil(dist / step))
-
-	for i = 0, count do
-		local t = i / count
-		local val = start_pos + dir * t * dist
-		table.insert(points, val)
-	end
-
-	return points
-end
-
-local function linspace_centered(vmin, vmax, center, step)
-	-- Build linspace that includes center exactly, split into two sides
-	local left = linspace_side(vmin, center, step)
-	local right = linspace_side(center, vmax, step)
-
-	-- Remove duplicate center at start of right side
-	table.remove(right, 1)
-
-	-- Concatenate left + right
-	for _, v in ipairs(right) do
-		table.insert(left, v)
-	end
-
-	return left
-end
-
-local function find_closest_index(arr, value)
-	local closest_idx = 1
-	local closest_dist = math.abs(arr[1] - value)
-	for i = 2, #arr do
-		local dist = math.abs(arr[i] - value)
-		if dist < closest_dist then
-			closest_idx = i
-			closest_dist = dist
-		end
-	end
-	return closest_idx
-end
-
 local function stone_part(pos) place_particle(pos, 6 / 3, "default_stone.png") end
 local function mese_blk_part(pos) place_particle(pos, 6 / 3, "default_mese_block.png") end
 local function diamond_blk_part(pos) place_particle(pos, 6 / 3, "default_diamond_block.png") end
@@ -585,14 +487,14 @@ function aabb.draw(r)
 	local center = vector.divide(vector.add(min, max), 2)
 	mese_blk_part(center)
 
-	local x_vals = linspace_centered(min.x, max.x, center.x, step)
-	local y_vals = linspace_centered(min.y, max.y, center.y, step)
-	local z_vals = linspace_centered(min.z, max.z, center.z, step)
+	local x_vals = utils.linspace_centered(min.x, max.x, center.x, step)
+	local y_vals = utils.linspace_centered(min.y, max.y, center.y, step)
+	local z_vals = utils.linspace_centered(min.z, max.z, center.z, step)
 
 	-- Find center indices (should be exact match)
-	local cx = find_closest_index(x_vals, center.x)
-	local cy = find_closest_index(y_vals, center.y)
-	local cz = find_closest_index(z_vals, center.z)
+	local cx = utils.find_closest_index(x_vals, center.x)
+	local cy = utils.find_closest_index(y_vals, center.y)
+	local cz = utils.find_closest_index(z_vals, center.z)
 
 	-- Draw shell
 	for _, x in ipairs(x_vals) do
@@ -778,39 +680,13 @@ local function do_update_pos(state)
 	end
 end
 
-local function has_empty_main_inv_slot(player)
-	local inventory = player:get_inventory()
-	local inv_list = inventory:get_list("main")
-	for _, stack in ipairs(inv_list) do
-		if stack:is_empty() then
-			return true
-		end
-	end
-	return false
-end
-
-local floating_dirs = CFG.FLOATING_DIRS
-
-local function is_floating(pos, expected_name)
-	for _, offset in ipairs(floating_dirs) do
-		local neighbor_pos = vector.add(pos, offset)
-		local neighbor = core.get_node_or_nil(neighbor_pos)
-		if neighbor and neighbor.name ~= "air" and neighbor.name ~= "ignore" and neighbor.name ~= expected_name then
-			-- Found a supporting node
-			return false
-		end
-	end
-	-- All neighbors are air or ignore: it's floating
-	return true
-end
-
 local mod_pos = vein_miner.h.mod_pos
 local is_liquid = vein_miner.h.is_liquid
 local function process_node_group(state, node_name, node, repeat_count)
 	local mined_nodes_count = 0
 	if is_liquid(node_name, "water") or is_liquid(node_name, "lava") then
 		for index, pos in pairs(node) do
-			fill_liquid_at_pos(state, pos, handle_pos_notify)
+			fill_liquid_at_pos(state, pos, utils.handle_pos_notify)
 			mined_nodes_count = mined_nodes_count + 1
 		end
 		if repeat_count <= 2 then
@@ -838,7 +714,7 @@ local function process_node_group(state, node_name, node, repeat_count)
 			local area_sector = mod_pos(pos, vector.new(16, 16, 16))
 			if p then
 				if state.cur_mined_nodes >= state.co_cur_max_nodes then
-					coroutine.yield(state.cur_mined_nodes)
+					yield(state.cur_mined_nodes)
 					state.co_cur_max_nodes = MAX_MINED_NODES
 					state.mined_nodes = state.mined_nodes + state.cur_mined_nodes
 					state.cur_mined_nodes = 0
@@ -849,7 +725,7 @@ local function process_node_group(state, node_name, node, repeat_count)
 			if not BlockDigger.should_dig(node, pos) then
 				goto next_node
 			end
-			local options = get_scan_options(node_name, {})
+			local options = utils.get_scan_options(node_name, {})
 			if options.light then
 				state.pending_light_notify:push_left({
 					pos = pos,
@@ -857,7 +733,7 @@ local function process_node_group(state, node_name, node, repeat_count)
 				})
 				state.found_light_count = state.found_light_count - 1
 			end
-			if not options.light or is_floating(pos, node.name) then
+			if not options.light or utils.is_floating(pos, node.name) then
 				dig(pos, node)
 			end
 			if options.light then
@@ -959,7 +835,7 @@ local function dig_pos_process_queue_item(state, item, player_name)
 	end
 
 	if is_liquid(node_name, "water") or is_liquid(node_name, "lava") then
-		fill_liquid_at_pos(state, pos, handle_pos_notify)
+		fill_liquid_at_pos(state, pos, utils.handle_pos_notify)
 		return
 	end
 	if options.light then

@@ -65,4 +65,16 @@ function utils.is_stuck_to_sticky(pos)
 	return false
 end
 
+local floating_dirs = CFG.FLOATING_DIRS
+function utils.is_floating(pos, expected_name)
+	for _, offset in ipairs(floating_dirs) do
+		local neighbor_pos = pos + offset
+		local neighbor = core.get_node_or_nil(neighbor_pos)
+		if neighbor and neighbor.name ~= "air" and neighbor.name ~= "ignore" and neighbor.name ~= expected_name then
+			return false
+		end
+	end
+	return true
+end
+
 return utils
