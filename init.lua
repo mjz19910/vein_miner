@@ -6,6 +6,7 @@ local minetest = minetest
 local next = next
 local table = table
 local dofile = dofile
+local tonumber = tonumber
 
 local utils = dofile(minetest.get_modpath("vein_miner") .. "/utils.lua")
 
