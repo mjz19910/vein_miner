@@ -389,8 +389,6 @@ end
 
 local wall_region_cache = {} -- list of { region = {min=vec, max=vec}, state = {...} }
 
-local wall_region_cache = {}
-
 local function pos_in_region(pos, region)
 	return pos.x >= region.min.x and pos.x <= region.max.x and pos.y >= region.min.y and pos.y <= region.max.y and pos.z >= region.min.z and
 		       pos.z <= region.max.z
