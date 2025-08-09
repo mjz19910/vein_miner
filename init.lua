@@ -4,14 +4,17 @@ dofile(minetest.get_modpath("vein_miner") .. "/utils.lua")
 vein_miner = {
 	deque = {},
 }
-utils.load("deque.lua")
-utils.load("auto_floor.lua")
-utils.load("voxel_utils.lua")
-utils.load("config.lua")
-utils.load("helpers.lua")
-utils.load("aabb.lua")
-utils.load("liquid_filler.lua")
-utils.load("remove_walls.lua")
+local require = utils.require
+require("mods.vein_miner.deque")
+require("mods.vein_miner.auto_floor")
+require("mods.vein_miner.voxel_utils")
+require("mods.vein_miner.config")
+require("mods.vein_miner.helpers")
+require("mods.vein_miner.aabb")
+require("mods.vein_miner.liquid_filler")
+require("mods.vein_miner.remove_walls")
+local player_hud = require("mods.vein_miner.src.player_hud")
+require("mods.vein_miner.src.player_config")
 
 local fill_liquid_at_pos = vein_miner.fill_liquid_at_pos
 
@@ -108,11 +111,7 @@ minetest.register_on_mods_loaded(function()
 	light_scan_dist = tonumber(core.settings:get("vein_miner_light_scan_distance"))
 end)
 
-local player_hud = dofile(modpath .. "/src/player_hud.lua")
-
 local log_work_start = false
-
-dofile(modpath .. "/src/player_config.lua")
 
 local floor = math.floor
 local ceil = math.ceil
