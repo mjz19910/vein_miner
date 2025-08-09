@@ -350,13 +350,13 @@ local function repeat_action(user, itemstack)
 		return
 	end
 
-	local next_pointed = raycast_next_pointed(user)
-	if not next_pointed then
-		return
-	end
+	local ray_length = 10
 
-	-- Call the remove walls function
-	do_remove_nonblocking_walls(itemstack, user, next_pointed)
+	local next_pointed = raycast_next_pointed(user, ray_length)
+	if next_pointed then
+		-- Call the remove walls function
+		do_remove_nonblocking_walls(itemstack, user, next_pointed)
+	end
 
 	-- Repeat after delay (e.g., 0.4s)
 	minetest.after(0.4, function()
