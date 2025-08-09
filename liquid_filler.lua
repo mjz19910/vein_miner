@@ -6,8 +6,53 @@ local next = next
 
 -- local builtin lua tables
 local table = table
+
+---@class Vector
+---@field x number
+---@field y number
+---@field z number
+
+---@class VectorModule
+---@field metatable table
+---@field new fun(x: number, y: number, z: number): Vector
+---@field zero fun(): Vector
+---@field copy fun(v: Vector): Vector
+---@field from_string fun(s: string, init?: number): Vector | nil, number | nil
+---@field to_string fun(v: Vector): string
+---@field equals fun(a: Vector, b: Vector): boolean
+---@field length fun(v: Vector): number
+---@field normalize fun(v: Vector): Vector
+---@field floor fun(v: Vector): Vector
+---@field round fun(v: Vector): Vector
+---@field ceil fun(v: Vector): Vector
+---@field sign fun(v: Vector, tolerance?: number): Vector
+---@field abs fun(v: Vector): Vector
+---@field apply fun(v: Vector, func: fun(x: number, ...: any): number): Vector
+---@field combine fun(a: Vector, b: Vector, func: fun(a: number, b: number): number): Vector
+---@field distance fun(a: Vector, b: Vector): number
+---@field direction fun(pos1: Vector, pos2: Vector): Vector
+---@field angle fun(a: Vector, b: Vector): number
+---@field dot fun(a: Vector, b: Vector): number
+---@field cross fun(a: Vector, b: Vector): Vector
+---@field add fun(a: Vector, b: Vector | number): Vector
+---@field subtract fun(a: Vector, b: Vector | number): Vector
+---@field multiply fun(a: Vector, b: Vector | number): Vector
+---@field divide fun(a: Vector, b: Vector | number): Vector
+---@field offset fun(v: Vector, x: number, y: number, z: number): Vector
+---@field sort fun(a: Vector, b: Vector): Vector, Vector
+---@field check fun(v: any): boolean
+---@field rotate_around_axis fun(v: Vector, axis: Vector, angle: number): Vector
+---@field rotate fun(v: Vector, rot: Vector): Vector
+---@field dir_to_rotation fun(forward: Vector, up?: Vector): Vector
+---@field in_area fun(pos: Vector, min: Vector, max: Vector): boolean
+---@field random_direction fun(): Vector
+---@field random_in_area fun(min: Vector, max: Vector): Vector
+---@field zero fun(): Vector
+
+---@type VectorModule
 local vector = vector
 local coroutine = coroutine
+local math = math
 
 -- local builtin lua table functions
 local insert_all = table.insert_all
@@ -21,7 +66,37 @@ local max = math.max
 -- minetest tables
 local core = core
 local minetest = minetest
+---@class VoxelArea
+---@field MinEdge Vector      # Minimum coordinate of the area
+---@field MaxEdge Vector      # Maximum coordinate of the area
+---@field ystride integer     # Size of one Y-level in array indexing
+---@field zstride integer     # Size of one Z-level in array indexing
+---@field index fun(self:VoxelArea, x:integer, y:integer, z:integer): integer
+---@field indexp fun(self:VoxelArea, pos:Vector): integer
+---@field position fun(self:VoxelArea, index:integer): Vector
+---@field contains fun(self:VoxelArea, x:integer, y:integer, z:integer): boolean
+---@field containsp fun(self:VoxelArea, pos:Vector): boolean
 local VoxelArea = VoxelArea
+---@class VoxelManip
+---@field read_from_map fun(self:VoxelManip, p1:Vector, p2:Vector): Vector, Vector		Reads region from map; returns min and max edges
+---@field initialize fun(self:VoxelManip, p1:Vector, p2:Vector, fill_node?: table): Vector, Vector	Initializes region optionally filling with node; returns min and max edges
+---@field get_data fun(self:VoxelManip, buffer?: table): integer[]	Returns node content IDs; optional buffer table
+---@field set_data fun(self:VoxelManip, data: integer[]) Sets node content IDs
+---@field write_to_map fun(self:VoxelManip, update_light?: boolean) Writes changes back to map; optionally updates lighting (default true)
+---@field get_node_at fun(self:VoxelManip, pos:Vector): table Gets node at position
+---@field set_node_at fun(self:VoxelManip, pos:Vector, node: table): boolean Sets node at position; returns success
+---@field update_liquids fun(self:VoxelManip) Updates flowing liquids
+---@field calc_lighting fun(self:VoxelManip, pmin?: Vector, pmax?: Vector, propagate_shadow?: boolean)  Calculates lighting (mapgen VM only)
+---@field set_lighting fun(self:VoxelManip, light_table: table, pmin?: Vector, pmax?: Vector)  Sets lighting (mapgen VM only)
+---@field get_light_data fun(self:VoxelManip, buffer?: table): integer[] Gets light data; optional buffer
+---@field set_light_data fun(self:VoxelManip, data: integer[]) Sets light data
+---@field get_param2_data fun(self:VoxelManip, buffer?: table): integer[] Gets param2 data; optional buffer
+---@field set_param2_data fun(self:VoxelManip, data: integer[]) Sets param2 data
+---@field update_map fun(self:VoxelManip) Updates the map (no-op)
+---@field was_modified fun(self:VoxelManip): boolean Returns whether data was modified
+---@field get_emerged_area fun(self:VoxelManip): Vector, Vector Returns min and max edges of emerged area
+---@field close fun(self:VoxelManip) Disposes object (not allowed on mapgen VMs)
+---@type fun(): VoxelManip
 local VoxelManip = VoxelManip
 
 -- minetest table functions
@@ -51,6 +126,8 @@ local cid_air, cid_wool_green
 local cids_source, cids_flowing
 local cids_replace = {}
 
+---@param fmt string
+---@vararg any
 local function verbose_log(fmt, ...)
 	if minetest.settings:get_bool("vein_miner_verbose_logging", false) then
 		core.log("action", ("[liquid_filler.lua] " .. fmt):format(...))
@@ -83,6 +160,14 @@ core.register_on_mods_loaded(function()
 	cid_wool_green = cid("wool:green")
 end)
 
+---@param qx integer[]
+---@param qy integer[]
+---@param qz integer[]
+---@param q_tail integer
+---@param x integer
+---@param y integer
+---@param z integer
+---@return integer
 local function push(qx, qy, qz, q_tail, x, y, z)
 	qx[q_tail], qy[q_tail], qz[q_tail] = x, y, z
 	return q_tail + 1
@@ -90,6 +175,15 @@ end
 
 local hash_pos = core.hash_node_position
 
+---@param qx integer[]
+---@param qy integer[]
+---@param qz integer[]
+---@param q_tail integer
+---@param visited table<string, boolean>
+---@param x integer
+---@param y integer
+---@param z integer
+---@return integer
 local function maybe_enqueue(qx, qy, qz, q_tail, visited, x, y, z)
 	local hash = hash_pos(vec_new(x, y, z))
 	if not visited[hash] then
@@ -99,6 +193,8 @@ local function maybe_enqueue(qx, qy, qz, q_tail, visited, x, y, z)
 	return q_tail
 end
 
+---@param vm VoxelManip
+---@param region Region
 local function read_voxels_from_map(vm, region)
 	local emin, emax = vm:read_from_map(region.min, region.max)
 	local area = VoxelArea:new{
@@ -109,9 +205,23 @@ local function read_voxels_from_map(vm, region)
 	return area, data
 end
 
+---@class State
+---@field vm VoxelManip
+---@field area VoxelArea
+---@field data integer[]  # node IDs from VoxelManip
+---@field region Region
+---@field cid_wall integer
+---@field cid_air integer
+---@field cids_replace table<integer, boolean>
+---@field cids_source table<integer, boolean>
+---@field cids_flowing table<integer, boolean>
+---@field read fun(self: State, region: Region) # convenience: read_voxels_from_map wrapper
 local State = {}
 State.__index = State
 
+---@param vm VoxelManip
+---@param cid_wall integer
+---@return State
 function State:new(vm, cid_wall)
 	local self = setmetatable({
 		vm = vm,
@@ -123,12 +233,19 @@ function State:new(vm, cid_wall)
 	return self
 end
 
+---@param region Region
 function State:reload_region(region)
 	local area, data = read_voxels_from_map(self.vm, region)
 	self.area = area
 	self.data = data
 end
 
+---@param state State
+---@param region Region
+---@param axis "x" | "y" | "z"
+---@param limit integer
+---@param skip_flag boolean[]  # a table with one boolean element, used as a mutable flag
+---@return boolean
 local function expand_axis_from_center(state, region, axis, limit, skip_flag)
 	local area = state.area
 	local data = state.data
@@ -206,6 +323,12 @@ local function expand_axis_from_center(state, region, axis, limit, skip_flag)
 	return expanded
 end
 
+---@param state State
+---@param region Region
+---@param skip_y boolean[]  # mutable flag to indicate whether to skip Y expansion
+---@param notify_pos fun(vein_miner_state: table, pos: Vector) # callback to notify on limit reached
+---@param vein_miner_state table
+---@return boolean # returns true if expanded vertically
 local function expand_vertical_axis(state, region, skip_y, notify_pos, vein_miner_state)
 	local area = state.area
 	local data = state.data
@@ -274,6 +397,9 @@ end
 
 local EXPAND_AMOUNT = 1
 
+---@param state State
+---@param region Region
+---@param pos Vector
 local function expand_region_to_include(state, region, pos)
 	local vm = state.vm
 
@@ -295,21 +421,23 @@ local function expand_region_to_include(state, region, pos)
 
 	core.log("warning", ("Expanding voxel area to new region from %s to %s"):format(pos_str(region.min), pos_str(region.max)))
 
-	-- Re-read voxel data and update area
-	local area, data = read_voxels_from_map(vm, region)
-	state.area = area
-	state.data = data
+	state:reload_region(region)
 end
 
-local function ensure_pos_in_area(state, pos)
+---@param state State
+---@param region Region
+---@param pos Vector
+---@return boolean # true if expansion happened, false otherwise
+local function ensure_pos_in_area(state, region, pos)
 	if not state.area:containsp(pos) then
-		expand_region_to_include(state, pos)
+		expand_region_to_include(state, region, pos)
 		return true
 	end
 	return false
 end
 
--- Helper iterator over positions inside the region
+---@param region Region
+---@return fun(): Vector -- iterator function returning Vector positions
 local function iter_region_positions(region)
 	local minx, maxx = region.min.x, region.max.x
 	local miny, maxy = region.min.y, region.max.y
@@ -326,6 +454,9 @@ local function iter_region_positions(region)
 	end)
 end
 
+---@param state State
+---@param pos Vector
+---@return boolean
 local function is_useless_wall(state, pos)
 	local did_expand = false
 	local idx = state.area:indexp(pos)
@@ -344,25 +475,36 @@ local function is_useless_wall(state, pos)
 	return true
 end
 
+---@param region Region
+---@param b_min Vector
+---@param b_max Vector
+---@return boolean
 local function region_equals(region, b_min, b_max) return vector.equals(region.min, b_min) and vector.equals(region.max, b_max) end
 
--- Returns true if position is a wall node
+---@param state State
+---@param pos Vector
+---@return boolean
 local function is_wall(state, pos)
 	local idx = state.area:indexp(pos)
 	return state.data[idx] == state.cid_wall
 end
 
--- Returns true if position is a liquid node (source or flowing)
+---@param state State
+---@param pos Vector
+---@return boolean
 local function is_liquid(state, pos)
 	local idx = state.area:indexp(pos)
 	return state.cids_replace[state.data[idx]] == true
 end
 
--- Checks if wall at pos is adjacent to liquid; if yes, it’s necessary
-local function is_wall_adjacent_to_liquid(state, pos)
+---@param state State
+---@param region Region
+---@param pos Vector
+---@return boolean
+local function is_wall_adjacent_to_liquid(state, region, pos)
 	for _, off in ipairs(cardinal_dirs) do
 		local npos = pos + off
-		ensure_pos_in_area(state, npos)
+		ensure_pos_in_area(state, region, npos)
 		if is_liquid(state, npos) then
 			return true
 		end
@@ -370,7 +512,9 @@ local function is_wall_adjacent_to_liquid(state, pos)
 	return false
 end
 
--- DFS to mark reachable walls connected to liquid or boundary as necessary
+---@param state State
+---@param start_pos Vector
+---@param visited table<string, boolean>  # hash -> visited flag
 local function dfs_mark_necessary(state, start_pos, visited)
 	local stack = {start_pos}
 
@@ -401,66 +545,96 @@ local function dfs_mark_necessary(state, start_pos, visited)
 	end
 end
 
+---@param pos Vector
+---@param region Region
+---@return boolean
+local function is_on_edge(pos, region)
+	local count = 0
+	if pos.x == region.min.x or pos.x == region.max.x then
+		count = count + 1
+	end
+	if pos.y == region.min.y or pos.y == region.max.y then
+		count = count + 1
+	end
+	if pos.z == region.min.z or pos.z == region.max.z then
+		count = count + 1
+	end
+	return count == 2
+end
+
+---@param region Region
+---@param params ParticleParams
 local function visualize_region_particles(region, params)
 	local min, max = region.min, region.max
 
-	for x = min.x, max.x do
-		for y = min.y, max.y do
-			for z = min.z, max.z do
-				local on_edge = ((x == min.x or x == max.x) and 1 or 0) + ((y == min.y or y == max.y) and 1 or 0) +
-					                ((z == min.z or z == max.z) and 1 or 0)
-
-				if on_edge == 2 then -- edges of the bounding box
-					local pos = vec_new(x + 0.5, y + 0.5, z + 0.5)
-					minetest.add_particle({
-						pos = pos,
-						velocity = vec_new(0, 0, 0),
-						expirationtime = params.expirationtime,
-						size = params.size,
-						texture = params.texture,
-						glow = params.glow,
-					})
-				end
-			end
+	for pos in iter_region_positions(region) do
+		local min, max = region.min, region.max
+		if is_on_edge(pos, region) then
+			minetest.add_particle({
+				pos = pos,
+				velocity = vec_new(0, 0, 0),
+				expirationtime = params.expirationtime,
+				size = params.size,
+				texture = params.texture,
+				glow = params.glow,
+			})
 		end
 	end
 end
 
+---@class WallRegionCacheEntry
+---@field region Region
+---@field state State
+---@type WallRegionCacheEntry[]
 local wall_region_cache = {} -- list of { region = {min=vec, max=vec}, state = {...} }
+
+---@class ParticleParams
+---@field expirationtime number
+---@field size number
+---@field texture string
+---@field glow number
+local particle_params = {
+	texture = "default_diamond.png",
+	expirationtime = 2, -- particles last 2 seconds
+	size = 5,
+	glow = 15,
+}
 
 -- Globalstep timer for particle visualization
 local timer = 0
+---@param dtime number
 core.register_globalstep(function(dtime)
 	timer = timer + dtime
 	if timer >= 1 then -- every second
 		timer = 0
-		local particle_params = {
-			texture = "default_diamond.png",
-			expirationtime = 2, -- particles last 2 seconds
-			size = 5,
-			glow = 15,
-		}
 		for _, entry in ipairs(wall_region_cache) do
 			visualize_region_particles(entry.region, particle_params)
 		end
 	end
 end)
 
+---@param pos Vector
+---@param region Region
+---@return boolean
 local function pos_in_region(pos, region)
 	local min = region.min
 	local max = region.max
 	return pos.x >= min.x and pos.x <= max.x and pos.y >= min.y and pos.y <= max.y and pos.z >= min.z and pos.z <= max.z
 end
 
-local function get_cached_wall_state(pos)
+---@param pos Vector
+---@return WallRegionCacheEntry|nil
+local function get_cached_wall_entry(pos)
 	for _, entry in ipairs(wall_region_cache) do
 		if pos_in_region(pos, entry.region) then
-			return entry.state, entry.region
+			return entry
 		end
 	end
 	return nil
 end
 
+---@param region Region
+---@param state State
 local function cache_wall_region(region, state)
 	table.insert(wall_region_cache, {
 		region = region,
@@ -469,13 +643,15 @@ local function cache_wall_region(region, state)
 end
 
 -- Remove walls not marked as necessary by DFS
+---@param state State
+---@param region Region
 local function remove_unnecessary_walls(state, region)
 	local visited = {}
 	local wall_search_region = region:shrink_clone(1)
 
 	-- First, mark all walls adjacent to liquid as necessary
 	for pos in iter_region_positions(wall_search_region) do
-		if is_wall(state, pos) and is_wall_adjacent_to_liquid(state, pos) then
+		if is_wall(state, pos) and is_wall_adjacent_to_liquid(state, region, pos) then
 			dfs_mark_necessary(state, pos, visited)
 		end
 	end
@@ -525,6 +701,9 @@ local function remove_overlapping_wall_regions(cache)
 	end
 end
 
+---@param pos Vector
+---@param limit integer
+---@return Region|nil
 local function flood_fill_liquid(start_pos, limit)
 	local visited = {}
 	local qx, qy, qz = {}, {}, {}
@@ -569,6 +748,12 @@ local function flood_fill_liquid(start_pos, limit)
 	return new_region(vec_new(minx, miny, minz), vec_new(maxx, maxy, maxz))
 end
 
+---@param state State
+---@param skip_x boolean[]
+---@param skip_y boolean[]
+---@param skip_z boolean[]
+---@param notify_pos Vector
+---@param vein_miner_state any
 local function expand_liquid_bounds(state, region, notify_pos, vein_miner_state)
 	local vm = state.vm
 
@@ -593,6 +778,8 @@ local function expand_liquid_bounds(state, region, notify_pos, vein_miner_state)
 	end
 end
 
+---@param state State
+---@param region Region
 local function clear_liquids(state, region)
 	for pos in iter_region_positions(region) do
 		local idx = state.area:indexp(pos)
@@ -602,6 +789,8 @@ local function clear_liquids(state, region)
 	end
 end
 
+---@param state State
+---@param region Region
 local function build_walls(state, region)
 	for pos in iter_region_positions(region) do
 		local idx = state.area:indexp(pos)
@@ -619,7 +808,9 @@ local function build_walls(state, region)
 	end
 end
 
--- === Main function ===
+---@param vein_miner_state any
+---@param pos Vector
+---@param notify_pos Vector
 function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 	verbose_log("fill_liquid_at_pos called at %s", pos_str(pos))
 
@@ -628,10 +819,12 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 		return
 	end
 
-	local cached_state, cached_region = get_cached_wall_state(pos)
-	if cached_state then
+	local entry = get_cached_wall_entry(pos)
+	if entry then
 		verbose_log("Using cached wall state for position %s", pos_str(pos))
-		local state, region = cached_state, cached_region
+		local state, region = entry.state, entry.region
+		-- previous vm is closed?
+		-- state.vm = VoxelManip()
 		state:reload_region(region)
 
 		verbose_log("Clearing liquids inside region (cached)")
@@ -683,7 +876,7 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 	state.vm:set_data(state.data)
 	state.vm:write_to_map()
 	state.vm:update_liquids()
-	state.vm:update_map()
+	state.vm:close()
 
 	verbose_log("Completed fill_liquid_at_pos for %s", pos_str(pos))
 end

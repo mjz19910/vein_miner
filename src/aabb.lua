@@ -11,31 +11,66 @@ local remove = table.remove
 local min = math.min
 local max = math.max
 
+---@class Region
+---@field min Vector
+---@field max Vector
+---@field shrink fun(self: Region, margin: number): void
+---@field grow fun(self: Region, margin: number): void
+---@field shrink_parts fun(self: Region, margin: number): Vector, Vector
+---@field grow_parts fun(self: Region, margin: number): Vector, Vector
+---@field shrink_clone fun(self: Region, margin: number): Region
+---@field grow_clone fun(self: Region, margin: number): Region
+
+---@class RegionMetatable
+---@field __index RegionMetatable
+
+---@type RegionMetatable
 local region_mt = {}
 region_mt.__index = region_mt
 
+---@param min Vector
+---@param max Vector
+---@return Region
 local function new_region(min, max)
 	return setmetatable({
 		min = min,
 		max = max,
 	}, region_mt)
 end
+
+---@param self Region
+---@param min Vector
+---@param max Vector
 function region_mt:assign_parts(min, max)
 	self.min = min
 	self.max = max
 end
 
+---@param self Region
+---@param margin number
 function region_mt:shrink_clone(margin) return new_region(vec_add(self.min, margin), vec_add(self.max, -margin)) end
+
+---@param self Region
+---@param margin number
 function region_mt:grow_clone(margin) return new_region(vec_add(self.min, -margin), vec_add(self.max, margin)) end
+
+---@param self Region
+---@param margin number
 function region_mt:shrink(margin)
 	self.min = vec_add(self.min, margin)
 	self.max = vec_sub(self.max, margin)
 end
+
+---@param self Region
+---@param margin number
 function region_mt:grow(margin)
 	self.min = vec_sub(self.min, margin)
 	self.max = vec_add(self.max, margin)
 end
 
+---@param a Region
+---@param b Region
+---@return boolean
 local function regions_overlap(a, b)
 	local x_overlap = a.max.x >= b.min.x and a.min.x <= b.max.x
 	local y_overlap = a.max.y >= b.min.y and a.min.y <= b.max.y
@@ -43,6 +78,9 @@ local function regions_overlap(a, b)
 	return x_overlap and y_overlap and z_overlap
 end
 
+---@param a Region
+---@param b Region
+---@return boolean
 local function region_fully_covered(a, b)
 	local x_covered = a.min.x >= b.min.x and a.max.x <= b.max.x
 	local y_covered = a.min.y >= b.min.y and a.max.y <= b.max.y
@@ -50,6 +88,9 @@ local function region_fully_covered(a, b)
 	return x_covered and y_covered and z_covered
 end
 
+---@param a Region
+---@param b Region
+---@return Region[]
 local function subtract_box(a, b)
 	if not regions_overlap(a, b) then
 		return {a}
@@ -92,6 +133,9 @@ local function subtract_box(a, b)
 	return results
 end
 
+---@param container Region
+---@param filled_list Region[]
+---@return Region[]
 local function subtract_region(container, filled_list)
 	local remaining = {container}
 
@@ -109,11 +153,21 @@ local function subtract_region(container, filled_list)
 	return remaining
 end
 
+---@param r Region
+---@return number
 local function volume(r) return (r.max.x - r.min.x + 1) * (r.max.y - r.min.y + 1) * (r.max.z - r.min.z + 1) end
 
 -- If they overlap or touch (1-node gap), merge them
+---@param min1 number
+---@param max1 number
+---@param min2 number
+---@param max2 number
+---@return boolean
 local function axis_touch_or_overlap(min1, max1, min2, max2) return not (max1 < min2 - 1 or min1 > max2 + 1) end
 
+---@param a Region
+---@param b Region
+---@return boolean
 local function mergeable(a, b)
 	local x_overlap = axis_touch_or_overlap(a.min.x, a.max.x, b.min.x, b.max.x)
 	local y_overlap = axis_touch_or_overlap(a.min.y, a.max.y, b.min.y, b.max.y)
@@ -121,10 +175,19 @@ local function mergeable(a, b)
 	return x_overlap and y_overlap and z_overlap
 end
 
+---@param a Vector
+---@param b Vector
+---@return Vector
 function vector.min(a, b) return vector.combine(a, b, min) end
 
+---@param a Vector
+---@param b Vector
+---@return Vector
 function vector.max(a, b) return vector.combine(a, b, max) end
 
+---@param a Region
+---@param b Region
+---@return Region, Region[]
 local function merge_regions(a, b)
 	local merged = new_region(vector.min(a.min, b.min), vector.max(a.max, b.max))
 
@@ -137,6 +200,8 @@ local function merge_regions(a, b)
 	return merged, unknown_regions
 end
 
+---@param region_list Region[]
+---@return Region[] unknown_regions
 local function compact_regions(region_list)
 	local changed = true
 	local unknown_regions = {}
@@ -168,6 +233,9 @@ local function compact_regions(region_list)
 	return unknown_regions
 end
 
+---@param r Region
+---@param scanned Region[]
+---@param on_region fun(region: Region)
 local function subtract_scan(r, scanned, on_region)
 	local uncovered = subtract_region(r, scanned)
 	for _, r in ipairs(uncovered) do
@@ -175,6 +243,14 @@ local function subtract_scan(r, scanned, on_region)
 	end
 end
 
+---@class SubtractAndAccumulateOptions
+---@field volume_threshold number|nil
+---@field max_distance number|nil
+---@field on_flush fun(region: Region)
+
+---@param r Region
+---@param scanned Region[]
+---@param opts SubtractAndAccumulateOptions
 local function subtract_and_accumulate(r, scanned, opts)
 	local max_volume = opts.volume_threshold or 50000
 	local max_dist = opts.max_distance or 16
@@ -226,6 +302,9 @@ local function subtract_and_accumulate(r, scanned, opts)
 	end
 end
 
+---@param a Region
+---@param b Region
+---@return number
 local function get_gap_distance(a, b)
 	local dx = math.max(0, math.max(b.min.x - a.max.x, a.min.x - b.max.x))
 	local dy = math.max(0, math.max(b.min.y - a.max.y, a.min.y - b.max.y))
@@ -234,6 +313,10 @@ local function get_gap_distance(a, b)
 end
 
 -- Returns AABB between two regions within the max distance
+---@param a Region
+---@param b Region
+---@param max_distance number
+---@return Region | nil
 local function between(a, b, max_distance)
 	if regions_overlap(a, b) then
 		return nil
@@ -250,6 +333,9 @@ local function between(a, b, max_distance)
 	return r
 end
 
+---@param target Region
+---@param region_list Region[]
+---@return boolean
 local function is_covered_by_any(target, region_list)
 	for _, r in ipairs(region_list) do
 		if region_fully_covered(target, r) then
@@ -259,21 +345,51 @@ local function is_covered_by_any(target, region_list)
 	return false
 end
 
+---@param r Region
+---@param pos Vector
+---@return boolean
 local function is_point_in_region(r, pos)
 	return pos.x >= r.min.x and pos.x <= r.max.x and pos.y >= r.min.y and pos.y <= r.max.y and pos.z >= r.min.z and pos.z <= r.max.z
 end
 
+---@param r Region
+---@return Vector
 local function size(r) return r.max - r.min end
 
+---@type fun(pos: Vector): string
 local pos_str = core.pos_to_string
 
+---@param r Region
+---@return string
 local function size_str(r) return pos_str(size(r)) end
 
+---@param r Region
+---@return string
 local function region_str(r)
 	local size = r.max - r.min
 	return ("%s to %s (%s) Volume=%d"):format(pos_str(r.min), pos_str(r.max), size_str(r), volume(r))
 end
-
+---@class AABB
+---@field axis_touch_or_overlap fun(min1: number, max1: number, min2: number, max2: number): boolean
+---@field between fun(a: Region, b: Region, max_distance: number): Region | nil
+---@field compact_regions fun(region_list: Region[]): Region[]
+---@field get_gap_distance fun(a: Region, b: Region): number
+---@field is_covered_by_any fun(target: Region, region_list: Region[]): boolean
+---@field is_point_in_region fun(r: Region, pos: Vector): boolean
+---@field merge_regions fun(a: Region, b: Region): Region, Region[]
+---@field mergeable fun(a: Region, b: Region): boolean
+---@field region fun(min: Vector, max: Vector): Region
+---@field region_fully_covered fun(a: Region, b: Region): boolean
+---@field region_str fun(r: Region): string
+---@field regions_overlap fun(a: Region, b: Region): boolean
+---@field size fun(r: Region): Vector
+---@field size_str fun(r: Region): string
+---@field subtract_and_accumulate fun(r: Region, scanned: Region[], opts: table): nil
+---@field subtract_box fun(a: Region, b: Region): Region[]
+---@field subtract_region fun(container: Region, filled_list: Region[]): Region[]
+---@field subtract_scan fun(r: Region, scanned: Region[], on_region: fun(region: Region)): nil
+---@field volume fun(r: Region): number
+---@type AABB
 aabb = {
 	axis_touch_or_overlap = axis_touch_or_overlap,
 	between = between,
