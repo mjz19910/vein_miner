@@ -19,14 +19,7 @@ local new_region = aabb.region
 local log_action = vein_miner.h.log_action
 local pos_str = core.pos_to_string
 
-local cardinal_dirs = {
-	vnew(1, 0, 0),
-	vnew(-1, 0, 0),
-	vnew(0, 1, 0),
-	vnew(0, -1, 0),
-	vnew(0, 0, 1),
-	vnew(0, 0, -1),
-}
+local cardinal_dirs = {vnew(1, 0, 0), vnew(-1, 0, 0), vnew(0, 1, 0), vnew(0, -1, 0), vnew(0, 0, 1), vnew(0, 0, -1)}
 local liquid_set = {
 	["default:water_source"] = true,
 	["default:water_flowing"] = true,
@@ -359,9 +352,7 @@ end
 
 -- DFS to mark reachable walls connected to liquid or boundary as necessary
 local function dfs_mark_necessary(state, start_pos, visited)
-	local stack = {
-		start_pos,
-	}
+	local stack = {start_pos}
 
 	while #stack > 0 do
 		local pos = table.remove(stack)
@@ -539,13 +530,7 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 	local region = new_region(vnew(minx, miny, minz), vnew(maxx, maxy, maxz))
 
 	-- Expand bounds
-	local skip_x, skip_y, skip_z = {
-		false,
-	}, {
-		false,
-	}, {
-		false,
-	}
+	local skip_x, skip_y, skip_z = {false}, {false}, {false}
 	local vm = VoxelManip()
 	local area, data = read_voxels_from_map(vm, region)
 	local state = {
