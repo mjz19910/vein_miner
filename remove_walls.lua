@@ -38,6 +38,9 @@ local function is_blocking_flow(data, area, pos)
 			if liquids[neighbor_cid] then
 				return true
 			end
+		else
+			-- we don't know if it is blocking any water outside of the area
+			return true
 		end
 	end
 	return false
