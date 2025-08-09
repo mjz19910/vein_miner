@@ -19,9 +19,20 @@ local new_region = aabb.region
 local log_action = vein_miner.h.log_action
 local pos_str = core.pos_to_string
 
-local cardinal_dirs = {vnew(1, 0, 0), vnew(-1, 0, 0), vnew(0, 1, 0), vnew(0, -1, 0), vnew(0, 0, 1), vnew(0, 0, -1)}
-local liquid_set = {["default:water_source"] = true, ["default:water_flowing"] = true, ["default:lava_source"] = true,
-	["default:lava_flowing"] = true}
+local cardinal_dirs = {
+	vnew(1, 0, 0),
+	vnew(-1, 0, 0),
+	vnew(0, 1, 0),
+	vnew(0, -1, 0),
+	vnew(0, 0, 1),
+	vnew(0, 0, -1),
+}
+local liquid_set = {
+	["default:water_source"] = true,
+	["default:water_flowing"] = true,
+	["default:lava_source"] = true,
+	["default:lava_flowing"] = true,
+}
 
 local cid = core.get_content_id
 local cid_air, cid_wool_green
@@ -37,8 +48,14 @@ core.register_on_mods_loaded(function()
 	local cid_lava_source = cid("default:lava_source")
 	local cid_lava_flowing = cid("default:lava_flowing")
 
-	cids_source = {[cid_water_source] = true, [cid_lava_source] = true}
-	cids_flowing = {[cid_water_flowing] = true, [cid_lava_flowing] = true}
+	cids_source = {
+		[cid_water_source] = true,
+		[cid_lava_source] = true,
+	}
+	cids_flowing = {
+		[cid_water_flowing] = true,
+		[cid_lava_flowing] = true,
+	}
 
 	for k, v in pairs(cids_source) do
 		cids_replace[k] = v
@@ -59,7 +76,11 @@ local function push(qx, qy, qz, q_tail, x, y, z)
 end
 
 local function maybe_enqueue(qx, qy, qz, q_tail, visited, x, y, z)
-	local hash = core.hash_node_position({x = x, y = y, z = z})
+	local hash = core.hash_node_position({
+		x = x,
+		y = y,
+		z = z,
+	})
 	if not visited[hash] then
 		visited[hash] = true
 		return push(qx, qy, qz, q_tail, x, y, z)
@@ -70,7 +91,10 @@ end
 local function read_voxels_from_map(vm, region)
 	assert(vm and region and region.min and region.max, "Invalid arguments to read_voxels_from_map")
 	local emin, emax = vm:read_from_map(region.min, region.max)
-	local area = VoxelArea:new{MinEdge = emin, MaxEdge = emax}
+	local area = VoxelArea:new{
+		MinEdge = emin,
+		MaxEdge = emax,
+	}
 	local data = vm:get_data()
 	return area, data
 end
@@ -96,7 +120,11 @@ local function expand_axis_from_center(state, axis, limit, skip_flag)
 		local found_positive = false
 		for y = region.min.y, region.max.y do
 			for z = region.min.z, region.max.z do
-				local pos = {x = 0, y = 0, z = 0}
+				local pos = {
+					x = 0,
+					y = 0,
+					z = 0,
+				}
 				pos[axis] = new_max
 				pos.y = y
 				pos.z = (axis == "x") and z or region.min.z + (z - region.min.z)
@@ -120,7 +148,11 @@ local function expand_axis_from_center(state, axis, limit, skip_flag)
 		local found_negative = false
 		for y = region.min.y, region.max.y do
 			for z = region.min.z, region.max.z do
-				local pos = {x = 0, y = 0, z = 0}
+				local pos = {
+					x = 0,
+					y = 0,
+					z = 0,
+				}
 				pos[axis] = new_min
 				pos.y = y
 				pos.z = (axis == "x") and z or region.min.z + (z - region.min.z)
@@ -342,7 +374,38 @@ end
 
 -- Checks if wall at pos is adjacent to liquid; if yes, it’s necessary
 local function is_wall_adjacent_to_liquid(state, pos)
-	for _, off in ipairs({{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}}) do
+	for _, off in ipairs({
+		{
+			1,
+			0,
+			0,
+		},
+		{
+			-1,
+			0,
+			0,
+		},
+		{
+			0,
+			1,
+			0,
+		},
+		{
+			0,
+			-1,
+			0,
+		},
+		{
+			0,
+			0,
+			1,
+		},
+		{
+			0,
+			0,
+			-1,
+		},
+	}) do
 		local npos = vector.add(pos, vector.new(off[1], off[2], off[3]))
 		ensure_pos_in_area(state, npos)
 		if is_liquid(state, npos) then
@@ -354,7 +417,9 @@ end
 
 -- DFS to mark reachable walls connected to liquid or boundary as necessary
 local function dfs_mark_necessary(state, start_pos, visited)
-	local stack = {start_pos}
+	local stack = {
+		start_pos,
+	}
 
 	while #stack > 0 do
 		local pos = table.remove(stack)
@@ -399,7 +464,12 @@ local function get_cached_wall_state(pos)
 	return nil
 end
 
-local function cache_wall_region(region, state) table.insert(wall_region_cache, {region = region, state = state}) end
+local function cache_wall_region(region, state)
+	table.insert(wall_region_cache, {
+		region = region,
+		state = state,
+	})
+end
 
 -- Remove walls not marked as necessary by DFS
 local function remove_unnecessary_walls(state)
@@ -486,11 +556,25 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 	local region = new_region(vnew(minx, miny, minz), vnew(maxx, maxy, maxz))
 
 	-- Expand bounds
-	local skip_x, skip_y, skip_z = {false}, {false}, {false}
+	local skip_x, skip_y, skip_z = {
+		false,
+	}, {
+		false,
+	}, {
+		false,
+	}
 	local vm = VoxelManip()
 	local area, data = read_voxels_from_map(vm, region)
-	local state = {vm = VoxelManip(), area = area, data = data, region = region, replace = cids_replace, cids_source = cids_source,
-		cids_flowing = cids_flowing}
+	local state = {
+		vm = VoxelManip(),
+		area = area,
+		data = data,
+		region = region,
+		cid_wall = cid_wool_green,
+		replace = cids_replace,
+		cids_source = cids_source,
+		cids_flowing = cids_flowing,
+	}
 
 	local function loop_expand()
 		local area, data = read_voxels_from_map(vm, region)
