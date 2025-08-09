@@ -41,7 +41,7 @@ function voxel_utils.iterate_area(area, func)
 	for z = minp.z, maxp.z do
 		for y = minp.y, maxp.y do
 			for x = minp.x, maxp.x do
-				func(vector.new(x, y, z))
+				func(vector_new(x, y, z))
 			end
 		end
 	end
