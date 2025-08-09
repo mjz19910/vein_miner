@@ -321,7 +321,23 @@ local function do_remove_nonblocking_walls(itemstack, user, pointed_thing)
 	return itemstack
 end
 
-local function repeat_action(user, itemstack, pointed_thing)
+local function raycast_next_pointed(user, max_distance)
+	local pos = user:get_pos()
+	local eye_offset = vector.new(0, user:get_properties().eye_height or 1.5, 0)
+	local eye_pos = vector.add(pos, eye_offset)
+	local look_dir = user:get_look_dir()
+
+	local ray = core.raycast(eye_pos, vector.add(eye_pos, vector.multiply(look_dir, max_distance)), false, false)
+
+	for pointed_thing in ray do
+		if pointed_thing.type == "node" then
+			return pointed_thing
+		end
+	end
+	return nil
+end
+
+local function repeat_action(user, itemstack)
 	if not user or not user:is_player() then
 		return
 	end
@@ -334,13 +350,18 @@ local function repeat_action(user, itemstack, pointed_thing)
 		return
 	end
 
+	local next_pointed = raycast_next_pointed(user)
+	if not next_pointed then
+		return
+	end
+
 	-- Call the remove walls function
-	do_remove_nonblocking_walls(itemstack, user, pointed_thing)
+	do_remove_nonblocking_walls(itemstack, user, next_pointed)
 
 	-- Repeat after delay (e.g., 0.4s)
 	minetest.after(0.4, function()
 		if active_players[player_name] then
-			repeat_action(user, itemstack, pointed_thing)
+			repeat_action(user, itemstack)
 		end
 	end)
 end
@@ -354,16 +375,11 @@ minetest.register_tool("vein_miner:remove_walls", {
 	---@param pointed_thing table
 	---@return ItemStack
 	on_use = function(itemstack, user, pointed_thing)
-		if not pointed_thing or pointed_thing.type ~= "node" then
-			return itemstack
-		end
-
 		local player_name = user:get_player_name()
 		if not active_players[player_name] then
 			active_players[player_name] = true
-			repeat_action(user, itemstack, pointed_thing)
+			repeat_action(user, itemstack)
 		end
-
 		return itemstack
 	end,
 
