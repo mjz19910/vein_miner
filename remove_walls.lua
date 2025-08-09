@@ -199,12 +199,20 @@ local function split_area_into_chunks_with_start(chunk_area, walls_to_remove, vm
 	local min = chunk_area.MinEdge
 	local max = chunk_area.MaxEdge
 
-	for x = min.x, max.x, MAP_BLOCKSIZE do
-		for y = min.y, max.y, MAP_BLOCKSIZE do
-			for z = min.z, max.z, MAP_BLOCKSIZE do
+	local xsz = min.x - max.x
+	local ysz = min.y - max.y
+	local zsz = min.z - max.z
+
+	local x_chunk_sz = math.min(MAX_CHUNK_SIZE, math.floor(xsz / 2))
+	local y_chunk_sz = math.min(MAX_CHUNK_SIZE, math.floor(ysz / 2))
+	local z_chunk_sz = math.min(MAX_CHUNK_SIZE, math.floor(zsz / 2))
+
+	for x = min.x, max.x, x_chunk_sz - 1 do
+		for y = min.y, max.y, y_chunk_sz - 1 do
+			for z = min.z, max.z, z_chunk_sz - 1 do
 				local chunk_min = vector.new(x, y, z)
-				local chunk_max = vector.new(math.min(x + MAP_BLOCKSIZE - 1, max.x), math.min(y + MAP_BLOCKSIZE - 1, max.y),
-					math.min(z + MAP_BLOCKSIZE - 1, max.z))
+				local chunk_max = vector.new(math.min(x + x_chunk_sz - 1, max.x), math.min(y + y_chunk_sz - 1, max.y),
+					math.min(z + z_chunk_sz - 1, max.z))
 
 				vm:read_from_map(chunk_min, chunk_max)
 				local area = VoxelArea:new({
