@@ -166,3 +166,5 @@ ia(vein_miner.CFG.MINE_ONLY_CUR_SET, {"mesecons_movestones:sticky_movestone_vert
 ia(vein_miner.CFG.MINE_ONLY_CUR_SET, {"mesecons_movestones:sticky_movestone"})
 
 ia(vein_miner.CFG.MINE_ONLY_CUR_SET, {"default:coral_skeleton"})
+local mine_only_set = vein_miner.CFG.MINE_ONLY_CUR_SET
+ia(mine_only_set, {"default:coral_green"})
