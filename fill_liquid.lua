@@ -75,6 +75,9 @@ core.register_on_mods_loaded(function()
 	cid_wool_green = cid("wool:green")
 end)
 
+local State = {}
+State.__index = State
+
 local vec_add = vector.add
 local vec_sub = vector.subtract
 
@@ -112,6 +115,13 @@ local function read_voxels_from_map(vm, region)
 	}
 	local data = vm:get_data()
 	return area, data
+end
+
+function State:reload_region(region)
+	local area, data = read_voxels_from_map(self.vm, region)
+	self.area = area
+	self.data = data
+	self.region = region
 end
 
 local function expand_axis_from_center(state, axis, limit, skip_flag)
@@ -536,28 +546,19 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 		return
 	end
 
-	local region = new_region(vec_new(minx, miny, minz), vec_new(maxx, maxy, maxz))
-
 	-- Expand bounds
 	local skip_x, skip_y, skip_z = {false}, {false}, {false}
 	local vm = VoxelManip()
-	local area, data = read_voxels_from_map(vm, region)
-	local state = {
-		vm = VoxelManip(),
-		area = area,
-		data = data,
-		region = region,
+	local state = setmetatable({
+		vm = vm,
 		cid_wall = cid_wool_green,
 		cids_replace = cids_replace,
 		cids_source = cids_source,
 		cids_flowing = cids_flowing,
-	}
+	}, State)
+	state:reload_region(new_region(vec_new(minx, miny, minz), vec_new(maxx, maxy, maxz)))
 
 	local function loop_expand()
-		local area, data = read_voxels_from_map(vm, region)
-		state.area = area
-		state.data = data
-
 		if not skip_x[1] and expand_axis_from_center(state, "x", 96, skip_x) then
 			return true
 		end
@@ -571,19 +572,13 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 	end
 
 	while loop_expand() do
+		state:reload_region(state.region)
 	end
 
-	region.min = vector.subtract(region.min, 2)
-	region.max = vector.add(region.max, 2)
-
-	local area, data = read_voxels_from_map(vm, region)
-	state.area = area
-	state.data = data
+	state:reload_region(state.region:grow(2))
 
 	-- Clear liquids
-	local clear_region = new_region(vector.add(region.min, 2), vector.subtract(region.max, 2))
-
-	for pos in iter_region_positions(clear_region) do
+	for pos in iter_region_positions(state.region:shrink(2)) do
 		local i = state.area:indexp(pos)
 		if cids_replace[state.data[i]] then
 			state.data[i] = cid_air
@@ -591,9 +586,7 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 	end
 
 	-- Build walls
-	local wall_region = new_region(vector.add(region.min, 1), vector.subtract(region.max, 1))
-
-	for pos in iter_region_positions(wall_region) do
+	for pos in iter_region_positions(state.region:shrink(1)) do
 		local i = state.area:indexp(pos)
 		if state.data[i] ~= cid_air then
 			goto continue_wall
@@ -610,16 +603,11 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 		::continue_wall::
 	end
 
-	region.min = vector.subtract(region.min, 1)
-	region.max = vector.add(region.max, 1)
-
-	local area, data = read_voxels_from_map(vm, region)
-	state.area = area
-	state.data = data
+	state:reload_region(state.region:grow(1))
 
 	remove_unnecessary_walls(state)
 
-	cache_wall_region(region, state)
+	cache_wall_region(state.region, state)
 
 	state.vm:set_data(state.data)
 	state.vm:write_to_map()

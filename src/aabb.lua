@@ -22,6 +22,7 @@ local function new_region(min, max)
 end
 
 function region_mt:shrink(margin) return new_region(add(self.min, margin), sub(self.max, margin)) end
+function region_mt:grow(margin) return new_region(sub(self.min, margin), add(self.max, margin)) end
 
 local function regions_overlap(a, b)
 	local x_overlap = a.max.x >= b.min.x and a.min.x <= b.max.x
