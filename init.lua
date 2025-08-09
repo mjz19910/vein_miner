@@ -6,7 +6,7 @@ vein_miner = {deque = {}}
 dofile(modpath .. "/deque.lua")
 dofile(modpath .. "/src/helpers.lua")
 dofile(modpath .. "/src/aabb.lua")
-dofile(modpath .. "/fill_liquid.lua")
+dofile(modpath .. "/liquid_filler.lua")
 
 local fill_liquid_at_pos = vein_miner.fill_liquid_at_pos
 

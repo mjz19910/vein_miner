@@ -51,6 +51,12 @@ local cid_air, cid_wool_green
 local cids_source, cids_flowing
 local cids_replace = {}
 
+local function verbose_log(fmt, ...)
+	if minetest.settings:get_bool("vein_miner_verbose_logging", false) then
+		core.log("verbose", ("[liquid_filler.lua] " .. fmt):format(...))
+	end
+end
+
 core.register_on_mods_loaded(function()
 	local cid_water_source = cid("default:water_source")
 	local cid_water_flowing = cid("default:water_flowing")
