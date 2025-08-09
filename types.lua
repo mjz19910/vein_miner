@@ -57,6 +57,7 @@ local chunk = {}
 ---@class VeinMinerConfig
 ---@field cardinal_dirs Vector[]
 ---@field MINE_ONLY_CUR_SET string[]
+---@field VEC_DIRS Vector[]
 local config = {}
 
 ---@class VeinMinerGlobal

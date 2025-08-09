@@ -96,9 +96,8 @@ vein_miner.CFG = {
 	},
 	cardinal_dirs = {p(0, 1, 0), p(0, -1, 0), p(1, 0, 0), p(-1, 0, 0), p(0, 0, 1), p(0, 0, -1)},
 }
----Insert all elements from `src` into vein_miner.CFG.VEC_DIRS (in-place)
----@generic T
----@param src  T[]  -- Source array
+---Insert all elements into `vein_miner.CFG.VEC_DIRS`
+---@param src  Vector[]
 local function i_vec_dirs(src) ia(vein_miner.CFG.VEC_DIRS, src) end
 -- self
 i_vec_dirs({p(0, 0, 0)})
