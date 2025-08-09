@@ -18,8 +18,6 @@ local function is_blocking_flow(data, area, liquids, pos)
 	return false
 end
 
-local function pos_key(pos) return pos.x .. "," .. pos.y .. "," .. pos.z end
-
 -- DFS traversal over voxels in 'area' starting at 'start_pos'
 -- Calls 'action(pos, vi)' on each visited voxel that matches walls_to_remove and not blocking flow.
 local function dfs_voxels(start_pos, area, data, walls_to_remove, liquids, action)
@@ -28,7 +26,7 @@ local function dfs_voxels(start_pos, area, data, walls_to_remove, liquids, actio
 
 	while #stack > 0 do
 		local pos = table.remove(stack)
-		local key = pos_key(pos)
+		local key = core.hash_node_position(pos)
 		if visited[key] then
 			goto continue
 		end
