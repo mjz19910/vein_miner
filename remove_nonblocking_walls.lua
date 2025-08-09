@@ -1,3 +1,8 @@
+local core = core
+local vector = vector
+local ipairs = ipairs
+
+local pos_str = core.pos_to_string
 local vec_new = vector.new
 local cardinal_dirs = {vec_new(1, 0, 0), vec_new(-1, 0, 0), vec_new(0, 1, 0), vec_new(0, -1, 0), vec_new(0, 0, 1), vec_new(0, 0, -1)}
 
@@ -190,6 +195,13 @@ local function split_area_into_chunks(p1, p2)
 	return chunks
 end
 
+local log_scope = "[remove_nonblocking_walls] "
+
+local function log_chunk_warning(chunk, removed_count)
+	local msg = string.format("Processed chunk from %s to %s, removed %d nodes", pos_str(chunk.min), pos_str(chunk.max), removed_count)
+	minetest.log("warning", log_scope .. msg)
+end
+
 local function process_chunks_delayed(chunks, vm, walls_to_remove, liquids, action, user, idx, removed_total)
 	idx = idx or 1
 	removed_total = removed_total or 0
@@ -210,6 +222,7 @@ local function process_chunks_delayed(chunks, vm, walls_to_remove, liquids, acti
 
 	local removed = remove_nonblocking_walls_dfs(vm, chunk.min, walls_to_remove, liquids, action, area, data)
 	removed_total = removed_total + removed
+	log_chunk_warning(chunk, removed)
 
 	vm:set_data(data)
 	vm:write_to_map()
