@@ -6,6 +6,7 @@ dofile(modpath .. "/auto_floor.lua")
 vein_miner = {
 	deque = {},
 }
+dofile(modpath .. "/src/config.lua")
 dofile(modpath .. "/deque.lua")
 dofile(modpath .. "/src/helpers.lua")
 dofile(modpath .. "/src/aabb.lua")
@@ -111,7 +112,6 @@ local player_hud = dofile(modpath .. "/src/player_hud.lua")
 
 local log_work_start = false
 
-dofile(modpath .. "/src/config.lua")
 dofile(modpath .. "/src/player_config.lua")
 
 local floor = math.floor
