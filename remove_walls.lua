@@ -1,4 +1,5 @@
 local core = core
+---@type VectorModule
 local vector = vector
 local ipairs = ipairs
 
@@ -28,17 +29,6 @@ local function is_blocking_flow(data, area, liquids, pos)
 	return false
 end
 
----@class Count
----@field val integer
-
----@param v integer
----@return Count
-local function Count(v)
-	return {
-		val = v,
-	}
-end
-
 ---@param vm VoxelManip
 ---@param start_pos Vector
 ---@param walls_to_remove table<integer, boolean>
@@ -64,12 +54,10 @@ local function remove_nonblocking_walls_dfs(vm, start_pos, walls_to_remove, liqu
 		visited[h] = true
 
 		local vi = area:indexp(pos)
-		if not vi or vi < 1 or vi > #data then
-			goto continue
-		end
-
+		assert(vi >= 1 and vi <= #data, "Voxel index out of bounds")
 		local cid = data[vi]
 		if walls_to_remove[cid] and not is_blocking_flow(data, area, liquids, pos) then
+			print("Removing node at", pos_str(pos), "cid", cid)
 			data[vi] = minetest.CONTENT_AIR
 			removed_count = removed_count + 1
 		end
@@ -195,6 +183,9 @@ minetest.register_tool("vein_miner:remove_nonblocking_walls", {
 		local cid_vein_wall = minetest.get_content_id("vein_miner:lit_cobble_1")
 		local cid_wool_green = minetest.get_content_id("wool:green")
 
+		print("cid_vein_wall", cid_vein_wall)
+		print("cid_wool_green", cid_wool_green)
+
 		local cid_water_source = minetest.get_content_id("default:water_source")
 		local cid_water_flowing = minetest.get_content_id("default:water_flowing")
 		local cid_lava_source = minetest.get_content_id("default:lava_source")
@@ -216,7 +207,7 @@ minetest.register_tool("vein_miner:remove_nonblocking_walls", {
 		local base_p1 = vector_new(start_pos.x, start_pos.y, start_pos.z)
 		local base_p2 = vector_new(start_pos.x, start_pos.y, start_pos.z)
 
-		local expanded_p1, expanded_p2 = expand_area(base_p1, base_p2, 9)
+		local expanded_p1, expanded_p2 = expand_area(base_p1, base_p2, 12)
 
 		local size_x = expanded_p2.x - expanded_p1.x + 1
 		local size_y = expanded_p2.y - expanded_p1.y + 1
