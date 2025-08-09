@@ -7,7 +7,7 @@ vein_miner = {
 	deque = {},
 }
 dofile(modpath .. "/voxel_utils.lua")
-dofile(modpath .. "/src/config.lua")
+dofile(modpath .. "/config.lua")
 dofile(modpath .. "/deque.lua")
 dofile(modpath .. "/src/helpers.lua")
 dofile(modpath .. "/src/aabb.lua")

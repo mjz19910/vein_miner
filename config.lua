@@ -161,3 +161,5 @@ register_wires_group()
 i(vein_miner.CFG.MINE_ONLY_CUR_SET, "mesecons_powerplant:power_plant")
 ia(vein_miner.CFG.MINE_ONLY_CUR_SET, {"mesecons_movestones:sticky_movestone_vertical", "mesecons_stickyblocks:sticky_block_all"})
 ia(vein_miner.CFG.MINE_ONLY_CUR_SET, {"mesecons_movestones:sticky_movestone"})
+
+ia(vein_miner.CFG.MINE_ONLY_CUR_SET, {"default:coral_skeleton"})

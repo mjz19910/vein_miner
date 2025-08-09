@@ -54,3 +54,4 @@
 
 ---@class VeinMinerGlobal
 ---@field CFG VeinMinerConfig
+---@field MINE_ONLY_CUR_SET string[]
