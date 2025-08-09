@@ -532,8 +532,7 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 			goto continue_wall
 		end
 
-		for _, off in ipairs({vector.new(1, 0, 0), vector.new(-1, 0, 0), vector.new(0, 1, 0), vector.new(0, -1, 0), vector.new(0, 0, 1),
-			vector.new(0, 0, -1)}) do
+		for _, off in ipairs(cardinal_dirs) do
 			local neighbor_pos = pos + off
 			local ni = state.area:indexp(neighbor_pos)
 			if cids_source[state.data[ni]] then
