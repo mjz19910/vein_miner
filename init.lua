@@ -299,7 +299,7 @@ end
 local function on_light_source(pos)
 	local res = {}
 	for i, v in pairs(vec_dirs) do
-		local next_pos = check_pos(pos + v)
+		local next_pos = utils.check_pos(pos + v)
 		if next_pos then
 			return next_pos
 		end
@@ -307,7 +307,7 @@ local function on_light_source(pos)
 	for i, dir in pairs(joined_dirs) do
 		local distance = vector.distance(vector.new(0, 0, 0), dir)
 		if not known_dir_set[core.hash_node_position(dir)] then
-			local next_pos = check_pos(pos + dir)
+			local next_pos = utils.check_pos(pos + dir)
 			if next_pos then
 				on_found_empty_space(dir)
 				table.insert(res, next_pos)
@@ -319,7 +319,7 @@ local function on_light_source(pos)
 		for i2, dir2 in pairs(vec_dirs) do
 			local distance = vector.distance(vector.new(0, 0, 0), dir1 + dir2)
 			if not known_dir_set[core.hash_node_position(dir1 + dir2)] then
-				local next_pos = check_pos(pos + dir1 + dir2)
+				local next_pos = utils.check_pos(pos + dir1 + dir2)
 				if next_pos then
 					on_found_empty_space(dir1 + dir2)
 					table.insert(res, next_pos)
@@ -342,7 +342,7 @@ local function mark_near_light(state, node_name, pos)
 	local h = core.hash_node_position(pos)
 	if not state.known_lights[h] then
 		state.known_lights[h] = true
-		add_pos_to_queue(state, node_name, pos)
+		utils.add_pos_to_queue(state, node_name, pos)
 		return true
 	end
 	return false
@@ -362,17 +362,6 @@ local function count_found_nodes(iter, orig_pos, player_name)
 	return count
 end
 
-local function notify_pos(pos, color, size, expire_time)
-	core.add_particle({
-		pos = pos,
-		expirationtime = expire_time or 30,
-		size = size or 6,
-		collisiondetection = false,
-		vertical = false,
-		texture = "bubble.png^[colorize:" .. color .. ":160",
-		glow = 15,
-	})
-end
 local function wait_for_player_near_pos(player, target_pos)
 	local out_of_range = vector.distance(player:get_pos(), target_pos) > 220
 	while out_of_range and vector.distance(player:get_pos(), target_pos) > 128 do
@@ -398,10 +387,10 @@ local function wait_for_player_near_pos(player, target_pos)
 
 		player:set_look_horizontal(yaw)
 		player:set_look_vertical(pitch)
-		async_wait(0.2)
+		utils.async_wait(0.2)
 	end
 	if out_of_range then
-		async_wait(0.6)
+		utils.async_wait(0.6)
 	end
 end
 local region_scan_fmt1 = "[LightScan] scanned region (%d) %s"
@@ -498,30 +487,25 @@ core.register_chatcommand("toggle_light_debug", {
 		end
 	end,
 })
-
-local function place_mese_particle(pos, size)
-	core.add_particle({
-		pos = pos,
-		velocity = vector.new(0, 0, 0),
-		acceleration = vector.new(0, 0, 0),
-		expirationtime = 4,
-		size = size,
-		texture = "default_mese_block.png",
-		glow = 15,
-	})
-end
+local add_particle = core.add_particle
 local function place_particle(pos, size, texture)
-	core.add_particle({
+	add_particle({
 		pos = pos,
-		velocity = vector.new(0, 0, 0),
-		acceleration = vector.new(0, 0, 0),
 		expirationtime = 4,
-		size = size,
-		texture = texture,
+		size = size or 4,
+		texture = texture or "default_mese_block.png",
 		glow = 15,
 	})
 end
-
+local function notify_pos(pos, color, size, expire_time)
+	add_particle({
+		pos = pos,
+		expirationtime = expire_time or 30,
+		size = size or 6,
+		texture = "bubble.png^[colorize:" .. color .. ":160",
+		glow = 15,
+	})
+end
 local function clamp_max(vmin, vmax, step)
 	local range = vmax - vmin
 	local count = math.ceil(range / step)
@@ -587,6 +571,11 @@ local function find_closest_index(arr, value)
 	return closest_idx
 end
 
+local function stone_part(pos) place_particle(pos, 6 / 3, "default_stone.png") end
+local function mese_blk_part(pos) place_particle(pos, 6 / 3, "default_mese_block.png") end
+local function diamond_blk_part(pos) place_particle(pos, 6 / 3, "default_diamond_block.png") end
+local function stone_blk_part(pos) place_particle(pos, 6 / 3, "default_stone_block.png") end
+
 function aabb.draw(r)
 	local min = r.min
 	local max = r.max
@@ -594,7 +583,7 @@ function aabb.draw(r)
 
 	-- Center point
 	local center = vector.divide(vector.add(min, max), 2)
-	place_mese_particle(center)
+	mese_blk_part(center)
 
 	local x_vals = linspace_centered(min.x, max.x, center.x, step)
 	local y_vals = linspace_centered(min.y, max.y, center.y, step)
@@ -604,13 +593,6 @@ function aabb.draw(r)
 	local cx = find_closest_index(x_vals, center.x)
 	local cy = find_closest_index(y_vals, center.y)
 	local cz = find_closest_index(z_vals, center.z)
-
-	local layers = { --
-	function(pos) place_particle(pos, 6 / 3, "default_stone.png") end, --
-	function(pos) place_mese_particle(pos, 6 / 3) end, --
-	function(pos) place_particle(pos, 6 / 3, "default_diamond_block.png") end, --
-	function(pos) place_particle(pos, 6 / 3, "default_stone_block.png") end --
-	}
 
 	-- Draw shell
 	for _, x in ipairs(x_vals) do
@@ -624,13 +606,13 @@ function aabb.draw(r)
 					local pos = vector.new(x, y, z)
 
 					if not on_y_edge then
-						layers[2](pos)
+						mese_blk_part(pos)
 					elseif y == max.y then
-						layers[1](pos)
+						stone_part(pos)
 					elseif y ~= min.y and (on_x_edge or on_z_edge) then
-						layers[4](pos)
+						stone_blk_part(pos)
 					elseif y == min.y then
-						layers[3](pos)
+						diamond_blk_part(pos)
 					end
 				end
 			end
@@ -640,17 +622,17 @@ function aabb.draw(r)
 	-- Draw axis lines through center
 	for i = 2, #x_vals - 1 do
 		if i ~= cx then
-			layers[2](vector.new(x_vals[i], y_vals[cy], z_vals[cz]))
+			mese_blk_part(vector.new(x_vals[i], y_vals[cy], z_vals[cz]))
 		end
 	end
 	for i = 2, #y_vals - 1 do
 		if i ~= cy then
-			layers[2](vector.new(x_vals[cx], y_vals[i], z_vals[cz]))
+			mese_blk_part(vector.new(x_vals[cx], y_vals[i], z_vals[cz]))
 		end
 	end
 	for i = 2, #z_vals - 1 do
 		if i ~= cz then
-			layers[2](vector.new(x_vals[cx], y_vals[cy], z_vals[i]))
+			mese_blk_part(vector.new(x_vals[cx], y_vals[cy], z_vals[i]))
 		end
 	end
 end
