@@ -26,29 +26,6 @@ end
 ---@type table<integer, boolean>
 local liquids = {}
 
-local function is_blocking_flow(data, area, pos)
-	local current_cid = data[area:indexp(pos)]
-	if liquids[current_cid] then
-		return false
-	end
-	for _, dir in ipairs(cardinal_dirs) do
-		local npos = vector.add(pos, dir)
-		if area:containsp(npos) then
-			local neighbor_cid = data[area:indexp(npos)]
-			if liquids[neighbor_cid] then
-				return true
-			end
-		else
-			local n_node = core.get_node(npos)
-			local neighbor_cid = core.get_content_id(n_node.name)
-			if liquids[neighbor_cid] then
-				return true
-			end
-		end
-	end
-	return false
-end
-
 ---@type table<integer, boolean>
 local walls_to_remove = {}
 
@@ -127,11 +104,9 @@ local function remove_all_walls_in_area(user, chunk_area)
 
 	local removed_count = 0
 	for _, pos in ipairs(positions_to_remove) do
-		if not is_blocking_flow(data, area, pos) then
-			local vi = area:indexp(pos)
-			data[vi] = minetest.CONTENT_AIR
-			removed_count = removed_count + 1
-		end
+		local vi = area:indexp(pos)
+		data[vi] = minetest.CONTENT_AIR
+		removed_count = removed_count + 1
 	end
 
 	vm:set_data(data)
@@ -174,7 +149,7 @@ local function remove_nonblocking_walls_dfs(vm, start_list, area, data)
 		local vi = area:indexp(pos)
 		local cid = data[vi]
 
-		if walls_to_remove[cid] and not is_blocking_flow(data, area, pos) then
+		if walls_to_remove[cid] then
 			data[vi] = minetest.CONTENT_AIR
 			removed_count = removed_count + 1
 		end
@@ -440,8 +415,8 @@ local function remove_walls_in_area(itemstack, user, pointed_thing)
 
 	local start_pos = pointed_thing.under
 	local chunk_area = VoxelArea:new{
-		MinEdge = vector.subtract(start_pos, 48),
-		MaxEdge = vector.add(start_pos, 48),
+		MinEdge = vector.subtract(start_pos, 64),
+		MaxEdge = vector.add(start_pos, 64),
 	}
 
 	local name = user:get_player_name()
@@ -464,7 +439,7 @@ local function remove_walls_in_area(itemstack, user, pointed_thing)
 			for x = min.x, max.x do
 				local pos = vector.new(x, y, z)
 				local vi = area:indexp(pos)
-				if walls_to_remove[data[vi]] and not is_blocking_flow(data, area, pos) then
+				if walls_to_remove[data[vi]] then
 					data[vi] = minetest.CONTENT_AIR
 					removed_count = removed_count + 1
 				end
