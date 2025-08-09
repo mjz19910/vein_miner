@@ -919,7 +919,7 @@ local function dig_pos_process_queue_item(state, item, player_name)
 	while not utils.has_empty_main_inv_slot(state.player) do
 		utils.async_wait(3)
 	end
-	if target_flags.liquid then
+	if false and target_flags.liquid then
 		iter_node_groups(state, core.find_nodes_in_area(minvec, maxvec, water_targets, true))
 	end
 	if target_flags.falling then
