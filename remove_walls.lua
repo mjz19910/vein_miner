@@ -62,8 +62,8 @@ local function repeat_action(user, itemstack, pointed_thing)
 	end)
 end
 
-minetest.register_tool("vein_miner:remove_nonblocking_walls", {
-	description = "Remove Non-blocking Walls Tool",
+minetest.register_tool("vein_miner:remove_walls", {
+	description = "Remove Walls Tool",
 	inventory_image = "default_tool_steelpick.png",
 
 	on_use = function(itemstack, user, pointed_thing)
