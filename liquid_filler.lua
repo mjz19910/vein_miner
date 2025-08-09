@@ -640,43 +640,61 @@ end
 
 -- === Main function ===
 function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
+	verbose_log("fill_liquid_at_pos called at %s", pos_str(pos))
+
 	if not liquid_set[core.get_node(pos).name] then
+		verbose_log("Position %s is not a liquid node, skipping", pos_str(pos))
 		return
 	end
 
 	local cached_state = get_cached_wall_state(pos)
 	if cached_state then
+		verbose_log("Using cached wall state for position %s", pos_str(pos))
 		return
 	end
 
 	local LIMIT = 64 * 6
+	verbose_log("Starting flood fill with limit %d", LIMIT)
 	local region = flood_fill_liquid(pos, LIMIT)
 	if not region then
+		verbose_log("Flood fill found no liquid region at %s", pos_str(pos))
 		return
 	end
+	verbose_log("Flood fill liquid region: min=%s max=%s", pos_str(region.min), pos_str(region.max))
 
 	local state = State:new(VoxelManip(), cid_wool_green)
 	state:reload_region(region)
 
-	-- Expand bounds
+	verbose_log("Expanding liquid bounds from region min=%s max=%s", pos_str(region.min), pos_str(region.max))
 	expand_liquid_bounds(state, region, notify_pos, vein_miner_state)
+	verbose_log("Expanded liquid bounds: min=%s max=%s", pos_str(region.min), pos_str(region.max))
 
 	region:grow(2)
+	verbose_log("Region grown by 2 blocks: min=%s max=%s", pos_str(region.min), pos_str(region.max))
 	state:reload_region(region)
 
+	verbose_log("Clearing liquids inside region")
 	clear_liquids(state, region)
+
+	verbose_log("Building walls inside region")
 	build_walls(state, region)
 
 	region:grow(1)
+	verbose_log("Region grown by 1 block: min=%s max=%s", pos_str(region.min), pos_str(region.max))
 	state:reload_region(region)
 
+	verbose_log("Removing unnecessary walls")
 	remove_unnecessary_walls(state, region)
 
 	cache_wall_region(region, state)
+
 	remove_overlapping_wall_regions(wall_region_cache)
+	verbose_log("Removed overlapping wall regions from cache")
 
 	state.vm:set_data(state.data)
 	state.vm:write_to_map()
 	state.vm:update_liquids()
 	state.vm:update_map()
+
+	verbose_log("Completed fill_liquid_at_pos for %s", pos_str(pos))
 end

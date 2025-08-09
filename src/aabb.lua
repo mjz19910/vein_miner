@@ -4,7 +4,7 @@ local ipairs = ipairs
 local table = table
 local math = math
 
-local add = vector.add
+local vec_add = vector.add
 local sub = vector.subtract
 local insert = table.insert
 local remove = table.remove
@@ -25,8 +25,8 @@ function region_mt:assign_parts(min, max)
 	self.max = max
 end
 
-function region_mt:shrink_parts(margin) return add(self.min, margin), add(self.max, -margin) end
-function region_mt:grow_parts(margin) return add(self.min, -margin), add(self.max, margin) end
+function region_mt:shrink_parts(margin) return vec_add(self.min, margin), vec_add(self.max, -margin) end
+function region_mt:grow_parts(margin) return vec_add(self.min, -margin), vec_add(self.max, margin) end
 
 function region_mt:shrink_clone(margin)
 	local min, max = self:shrink_parts(margin)
