@@ -132,4 +132,15 @@ function voxel_utils.flood_fill(vm, data, area, start_pos, predicate, fill_conte
 	end
 end
 
+---Insert all elements from `src` into `dest` (in-place)
+---@generic T
+---@param dest T[]  -- Destination array
+---@param src  T[]  -- Source array
+function voxel_utils.insert_all(dest, src)
+    local len = #dest
+    for i = 1, #src do
+        dest[len + i] = src[i]
+    end
+end
+
 return voxel_utils

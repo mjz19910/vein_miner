@@ -2,6 +2,10 @@ local vector = vector
 local table = table
 local p = vector.new
 local i = table.insert
+---Insert all elements from `src` into `dest` (in-place)
+---@generic T
+---@param dest T[]  -- Destination array
+---@param src  T[]  -- Source array
 local ia = table.insert_all
 
 vein_miner.CFG = {
