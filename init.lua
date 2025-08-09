@@ -20,8 +20,8 @@ require("mods.vein_miner.helpers")
 require("mods.vein_miner.aabb")
 require("mods.vein_miner.liquid_filler")
 require("mods.vein_miner.remove_walls")
-local player_hud = require("mods.vein_miner.src.player_hud")
-local p_config = require("mods.vein_miner.src.player_config")
+local player_hud = require("mods.vein_miner.player_hud")
+local p_config = require("mods.vein_miner.player_config")
 require("mods.vein_miner.late_utils")
 
 local utils = utils
