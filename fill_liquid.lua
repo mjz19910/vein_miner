@@ -1,7 +1,7 @@
 local ipairs = ipairs
 
 local table = table
-local vector = vector
+-- local vector = vector
 
 local insert_all = table.insert_all
 local vnew = vector.new
@@ -147,11 +147,7 @@ local function expand_axis_from_center(state, axis, limit, skip_flag)
 		local found_negative = false
 		for y = region.min.y, region.max.y do
 			for z = region.min.z, region.max.z do
-				local pos = {
-					x = 0,
-					y = 0,
-					z = 0,
-				}
+				local pos = vector.zero()
 				pos[axis] = new_min
 				pos.y = y
 				pos.z = (axis == "x") and z or region.min.z + (z - region.min.z)
@@ -427,8 +423,9 @@ core.register_globalstep(function(dtime)
 end)
 
 local function pos_in_region(pos, region)
-	return pos.x >= region.min.x and pos.x <= region.max.x and pos.y >= region.min.y and pos.y <= region.max.y and pos.z >= region.min.z and
-		       pos.z <= region.max.z
+	local min = region.min
+	local max = region.max
+	return pos.x >= min.x and pos.x <= max.x and pos.y >= min.y and pos.y <= max.y and pos.z >= min.z and pos.z <= max.z
 end
 
 local function get_cached_wall_state(pos)
