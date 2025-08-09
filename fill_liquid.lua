@@ -12,6 +12,7 @@ local co_yield = coroutine.yield
 
 -- local builtin lua functions
 local ipairs = ipairs
+local pairs = pairs
 
 -- minetest tables
 local core = core
