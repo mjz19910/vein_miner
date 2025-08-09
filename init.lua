@@ -225,12 +225,6 @@ function BlockDigger.should_dig(node, pos)
 	end
 	return true -- safe to mine
 end
--- function BlockDigger.should_dig(node)
--- 	if node.name == "air" then
--- 		return false
--- 	end
--- 	return true
--- end
 
 local light_scan_boost = 0
 
