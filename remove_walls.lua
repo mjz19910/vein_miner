@@ -1,13 +1,18 @@
 local VoxelArea = VoxelArea
-local minetest = minetest
+-- local minetest = minetest
 
 local CFG = vein_miner.CFG
 
 local DELAY_SECONDS = 0.5
-local MAX_CHUNK_SIZE = 24
+local MAX_CHUNK_SIZE = 8 * 2
 local MAP_BLOCKSIZE = 8
 
 local cardinal_dirs = CFG.cardinal_dirs
+
+local function send_message_to_user(name, msg)
+	core.chat_send_player(name, msg)
+	core.log("action", msg)
+end
 
 local function is_blocking_flow(data, area, liquids, pos)
 	local current_cid = data[area:indexp(pos)]
@@ -137,7 +142,7 @@ local function process_chunks_delayed(chunks, vm, walls_to_remove, liquids, user
 		vm:read_from_map(area.MinEdge, area.MaxEdge)
 		local data = vm:get_data()
 
-		local removed_count = remove_nonblocking_walls_dfs(vm, chunk.start_pos, walls_to_remove, liquids, area, data)
+		local removed_count = remove_nonblocking_walls_dfs(vm, chunk.start_list, walls_to_remove, liquids, area, data)
 		removed_total = removed_total + removed_count
 
 		vm:set_data(data)
@@ -267,13 +272,21 @@ local function do_remove_nonblocking_walls(itemstack, user, pointed_thing)
 	local base_p1 = vector.new(start_pos.x, start_pos.y, start_pos.z)
 	local base_p2 = vector.new(start_pos.x, start_pos.y, start_pos.z)
 
-	local min, max = expand_area(base_p1, base_p2, 1)
+	local min, max = expand_area(base_p1, base_p2, 2)
 	local chunk_area = VoxelArea:new{
 		MinEdge = min,
 		MaxEdge = max,
 	}
 	local vm = minetest.get_voxel_manip()
 	local chunks = split_area_into_chunks_with_start(chunk_area, walls_to_remove, vm)
+
+	local chunk_areas = {}
+	for _, v in ipairs(chunks) do
+		table.insert(chunk_areas, {v.area.MinEdge, v.area.MaxEdge})
+	end
+	local name = user:get_player_name()
+
+	send_message_to_user(name, "chunk_areas=" .. core.serialize(chunk_areas))
 
 	if #chunks == 0 then
 		minetest.chat_send_player(user:get_player_name(), "No removable walls found nearby.")
