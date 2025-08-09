@@ -1,21 +1,28 @@
-local offset = vector.offset
-local ipairs = ipairs
-local vector = vector
 local core = core
+local dofile = dofile
+
+local utils = dofile(core.get_modpath("vein_miner") .. "/utils.lua")
+local require = utils.require
+
 local minetest = minetest
+local vector = vector
+local ipairs = ipairs
 local next = next
 local table = table
-local dofile = dofile
 local tonumber = tonumber
-
-local utils = dofile(minetest.get_modpath("vein_miner") .. "/utils.lua")
+local pairs = pairs
+local string = string
+local math = math
+local offset = vector.offset
+local string_match = string.match
+local floor = math.floor
+local ceil = math.ceil
 
 ---@type VeinMinerGlobal
 vein_miner = {
 	deque = {},
 }
 local vein_miner = vein_miner
-local require = utils.require
 require("mods.vein_miner.deque")
 require("mods.vein_miner.auto_floor")
 require("mods.vein_miner.voxel_utils")
@@ -124,10 +131,6 @@ minetest.register_on_mods_loaded(function()
 end)
 
 local log_work_start = false
-
-local floor = math.floor
-local ceil = math.ceil
-local string_match = string.match
 
 local log_error = vein_miner.h.log_error
 local log_warning = vein_miner.h.log_warning
