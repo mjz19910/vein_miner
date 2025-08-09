@@ -93,8 +93,10 @@ local function push(qx, qy, qz, q_tail, x, y, z)
 	return q_tail + 1
 end
 
+local hash_pos = core.hash_node_position
+
 local function maybe_enqueue(qx, qy, qz, q_tail, visited, x, y, z)
-	local hash = core.hash_node_position(vec_new(x, y, z))
+	local hash = hash_pos(vec_new(x, y, z))
 	if not visited[hash] then
 		visited[hash] = true
 		return push(qx, qy, qz, q_tail, x, y, z)
@@ -362,7 +364,7 @@ local function dfs_mark_necessary(state, start_pos, visited)
 
 	while #stack > 0 do
 		local pos = table.remove(stack)
-		local hash = core.hash_node_position(pos)
+		local hash = hash_pos(pos)
 		if visited[hash] then
 			goto continue
 		end
@@ -378,7 +380,7 @@ local function dfs_mark_necessary(state, start_pos, visited)
 		for _, off in ipairs(cardinal_dirs) do
 			local npos = pos + off
 			local in_region = state.area:containsp(npos)
-			if in_region and not visited[core.hash_node_position(npos)] then
+			if in_region and not visited[hash_pos(npos)] then
 				stack[#stack + 1] = npos
 			end
 		end
@@ -469,7 +471,7 @@ local function remove_unnecessary_walls(state)
 
 	-- Then, remove walls that are not visited (not necessary)
 	for pos in iter_region_positions(region) do
-		local hash = core.hash_node_position(pos)
+		local hash = hash_pos(pos)
 		if is_wall(state, pos) and not visited[hash] then
 			local idx = state.area:indexp(pos)
 			state.data[idx] = state.cid_air
@@ -500,7 +502,7 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 	local maxx, maxy, maxz = pos.x, pos.y, pos.z
 
 	-- Seed queue
-	visited[core.hash_node_position(pos)] = true
+	visited[hash_pos(pos)] = true
 	q_tail = push(qx, qy, qz, q_tail, pos.x, pos.y, pos.z)
 
 	-- Flood-fill
