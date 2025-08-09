@@ -64,6 +64,11 @@ local config = {}
 ---@field CFG VeinMinerConfig
 local vein_miner = {}
 
+---@class LuantiCore
+---@field get_voxel_manip fun(): VoxelManip
+core = {}
+local vm = core.get_voxel_manip()
+
 ---@class VoxelManip
 ---@field read_from_map fun(self:VoxelManip, p1:Vector, p2:Vector): Vector, Vector		Reads region from map; returns min and max edges
 ---@field initialize fun(self:VoxelManip, p1:Vector, p2:Vector, fill_node?: table): Vector, Vector	Initializes region optionally filling with node; returns min and max edges
@@ -84,4 +89,3 @@ local vein_miner = {}
 ---@field get_emerged_area fun(self:VoxelManip): Vector, Vector Returns min and max edges of emerged area
 ---@field close fun(self:VoxelManip) Disposes object (not allowed on mapgen VMs)
 local vm = {}
-
