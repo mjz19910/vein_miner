@@ -61,9 +61,8 @@ local function remove_nonblocking_walls_dfs(vm, start_pos, walls_to_remove, liqu
 
 		local vi = area:indexp(pos)
 		local cid = data[vi]
-		print("checking node at", pos_str(pos), "cid", cid)
 		if walls_to_remove[cid] and not is_blocking_flow(data, area, liquids, pos) then
-			print("Removing node at", pos_str(pos), "cid", cid)
+			core.log("warning", "Removing node at " .. pos_str(pos) .. " cid " .. cid)
 			data[vi] = minetest.CONTENT_AIR
 			removed_count = removed_count + 1
 		end
@@ -79,6 +78,8 @@ local function remove_nonblocking_walls_dfs(vm, start_pos, walls_to_remove, liqu
 						table.insert(stack, npos)
 					end
 				end
+			else
+				core.log("warning", "Skip node " .. core.get_node(npos).name)
 			end
 		end
 
@@ -207,7 +208,6 @@ local function process_chunks_delayed(chunks, vm, walls_to_remove, liquids, user
 
 	local function process_next_chunk()
 		if chunk_index > #chunks then
-			minetest.chat_send_player(user:get_player_name(), string.format("Removed %d non-blocking walls total.", removed_total))
 			return
 		end
 
@@ -227,6 +227,10 @@ local function process_chunks_delayed(chunks, vm, walls_to_remove, liquids, user
 		log_chunk_warning(chunk, removed_count)
 
 		chunk_index = chunk_index + 1
+		if chunk_index > #chunks then
+			minetest.chat_send_player(user:get_player_name(), string.format("Removed %d non-blocking walls total.", removed_total))
+			return
+		end
 		minetest.after(DELAY_SECONDS, process_next_chunk)
 	end
 
