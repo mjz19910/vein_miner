@@ -173,7 +173,7 @@ local function process_chunks_delayed(chunks, vm, walls_to_remove, liquids, user
 		vm:read_from_map(area.MinEdge, area.MaxEdge)
 		local data = vm:get_data()
 
-		local removed_count = remove_nonblocking_walls_dfs(vm, chunk.start_list, walls_to_remove, liquids, area, data)
+		local removed_count = remove_nonblocking_walls_dfs(vm, chunk.start_list[1], walls_to_remove, liquids, area, data)
 		removed_total = removed_total + removed_count
 
 		vm:set_data(data)
