@@ -1,6 +1,11 @@
 local vec_new = vector.new
 local cardinal_dirs = {vec_new(1, 0, 0), vec_new(-1, 0, 0), vec_new(0, 1, 0), vec_new(0, -1, 0), vec_new(0, 0, 1), vec_new(0, 0, -1)}
 
+---@param data integer[]
+---@param area VoxelArea
+---@param liquids table<integer, boolean>
+---@param pos vector
+---@return boolean
 local function is_blocking_flow(data, area, liquids, pos)
 	local current_cid = data[area:indexp(pos)]
 	if liquids[current_cid] then
@@ -20,6 +25,12 @@ end
 
 -- DFS traversal over voxels in 'area' starting at 'start_pos'
 -- Calls 'action(pos, vi)' on each visited voxel that matches walls_to_remove and not blocking flow.
+---@param start_pos vector
+---@param area VoxelArea
+---@param data integer[]
+---@param walls_to_remove table<integer, boolean>
+---@param liquids table<integer, boolean>
+---@param action fun(pos: vector, vi: integer)
 local function dfs_voxels(start_pos, area, data, walls_to_remove, liquids, action)
 	local visited = {}
 	local stack = {start_pos}
@@ -59,11 +70,66 @@ local function dfs_voxels(start_pos, area, data, walls_to_remove, liquids, actio
 		::continue::
 	end
 end
+---@class InvRef
+---@field get_size fun(self: InvRef, listname: string): integer
+---@field set_size fun(self: InvRef, listname: string, size: integer)
+---@field get_width fun(self: InvRef, listname: string): integer
+---@field set_width fun(self: InvRef, listname: string, width: integer)
+---@field get_stack fun(self: InvRef, listname: string, index: integer): ItemStack
+---@field set_stack fun(self: InvRef, listname: string, index: integer, stack: ItemStack)
+---@field add_item fun(self: InvRef, listname: string, stack: ItemStack): ItemStack|nil
+---@field remove_item fun(self: InvRef, listname: string, stack: ItemStack): ItemStack|nil
+---@field room_for_item fun(self: InvRef, listname: string, stack: ItemStack): boolean
+---@field contains_item fun(self: InvRef, listname: string, stack: ItemStack): boolean
+---@field get_list_names fun(self: InvRef): string[]
+---@field set_location fun(self: InvRef, location: string)
+
+---@class MetaDataRef
+---@field get_string fun(self: MetaDataRef, key: string): string
+---@field set_string fun(self: MetaDataRef, key: string, value: string)
+---@field get_int fun(self: MetaDataRef, key: string): integer
+---@field set_int fun(self: MetaDataRef, key: string, value: integer)
+---@field get_float fun(self: MetaDataRef, key: string): number
+---@field set_float fun(self: MetaDataRef, key: string, value: number)
+---@field to_table fun(self: MetaDataRef): table
+---@field from_table fun(self: MetaDataRef, table: table)
+---@field get_inventory fun(self: MetaDataRef): InvRef
+---@field set_inventory fun(self: MetaDataRef, inv: InvRef)
+
+---@class ItemStack
+---@field get_count fun(self: ItemStack): integer
+---@field get_name fun(self: ItemStack): string
+---@field take_item fun(self: ItemStack, count: integer): ItemStack
+---@field add_item fun(self: ItemStack, stack: ItemStack|string): ItemStack
+---@field get_wear fun(self: ItemStack): integer
+---@field set_wear fun(self: ItemStack, wear: integer)
+---@field get_meta fun(self: ItemStack): MetaDataRef
+---@field to_string fun(self: ItemStack): string
+
+---@class Player
+---@field get_player_name fun(self: Player): string
+---@field get_pos fun(self: Player): vector
+---@field hud_add fun(self: Player, params: table): integer
+---@field hud_remove fun(self: Player, id: integer)
+---@field hud_change fun(self: Player, id: integer, params: table)
+---@field hud_get fun(self: Player, id: integer): table
+---@field get_wielded_item fun(self: Player): ItemStack
+---@field set_wielded_item fun(self: Player, item: ItemStack|string)
+---@field is_player fun(self: any): boolean
+
+---@class pointed_thing
+---@field type string
+---@field under vector
+---@field above vector
 
 minetest.register_tool("vein_miner:remove_nonblocking_walls", {
 	description = "Remove Non-blocking Walls Tool",
 	inventory_image = "default_tool_steelpick.png",
 
+	---@param itemstack ItemStack
+	---@param user Player
+	---@param pointed_thing pointed_thing
+	---@return ItemStack
 	on_use = function(itemstack, user, pointed_thing)
 		if not pointed_thing or pointed_thing.type ~= "node" then
 			return
