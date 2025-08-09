@@ -9,7 +9,7 @@ dofile(modpath .. "/deque.lua")
 dofile(modpath .. "/src/helpers.lua")
 dofile(modpath .. "/src/aabb.lua")
 dofile(modpath .. "/liquid_filler.lua")
-dofile(modpath .. "/remove_nonblocking_walls.lua")
+dofile(modpath .. "/remove_walls.lua")
 
 local fill_liquid_at_pos = vein_miner.fill_liquid_at_pos
 
