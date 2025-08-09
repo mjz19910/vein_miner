@@ -656,17 +656,17 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 	expand_liquid_bounds(state, region, notify_pos, vein_miner_state)
 	verbose_log("Expanded liquid bounds: min=%s max=%s", pos_str(region.min), pos_str(region.max))
 
-	region:grow(2)
+	region:shrink(2)
 	verbose_log("Region grown by 2 blocks: min=%s max=%s", pos_str(region.min), pos_str(region.max))
 	state:reload_region(region)
 
 	verbose_log("Clearing liquids inside region")
-	clear_liquids(state, region:shrink_clone(2))
+	clear_liquids(state, region:grow_clone(2))
 
 	verbose_log("Building walls inside region")
-	build_walls(state, region:shrink_clone(1))
+	build_walls(state, region:grow_clone(1))
 
-	region:grow(1)
+	region:grow(2 + 1)
 	verbose_log("Region grown by 1 block: min=%s max=%s", pos_str(region.min), pos_str(region.max))
 	state:reload_region(region)
 

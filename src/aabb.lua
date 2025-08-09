@@ -25,24 +25,15 @@ function region_mt:assign_parts(min, max)
 	self.max = max
 end
 
-function region_mt:shrink_parts(margin) return vec_add(self.min, margin), vec_add(self.max, -margin) end
-function region_mt:grow_parts(margin) return vec_add(self.min, -margin), vec_add(self.max, margin) end
-
-function region_mt:shrink_clone(margin)
-	local min, max = self:shrink_parts(margin)
-	return new_region(min, max)
-end
-function region_mt:grow_clone(margin)
-	local min, max = self:grow_parts(margin)
-	return new_region(min, max)
-end
+function region_mt:shrink_clone(margin) return new_region(vec_add(self.min, margin), vec_add(self.max, -margin)) end
+function region_mt:grow_clone(margin) return new_region(vec_add(self.min, -margin), vec_add(self.max, margin)) end
 function region_mt:shrink(margin)
-	local min, max = self:shrink_parts(margin)
-	region_mt:assign_parts(min, max)
+	self.min = vec_add(self.min, margin)
+	self.max = vec_add(self.max, -margin)
 end
 function region_mt:grow(margin)
-	local min, max = self:grow_parts(margin)
-	region_mt:assign_parts(min, max)
+	self.min = vec_add(self.min, -margin)
+	self.max = vec_add(self.max, margin)
 end
 
 local function regions_overlap(a, b)
