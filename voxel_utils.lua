@@ -2,21 +2,6 @@
 -- Utility functions for voxel manipulation in Luanti mods
 local voxel_utils = {}
 
----@class Vector
----@field x integer
----@field y integer
----@field z integer
-
----@class VoxelArea
----@field MinEdge Vector
----@field MaxEdge Vector
----@field index fun(self: VoxelArea, x: integer, y: integer, z: integer): integer
----@field position fun(self: VoxelArea, index: integer): Vector
-
----@class VoxelManip
----@field get_data fun(self: VoxelManip): integer[]
----@field set_data fun(self: VoxelManip, data: integer[]): nil
-
 ---Convert position to VoxelArea index
 ---@param area VoxelArea
 ---@param pos Vector
@@ -48,11 +33,7 @@ function voxel_utils.iterate_area(area, func)
 	for z = minp.z, maxp.z do
 		for y = minp.y, maxp.y do
 			for x = minp.x, maxp.x do
-				func({
-					x = x,
-					y = y,
-					z = z,
-				})
+				func(vector.new(x, y, z))
 			end
 		end
 	end
