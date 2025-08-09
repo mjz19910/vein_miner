@@ -1,18 +1,17 @@
-local modpath = minetest.get_modpath("vein_miner")
-
-dofile(modpath .. "/auto_floor.lua")
+dofile(minetest.get_modpath("vein_miner") .. "/utils.lua")
 
 ---@type VeinMinerGlobal
 vein_miner = {
 	deque = {},
 }
-dofile(modpath .. "/voxel_utils.lua")
-dofile(modpath .. "/config.lua")
-dofile(modpath .. "/deque.lua")
-dofile(modpath .. "/src/helpers.lua")
-dofile(modpath .. "/src/aabb.lua")
-dofile(modpath .. "/liquid_filler.lua")
-dofile(modpath .. "/remove_walls.lua")
+utils.load("deque.lua")
+utils.load("auto_floor.lua")
+utils.load("voxel_utils.lua")
+utils.load("config.lua")
+utils.load("helpers.lua")
+utils.load("aabb.lua")
+utils.load("liquid_filler.lua")
+utils.load("remove_walls.lua")
 
 local fill_liquid_at_pos = vein_miner.fill_liquid_at_pos
 
