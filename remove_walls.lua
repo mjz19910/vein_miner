@@ -38,7 +38,7 @@ end
 ---@return integer removed_count
 local function remove_nonblocking_walls_dfs(vm, start_pos, walls_to_remove, liquids, area, data)
 	local removed_count = 0
-	local stack = {start_pos}
+	local stack = {start_pos, vector.offset(start_pos, 0, 1, 0), vector.offset(start_pos, 0, -1, 0)}
 	local visited = {}
 
 	-- Helper to get hash of a position (for visited set)
@@ -51,11 +51,17 @@ local function remove_nonblocking_walls_dfs(vm, start_pos, walls_to_remove, liqu
 		if visited[h] then
 			goto continue
 		end
+
+		-- Skip positions outside the area
+		if not area:containsp(pos) then
+			goto continue
+		end
+
 		visited[h] = true
 
 		local vi = area:indexp(pos)
-		assert(vi >= 1 and vi <= #data, "Voxel index out of bounds")
 		local cid = data[vi]
+		print("checking node at", pos_str(pos), "cid", cid)
 		if walls_to_remove[cid] and not is_blocking_flow(data, area, liquids, pos) then
 			print("Removing node at", pos_str(pos), "cid", cid)
 			data[vi] = minetest.CONTENT_AIR
@@ -128,6 +134,29 @@ local function split_area_into_chunks(p1, p2)
 	return chunks
 end
 
+---@param data integer[]
+---@param area VoxelArea
+---@param chunk table {min=Vector, max=Vector}
+---@param walls_to_remove table<integer, boolean>
+---@return Vector|nil
+local function find_starting_wall(data, area, chunk, walls_to_remove)
+	for z = chunk.min.z, chunk.max.z do
+		for y = chunk.min.y, chunk.max.y do
+			for x = chunk.min.x, chunk.max.x do
+				local pos = vector.new(x, y, z)
+				if area:containsp(pos) then
+					local vi = area:indexp(pos)
+					local cid = data[vi]
+					if walls_to_remove[cid] then
+						return pos
+					end
+				end
+			end
+		end
+	end
+	return nil
+end
+
 ---@param chunks table[] List of chunks {min=Vector, max=Vector}
 ---@param vm VoxelManip
 ---@param walls_to_remove table<integer, boolean>
@@ -151,13 +180,21 @@ local function process_chunks_delayed(chunks, vm, walls_to_remove, liquids, user
 		}
 		local data = vm:get_data()
 
-		local removed_count = remove_nonblocking_walls_dfs(vm, chunk.min, walls_to_remove, liquids, area, data)
-		removed_total = removed_total + removed_count
+		-- Find a valid start position inside the chunk on a wall node
+		local start_pos = find_starting_wall(data, area, chunk, walls_to_remove)
+		if start_pos then
+			local removed_count = remove_nonblocking_walls_dfs(vm, start_pos, walls_to_remove, liquids, area, data)
+			removed_total = removed_total + removed_count
 
-		vm:set_data(data)
-		vm:write_to_map()
+			vm:set_data(data)
+			vm:write_to_map()
+			vm:update_map()
 
-		log_chunk_warning(chunk, removed_count)
+			log_chunk_warning(chunk, removed_count)
+		else
+			minetest.log("warning",
+				"[remove_nonblocking_walls] No valid start node found in chunk from " .. pos_str(chunk.min) .. " to " .. pos_str(chunk.max))
+		end
 
 		chunk_index = chunk_index + 1
 		minetest.after(DELAY_SECONDS, process_next_chunk)
@@ -219,25 +256,9 @@ minetest.register_tool("vein_miner:remove_nonblocking_walls", {
 			local chunks = split_area_into_chunks(expanded_p1, expanded_p2)
 			process_chunks_delayed(chunks, vm, walls_to_remove, liquids, user)
 		else
-			vm:read_from_map(expanded_p1, expanded_p2)
-			local area = VoxelArea:new{
-				MinEdge = expanded_p1,
-				MaxEdge = expanded_p2,
-			}
-			local data = vm:get_data()
+			local chunks = {aabb.region(expanded_p1, expanded_p2)}
+			process_chunks_delayed(chunks, vm, walls_to_remove, liquids, user)
 
-			local removed_count = remove_nonblocking_walls_dfs(vm, start_pos, walls_to_remove, liquids, area, data)
-
-			log_chunk_warning({
-				min = expanded_p1,
-				max = expanded_p2,
-			}, removed_count)
-
-			vm:set_data(data)
-			vm:write_to_map()
-			vm:update_map()
-
-			minetest.chat_send_player(user:get_player_name(), string.format("Removed %d non-blocking walls.", removed_count))
 		end
 
 		return itemstack
