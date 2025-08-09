@@ -20,9 +20,30 @@ local function new_region(min, max)
 		max = max,
 	}, region_mt)
 end
+function region_mt:assign_parts(min, max)
+	self.min = min
+	self.max = max
+end
 
-function region_mt:shrink(margin) return new_region(add(self.min, margin), sub(self.max, margin)) end
-function region_mt:grow(margin) return new_region(sub(self.min, margin), add(self.max, margin)) end
+function region_mt:shrink_parts(margin) return add(self.min, margin), add(self.max, -margin) end
+function region_mt:grow_parts(margin) return add(self.min, -margin), add(self.max, margin) end
+
+function region_mt:shrink_clone(margin)
+	local min, max = self:shrink_parts(margin)
+	return new_region(min, max)
+end
+function region_mt:grow_clone(margin)
+	local min, max = self:grow_parts(margin)
+	return new_region(min, max)
+end
+function region_mt:shrink(margin)
+	local min, max = self:shrink_parts(margin)
+	region_mt:assign_parts(min, max)
+end
+function region_mt:grow(margin)
+	local min, max = self:grow_parts(margin)
+	region_mt:assign_parts(min, max)
+end
 
 local function regions_overlap(a, b)
 	local x_overlap = a.max.x >= b.min.x and a.min.x <= b.max.x

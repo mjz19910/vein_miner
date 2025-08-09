@@ -6,7 +6,7 @@ local next = next
 
 -- local builtin lua tables
 local table = table
-local vector = vector
+-- local vector = vector
 local coroutine = coroutine
 
 -- local builtin lua table functions
@@ -117,12 +117,9 @@ end
 local State = {}
 State.__index = State
 
-function State:new(vm, region, cid_wall)
-	local area, data = read_voxels_from_map(vm, region)
+function State:new(vm, cid_wall)
 	local self = setmetatable({
 		vm = vm,
-		area = area,
-		data = data,
 		cid_wall = cid_wall,
 		cids_replace = cids_replace,
 		cids_source = cids_source,
@@ -582,20 +579,22 @@ local function expand_liquid_bounds(state, region, notify_pos, vein_miner_state)
 
 	local skip_x, skip_y, skip_z = {false}, {false}, {false}
 
-	while true do
+	local function loop_expand()
 		state:reload_region(region)
 
 		if not skip_x[1] and expand_axis_from_center(state, region, "x", 96, skip_x) then
-			goto continue
+			return true
 		end
 		if not skip_z[1] and expand_axis_from_center(state, region, "z", 96, skip_z) then
-			goto continue
+			return true
 		end
 		if not skip_y[1] and expand_vertical_axis(state, region, skip_y, notify_pos, vein_miner_state) then
-			goto continue
+			return true
 		end
-		break
-		::continue::
+		return false
+	end
+
+	while loop_expand() do
 	end
 end
 
@@ -649,6 +648,7 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 	end
 
 	local state = State:new(VoxelManip(), cid_wool_green)
+	state:reload_region(region)
 
 	-- Expand bounds
 	expand_liquid_bounds(state, region, notify_pos, vein_miner_state)
@@ -662,7 +662,7 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 	region = region:grow(1)
 	state:reload_region(region)
 
-	remove_unnecessary_walls(state)
+	remove_unnecessary_walls(state, region)
 
 	cache_wall_region(region, state)
 	remove_overlapping_wall_regions(wall_region_cache)
