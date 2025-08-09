@@ -12,3 +12,6 @@ vein_miner_allow_all (Allow mining any node) bool false
 
 # Scan distance for lights
 vein_miner_light_scan_distance (Light scan distance) float 1.0
+
+# Enable detailed debug logs (may reduce performance)
+vein_miner_verbose_logging (Verbose Logging) bool false
