@@ -5,7 +5,7 @@ local table = table
 local math = math
 
 local vec_add = vector.add
-local sub = vector.subtract
+local vec_sub = vector.subtract
 local insert = table.insert
 local remove = table.remove
 local min = math.min
@@ -29,10 +29,10 @@ function region_mt:shrink_clone(margin) return new_region(vec_add(self.min, marg
 function region_mt:grow_clone(margin) return new_region(vec_add(self.min, -margin), vec_add(self.max, margin)) end
 function region_mt:shrink(margin)
 	self.min = vec_add(self.min, margin)
-	self.max = vec_add(self.max, -margin)
+	self.max = vec_sub(self.max, margin)
 end
 function region_mt:grow(margin)
-	self.min = vec_add(self.min, -margin)
+	self.min = vec_sub(self.min, margin)
 	self.max = vec_add(self.max, margin)
 end
 
