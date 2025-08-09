@@ -83,19 +83,6 @@ core.register_on_mods_loaded(function()
 	cid_wool_green = cid("wool:green")
 end)
 
-local vec_add = vector.add
-local vec_sub = vector.subtract
-
-local function expand_region(region, amount)
-	region.min = vec_sub(region.min, amount)
-	region.max = vec_add(region.max, amount)
-end
-
-local function shrink_region(region, amount)
-	region.min = vec_add(region.min, amount)
-	region.max = vec_sub(region.max, amount)
-end
-
 local function push(qx, qy, qz, q_tail, x, y, z)
 	qx[q_tail], qy[q_tail], qz[q_tail] = x, y, z
 	return q_tail + 1
