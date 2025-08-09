@@ -1,6 +1,6 @@
 -- voxel_utils.lua
 -- Utility functions for voxel manipulation in Luanti mods
-local voxel_utils = {}
+voxel_utils = {}
 
 local core = core or minetest
 local vector_new = vector.new
@@ -136,11 +136,5 @@ end
 ---@generic T
 ---@param dest T[]  -- Destination array
 ---@param src  T[]  -- Source array
-function voxel_utils.insert_all(dest, src)
-    local len = #dest
-    for i = 1, #src do
-        dest[len + i] = src[i]
-    end
-end
-
-return voxel_utils
+---@return T[]
+function voxel_utils.insert_all(dest, src) return table.insert_all(dest, src) end

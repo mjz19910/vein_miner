@@ -1,12 +1,9 @@
 local vector = vector
 local table = table
+local voxel_utils = voxel_utils
 local p = vector.new
 local i = table.insert
----Insert all elements from `src` into `dest` (in-place)
----@generic T
----@param dest T[]  -- Destination array
----@param src  T[]  -- Source array
-local ia = table.insert_all
+local ia = voxel_utils.insert_all
 
 vein_miner.CFG = {
 	LIGHT_NODES = {"default:mese_post_light_pine_wood", "default:mese_post_light_acacia_wood"},
