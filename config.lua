@@ -99,7 +99,10 @@ vein_miner.CFG = {
 	},
 	cardinal_dirs = {p(0, 1, 0), p(0, -1, 0), p(1, 0, 0), p(-1, 0, 0), p(0, 0, 1), p(0, 0, -1)},
 }
-local function i_vec_dirs(arg) table.insert_all(vein_miner.CFG.VEC_DIRS, arg) end
+---Insert all elements from `src` into vein_miner.CFG.VEC_DIRS (in-place)
+---@generic T
+---@param src  T[]  -- Source array
+local function i_vec_dirs(src) ia(vein_miner.CFG.VEC_DIRS, src) end
 -- self
 i_vec_dirs({p(0, 0, 0)})
 -- cardinal directions
