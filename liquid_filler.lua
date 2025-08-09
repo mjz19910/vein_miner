@@ -455,7 +455,7 @@ end
 local function get_cached_wall_state(pos)
 	for _, entry in ipairs(wall_region_cache) do
 		if pos_in_region(pos, entry.region) then
-			return entry.state
+			return entry.state, entry.region
 		end
 	end
 	return nil
@@ -594,9 +594,7 @@ local function expand_liquid_bounds(state, region, notify_pos, vein_miner_state)
 end
 
 local function clear_liquids(state, region)
-	local clear_region = new_region(vector.add(region.min, 2), vector.subtract(region.max, 2))
-
-	for pos in iter_region_positions(clear_region) do
+	for pos in iter_region_positions(region) do
 		local idx = state.area:indexp(pos)
 		if state.cids_replace[state.data[idx]] then
 			state.data[idx] = state.cid_air
@@ -605,14 +603,11 @@ local function clear_liquids(state, region)
 end
 
 local function build_walls(state, region)
-	local wall_region = new_region(vector.add(region.min, 1), vector.subtract(region.max, 1))
-
-	for pos in iter_region_positions(wall_region) do
+	for pos in iter_region_positions(region) do
 		local idx = state.area:indexp(pos)
 		if state.data[idx] ~= state.cid_air then
 			goto continue_wall
 		end
-
 		for _, offset in ipairs(cardinal_dirs) do
 			local neighbor_pos = pos + offset
 			local nidx = state.area:indexp(neighbor_pos)
@@ -620,7 +615,6 @@ local function build_walls(state, region)
 				state.data[nidx] = state.cid_wall
 			end
 		end
-
 		::continue_wall::
 	end
 end
@@ -634,9 +628,15 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 		return
 	end
 
-	local cached_state = get_cached_wall_state(pos)
+	local cached_state, cached_region = get_cached_wall_state(pos)
 	if cached_state then
 		verbose_log("Using cached wall state for position %s", pos_str(pos))
+		local state, region = cached_state, cached_region
+		verbose_log("Clearing liquids inside region (cached)")
+		clear_liquids(state, region:shrink_clone(2))
+
+		verbose_log("Building walls inside region (cached)")
+		build_walls(state, region:shrink_clone(1))
 		return
 	end
 
@@ -661,10 +661,10 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 	state:reload_region(region)
 
 	verbose_log("Clearing liquids inside region")
-	clear_liquids(state, region)
+	clear_liquids(state, region:shrink_clone(2))
 
 	verbose_log("Building walls inside region")
-	build_walls(state, region)
+	build_walls(state, region:shrink_clone(1))
 
 	region:grow(1)
 	verbose_log("Region grown by 1 block: min=%s max=%s", pos_str(region.min), pos_str(region.max))
