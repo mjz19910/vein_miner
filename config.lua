@@ -7,7 +7,7 @@ local ia = voxel_utils.insert_all
 
 vein_miner.CFG = {
 	LIGHT_NODES = {"default:mese_post_light_pine_wood", "default:mese_post_light_acacia_wood"},
-	MINE_ONLY_CUR_SET = {"default:clay", "default:snow", "default:dry_dirt", "default:stone_block", "farming:cotton_wild", "fire:basic_flame",
+	MINE_ONLY_CUR_SET = {"default:snow", "default:dry_dirt", "default:stone_block", "farming:cotton_wild", "fire:basic_flame",
 		"default:obsidian", "wool:green", "wool:orange"},
 	IGNORED_NODES = {"default:chest", "default:leaves", "drawers:trim", "drawers:pine_wood1", "drawers:controller", "digtron:axle",
 		"digtron:light", "digtron:pusher", "digtron:digger", "digtron:builder", "digtron:structure", "digtron:inventory", "digtron:fuelstore",
@@ -161,10 +161,15 @@ local function register_wires_group()
 end
 register_wires_group()
 
-i(vein_miner.CFG.MINE_ONLY_CUR_SET, "mesecons_powerplant:power_plant")
-ia(vein_miner.CFG.MINE_ONLY_CUR_SET, {"mesecons_movestones:sticky_movestone_vertical", "mesecons_stickyblocks:sticky_block_all"})
-ia(vein_miner.CFG.MINE_ONLY_CUR_SET, {"mesecons_movestones:sticky_movestone"})
-
-ia(vein_miner.CFG.MINE_ONLY_CUR_SET, {"default:coral_skeleton"})
 local mine_only_set = vein_miner.CFG.MINE_ONLY_CUR_SET
-ia(mine_only_set, {"default:coral_green"})
+i(mine_only_set, "mesecons_powerplant:power_plant")
+ia(mine_only_set, {"mesecons_movestones:sticky_movestone_vertical", "mesecons_stickyblocks:sticky_block_all"})
+ia(mine_only_set, {"mesecons_movestones:sticky_movestone"})
+
+-- ia(mine_only_set, {"default:coral_skeleton"})
+-- ia(mine_only_set, {"default:coral_green", "default:coral_cyan", "default:coral_pink", "default:coral_orange", "default:coral_brown"})
+
+local mine_groups = vein_miner.CFG.MINE_ONLY_GROUPS
+mine_groups.coral = {"default:coral_skeleton", "default:coral_green", "default:coral_cyan", "default:coral_pink", "default:coral_orange",
+	"default:coral_brown"}
+mine_groups.target_nodes = {"default:dirt", "default:clay"}

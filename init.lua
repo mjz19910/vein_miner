@@ -1106,7 +1106,7 @@ local function dig_pos_process_queue_item(state, item, player_name)
 	end
 
 	local target_nodes = {}
-	table.insert_all(target_nodes, {"default:dirt"})
+	table.insert_all(target_nodes, mine_only_groups.target_nodes)
 	table.insert_all(target_nodes, mine_only_groups.stone)
 	table.insert_all(target_nodes, mine_only_groups.stone_like)
 	table.insert_all(target_nodes, mine_only_groups.stone_with_ore)
