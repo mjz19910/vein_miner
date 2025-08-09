@@ -45,11 +45,6 @@
 ---@field set_wielded_item fun(self: Player, item: ItemStack|string)
 ---@field is_player fun(self: any): boolean
 
----@class pointed_thing
----@field type string
----@field under vector
----@field above vector
-
 ---@class Chunk
 ---@field area VoxelArea
 ---@field start_list Vector[]
