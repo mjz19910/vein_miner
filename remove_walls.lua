@@ -29,6 +29,10 @@ local function is_blocking_flow(data, area, liquids, pos)
 	return false
 end
 
+---@param cid integer
+---@return string
+local function get_node_name(cid) return minetest.get_name_from_content_id(cid) or tostring(cid) end
+
 ---@param vm VoxelManip
 ---@param start_pos Vector
 ---@param walls_to_remove table<integer, boolean>
@@ -54,6 +58,11 @@ local function remove_nonblocking_walls_dfs(vm, start_pos, walls_to_remove, liqu
 
 		-- Skip positions outside the area
 		if not area:containsp(pos) then
+			local outside_node = core.get_node(pos)
+			local out_name = outside_node.name
+			local out_cid = core.get_content_id(out_name)
+			core.log("warning", ("Skip node out of bounds (dfs visit) of %s to %s cid %d (%s)"):format(pos_str(area.MinEdge), pos_str(area.MaxEdge),
+				out_cid, out_name))
 			goto continue
 		end
 
@@ -61,8 +70,11 @@ local function remove_nonblocking_walls_dfs(vm, start_pos, walls_to_remove, liqu
 
 		local vi = area:indexp(pos)
 		local cid = data[vi]
+		local cid_name = get_node_name(cid)
+		core.log("warning", string.format("checking node at %s cid %d (%s)", pos_str(pos), cid, cid_name))
 		if walls_to_remove[cid] and not is_blocking_flow(data, area, liquids, pos) then
-			core.log("warning", "Removing node at " .. pos_str(pos) .. " " .. core.get_name_from_content_id(cid))
+			local name = get_node_name(cid)
+			core.log("warning", string.format("Removing node at %s cid %d (%s)", pos_str(pos), cid, name))
 			data[vi] = minetest.CONTENT_AIR
 			removed_count = removed_count + 1
 		end
@@ -74,12 +86,20 @@ local function remove_nonblocking_walls_dfs(vm, start_pos, walls_to_remove, liqu
 				local nvi = area:indexp(npos)
 				if nvi and nvi >= 1 and nvi <= #data then
 					local ncid = data[nvi]
+					local ncid_name = get_node_name(ncid)
 					if walls_to_remove[ncid] and not visited[pos_hash(npos)] then
+						core.log("warning", string.format("Pushing neighbor %s cid %d (%s)", pos_str(npos), ncid, ncid_name))
 						table.insert(stack, npos)
+					else
+						core.log("warning", string.format("Skipping neighbor not wall to remove %s cid %d (%s)", pos_str(npos), ncid, ncid_name))
 					end
 				end
 			else
-				core.log("warning", "Skip node " .. core.get_node(npos).name)
+				local outside_node = core.get_node(npos)
+				local out_name = outside_node.name
+				local out_cid = core.get_content_id(out_name)
+				core.log("warning", ("Skip node out of bounds (dfs neighbors) of %s to %s cid %d (%s)"):format(pos_str(area.MinEdge),
+					pos_str(area.MaxEdge), out_cid, out_name))
 			end
 		end
 
@@ -141,6 +161,48 @@ local function split_area_into_chunks_with_start(chunk_area, walls_to_remove, vm
 	local chunks = {}
 	local min = chunk_area.MinEdge
 	local max = chunk_area.MaxEdge
+
+	local size_x = max.x - min.x + 1
+	local size_y = max.y - min.y + 1
+	local size_z = max.z - min.z + 1
+
+	if size_x <= MAX_CHUNK_SIZE and size_y <= MAX_CHUNK_SIZE and size_z <= MAX_CHUNK_SIZE then
+		vm:read_from_map(min, max)
+		local area = VoxelArea:new({
+			MinEdge = min,
+			MaxEdge = max,
+		})
+		local data = vm:get_data()
+
+		local start_pos = nil
+		for z = min.z, max.z do
+			for y = min.y, max.y do
+				for x = min.x, max.x do
+					local pos = vector.new(x, y, z)
+					local vi = area:indexp(pos)
+					if walls_to_remove[data[vi]] then
+						start_pos = pos
+						break
+					end
+				end
+				if start_pos then
+					break
+				end
+			end
+			if start_pos then
+				break
+			end
+		end
+
+		if start_pos then
+			table.insert(chunks, {
+				area = area,
+				start_pos = start_pos,
+			})
+		end
+
+		return chunks
+	end
 
 	for x = min.x, max.x, MAX_CHUNK_SIZE do
 		for y = min.y, max.y, MAX_CHUNK_SIZE do
@@ -281,6 +343,7 @@ minetest.register_tool("vein_miner:remove_nonblocking_walls", {
 		local chunk_area = expand_area(base_p1, base_p2, 12)
 		local vm = minetest.get_voxel_manip()
 		local chunks = split_area_into_chunks_with_start(chunk_area, walls_to_remove, vm)
+		core.log("warning", "chunks from pos " .. pos_str(start_pos) .. " " .. core.serialize(chunks))
 		process_chunks_delayed(chunks, vm, walls_to_remove, liquids, user)
 
 		return itemstack
