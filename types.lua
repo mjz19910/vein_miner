@@ -49,3 +49,7 @@
 ---@field type string
 ---@field under vector
 ---@field above vector
+
+---@class Chunk
+---@field area VoxelArea
+---@field start_pos Vector
