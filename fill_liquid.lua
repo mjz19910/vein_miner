@@ -504,6 +504,41 @@ local function remove_unnecessary_walls(state)
 	expand_region(region, 1)
 end
 
+local function aabb_overlap(r1, r2)
+	return not (r1.max.x < r2.min.x or r1.min.x > r2.max.x or r1.max.y < r2.min.y or r1.min.y > r2.max.y or r1.max.z < r2.min.z or r1.min.z >
+		       r2.max.z)
+end
+
+local function remove_overlapping_wall_regions(cache)
+	local to_remove = {}
+
+	-- Find all overlapping region pairs
+	for i = 1, #cache do
+		for j = i + 1, #cache do
+			if aabb_overlap(cache[i].region, cache[j].region) then
+				to_remove[i] = true
+				to_remove[j] = true
+			end
+		end
+	end
+
+	-- Remove all overlapping regions
+	local new_cache = {}
+	for i, entry in ipairs(cache) do
+		if not to_remove[i] then
+			table.insert(new_cache, entry)
+		end
+	end
+
+	-- Replace cache contents
+	for i = 1, #cache do
+		cache[i] = nil
+	end
+	for i, entry in ipairs(new_cache) do
+		cache[i] = entry
+	end
+end
+
 -- === Main function ===
 function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 	if not liquid_set[core.get_node(pos).name] then
@@ -615,6 +650,7 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 	remove_unnecessary_walls(state)
 
 	cache_wall_region(state.region, state)
+	remove_overlapping_wall_regions(wall_region_cache)
 
 	state.vm:set_data(state.data)
 	state.vm:write_to_map()
