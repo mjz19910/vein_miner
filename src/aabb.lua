@@ -12,13 +12,13 @@ local min = math.min
 local max = math.max
 
 local region_mt = {}
+region_mt.__index = region_mt
 
 local function new_region(min, max)
-	local reg = {
+	return setmetatable({
 		min = min,
 		max = max,
-	}
-	return setmetatable(reg, region_mt)
+	}, region_mt)
 end
 
 function region_mt:shrink(margin) return new_region(add(self.min, margin), sub(self.max, margin)) end

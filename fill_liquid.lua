@@ -1,3 +1,8 @@
+-- local builtin lua functions
+local ipairs = ipairs
+local pairs = pairs
+local setmetatable = setmetatable
+
 -- local builtin lua tables
 local table = table
 local vector = vector
@@ -9,10 +14,6 @@ local vec_new = vector.new
 local zero = vector.zero
 local co_wrap = coroutine.wrap
 local co_yield = coroutine.yield
-
--- local builtin lua functions
-local ipairs = ipairs
-local pairs = pairs
 
 -- minetest tables
 local core = core
@@ -31,8 +32,6 @@ local helpers = vein_miner.h
 
 -- vein_miner table functions
 local new_region = aabb.region
-
--- vein_miner table functions
 local log_action = helpers.log_action
 
 -- constants
@@ -117,11 +116,25 @@ end
 local State = {}
 State.__index = State
 
-function State:reload_region(region)
-	local area, data = read_voxels_from_map(self.vm, region)
+function State:new(vm, region, cid_wall)
+	local area, data = read_voxels_from_map(vm, region)
+	local self = setmetatable({
+		vm = vm,
+		region = region,
+		area = area,
+		data = data,
+		cid_wall = cid_wall,
+		cids_replace = cids_replace,
+		cids_source = cids_source,
+		cids_flowing = cids_flowing,
+	}, State)
+	return self
+end
+
+function State:reload_region()
+	local area, data = read_voxels_from_map(self.vm, self.region)
 	self.area = area
 	self.data = data
-	self.region = region
 end
 
 local function expand_axis_from_center(state, axis, limit, skip_flag)
@@ -548,15 +561,7 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 
 	-- Expand bounds
 	local skip_x, skip_y, skip_z = {false}, {false}, {false}
-	local vm = VoxelManip()
-	local state = setmetatable({
-		vm = vm,
-		cid_wall = cid_wool_green,
-		cids_replace = cids_replace,
-		cids_source = cids_source,
-		cids_flowing = cids_flowing,
-	}, State)
-	state:reload_region(new_region(vec_new(minx, miny, minz), vec_new(maxx, maxy, maxz)))
+	local state = State:new(VoxelManip(), new_region(vec_new(minx, miny, minz), vec_new(maxx, maxy, maxz)), cid_wool_green)
 
 	local function loop_expand()
 		if not skip_x[1] and expand_axis_from_center(state, "x", 96, skip_x) then
@@ -572,10 +577,11 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 	end
 
 	while loop_expand() do
-		state:reload_region(state.region)
+		state:reload_region()
 	end
 
-	state:reload_region(state.region:grow(2))
+	state.region = state.region:grow(2)
+	state:reload_region()
 
 	-- Clear liquids
 	for pos in iter_region_positions(state.region:shrink(2)) do
@@ -603,7 +609,8 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 		::continue_wall::
 	end
 
-	state:reload_region(state.region:grow(1))
+	state.region = state.region:grow(1)
+	state:reload_region()
 
 	remove_unnecessary_walls(state)
 
