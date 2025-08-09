@@ -67,10 +67,10 @@ local max = math.max
 local core = core
 local minetest = minetest
 ---@class VoxelArea
----@field MinEdge Vector      # Minimum coordinate of the area
----@field MaxEdge Vector      # Maximum coordinate of the area
----@field ystride integer     # Size of one Y-level in array indexing
----@field zstride integer     # Size of one Z-level in array indexing
+---@field MinEdge Vector      Minimum coordinate of the area
+---@field MaxEdge Vector      Maximum coordinate of the area
+---@field ystride integer     Size of one Y-level in array indexing
+---@field zstride integer     Size of one Z-level in array indexing
 ---@field index fun(self:VoxelArea, x:integer, y:integer, z:integer): integer
 ---@field indexp fun(self:VoxelArea, pos:Vector): integer
 ---@field position fun(self:VoxelArea, index:integer): Vector

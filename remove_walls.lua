@@ -38,7 +38,7 @@ end
 ---@return integer removed_count
 local function remove_nonblocking_walls_dfs(vm, start_pos, walls_to_remove, liquids, area, data)
 	local removed_count = 0
-	local stack = {start_pos, vector.offset(start_pos, 0, 1, 0), vector.offset(start_pos, 0, -1, 0)}
+	local stack = {start_pos}
 	local visited = {}
 
 	-- Helper to get hash of a position (for visited set)
@@ -90,8 +90,15 @@ end
 
 local log_scope = "[remove_nonblocking_walls] "
 
+---@class Chunk
+---@field area VoxelArea
+---@field start_pos Vector
+
+---@param chunk Chunk
+---@param removed_count integer
 local function log_chunk_warning(chunk, removed_count)
-	local msg = string.format("Processed chunk from %s to %s, removed %d nodes", pos_str(chunk.min), pos_str(chunk.max), removed_count)
+	local area = chunk.area
+	local msg = string.format("Processed chunk from %s to %s, removed %d nodes", pos_str(area.MinEdge), pos_str(area.MaxEdge), removed_count)
 	minetest.log("warning", log_scope .. msg)
 end
 
@@ -102,62 +109,94 @@ local MAP_BLOCKSIZE = 16
 local MAX_CHUNK_SIZE = 48
 local DELAY_SECONDS = 0.5
 
+local VoxelArea = VoxelArea
+---@class VoxelAreaInit
+---@field MinEdge Vector
+---@field MaxEdge Vector
+---@param tbl VoxelAreaInit
+---@return VoxelArea
+local VoxelArea_new = function(tbl) return VoxelArea:new(tbl) end
+
 ---@param p1 Vector
 ---@param p2 Vector
 ---@param expand_blocks integer Number of nodes to expand
----@return Vector, Vector
+---@return VoxelArea
 local function expand_area(p1, p2, expand_nodes)
 	local offset = math.floor(expand_nodes / 2)
 	local min_expanded = vector_subtract(p1, offset)
 	local max_expanded = vector_add(p2, offset)
-	return min_expanded, max_expanded
+	return VoxelArea_new {
+		MinEdge = min_expanded,
+		MaxEdge = max_expanded,
+	}
 end
 
----@param p1 Vector
----@param p2 Vector
----@return Vector[]
-local function split_area_into_chunks(p1, p2)
-	local chunks = {}
-	for x = p1.x, p2.x, MAX_CHUNK_SIZE do
-		for y = p1.y, p2.y, MAX_CHUNK_SIZE do
-			for z = p1.z, p2.z, MAX_CHUNK_SIZE do
-				local chunk_min = vector_new(x, y, z)
-				local chunk_max = vector_new(math.min(x + MAX_CHUNK_SIZE - 1, p2.x), math.min(y + MAX_CHUNK_SIZE - 1, p2.y),
-					math.min(z + MAX_CHUNK_SIZE - 1, p2.z))
-				table.insert(chunks, {
-					min = chunk_min,
-					max = chunk_max,
-				})
-			end
-		end
-	end
-	return chunks
-end
-
----@param data integer[]
----@param area VoxelArea
----@param chunk table {min=Vector, max=Vector}
+---@param chunk_area VoxelArea
 ---@param walls_to_remove table<integer, boolean>
----@return Vector|nil
-local function find_starting_wall(data, area, chunk, walls_to_remove)
-	for z = chunk.min.z, chunk.max.z do
-		for y = chunk.min.y, chunk.max.y do
-			for x = chunk.min.x, chunk.max.x do
-				local pos = vector.new(x, y, z)
-				if area:containsp(pos) then
-					local vi = area:indexp(pos)
-					local cid = data[vi]
-					if walls_to_remove[cid] then
-						return pos
+---@param vm VoxelManip
+---@return Chunk[]
+local function split_area_into_chunks_with_start(chunk_area, walls_to_remove, vm)
+	---@type Chunk[]
+	local chunks = {}
+	local min = chunk_area.MinEdge
+	local max = chunk_area.MaxEdge
+
+	for x = min.x, max.x, MAX_CHUNK_SIZE do
+		for y = min.y, max.y, MAX_CHUNK_SIZE do
+			for z = min.z, max.z, MAX_CHUNK_SIZE do
+				local chunk_min = vector.new(x, y, z)
+				local chunk_max = vector.new(math.min(x + MAX_CHUNK_SIZE - 1, max.x), math.min(y + MAX_CHUNK_SIZE - 1, max.y),
+					math.min(z + MAX_CHUNK_SIZE - 1, max.z))
+
+				-- Read chunk voxel data to find a start wall node
+				vm:read_from_map(chunk_min, chunk_max)
+				local area = VoxelArea_new({
+					MinEdge = chunk_min,
+					MaxEdge = chunk_max,
+				})
+				local data = vm:get_data()
+
+				local start_pos = nil
+				for cz = chunk_min.z, chunk_max.z do
+					for cy = chunk_min.y, chunk_max.y do
+						for cx = chunk_min.x, chunk_max.x do
+							local pos = vector.new(cx, cy, cz)
+							if area:containsp(pos) then
+								local vi = area:indexp(pos)
+								if walls_to_remove[data[vi]] then
+									start_pos = pos
+									break
+								end
+							end
+						end
+						if start_pos then
+							break
+						end
 					end
+					if start_pos then
+						break
+					end
+				end
+
+				if start_pos then
+					table.insert(chunks, {
+						area = VoxelArea_new {
+							MinEdge = chunk_min,
+							MaxEdge = chunk_max,
+						},
+						start_pos = start_pos,
+					})
+				else
+					-- Skip chunks with no walls to remove
 				end
 			end
 		end
 	end
-	return nil
+
+	return chunks
 end
 
----@param chunks table[] List of chunks {min=Vector, max=Vector}
+---@param chunks Chunk[]
 ---@param vm VoxelManip
 ---@param walls_to_remove table<integer, boolean>
 ---@param liquids table<integer, boolean>
@@ -173,28 +212,19 @@ local function process_chunks_delayed(chunks, vm, walls_to_remove, liquids, user
 		end
 
 		local chunk = chunks[chunk_index]
-		vm:read_from_map(chunk.min, chunk.max)
-		local area = VoxelArea:new{
-			MinEdge = chunk.min,
-			MaxEdge = chunk.max,
-		}
+		local area = chunk.area
+		vm:read_from_map(area.MinEdge, area.MaxEdge)
 		local data = vm:get_data()
 
-		-- Find a valid start position inside the chunk on a wall node
-		local start_pos = find_starting_wall(data, area, chunk, walls_to_remove)
-		if start_pos then
-			local removed_count = remove_nonblocking_walls_dfs(vm, start_pos, walls_to_remove, liquids, area, data)
-			removed_total = removed_total + removed_count
+		-- Use saved start_pos inside chunk
+		local removed_count = remove_nonblocking_walls_dfs(vm, chunk.start_pos, walls_to_remove, liquids, area, data)
+		removed_total = removed_total + removed_count
 
-			vm:set_data(data)
-			vm:write_to_map()
-			vm:update_map()
+		vm:set_data(data)
+		vm:write_to_map()
+		vm:update_map()
 
-			log_chunk_warning(chunk, removed_count)
-		else
-			minetest.log("warning",
-				"[remove_nonblocking_walls] No valid start node found in chunk from " .. pos_str(chunk.min) .. " to " .. pos_str(chunk.max))
-		end
+		log_chunk_warning(chunk, removed_count)
 
 		chunk_index = chunk_index + 1
 		minetest.after(DELAY_SECONDS, process_next_chunk)
@@ -244,22 +274,10 @@ minetest.register_tool("vein_miner:remove_nonblocking_walls", {
 		local base_p1 = vector_new(start_pos.x, start_pos.y, start_pos.z)
 		local base_p2 = vector_new(start_pos.x, start_pos.y, start_pos.z)
 
-		local expanded_p1, expanded_p2 = expand_area(base_p1, base_p2, 12)
-
-		local size_x = expanded_p2.x - expanded_p1.x + 1
-		local size_y = expanded_p2.y - expanded_p1.y + 1
-		local size_z = expanded_p2.z - expanded_p1.z + 1
-
+		local chunk_area = expand_area(base_p1, base_p2, 12)
 		local vm = minetest.get_voxel_manip()
-
-		if size_x > MAX_CHUNK_SIZE or size_y > MAX_CHUNK_SIZE or size_z > MAX_CHUNK_SIZE then
-			local chunks = split_area_into_chunks(expanded_p1, expanded_p2)
-			process_chunks_delayed(chunks, vm, walls_to_remove, liquids, user)
-		else
-			local chunks = {aabb.region(expanded_p1, expanded_p2)}
-			process_chunks_delayed(chunks, vm, walls_to_remove, liquids, user)
-
-		end
+		local chunks = split_area_into_chunks_with_start(chunk_area, walls_to_remove, vm)
+		process_chunks_delayed(chunks, vm, walls_to_remove, liquids, user)
 
 		return itemstack
 	end,
