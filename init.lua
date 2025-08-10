@@ -378,6 +378,7 @@ local function place_particle(pos, size, texture)
 		glow = 15,
 	})
 end
+
 local function notify_pos(pos, color, size, expire_time)
 	add_particle({
 		pos = pos,
