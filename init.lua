@@ -59,6 +59,12 @@ core.check_for_falling = function(pos)
 	vein_miner.last_falling_node = vein_miner.current_tick_time
 end
 
+---@type table<string, Region[]>
+local light_scan_data = {}
+vein_miner.light_scan_data = light_scan_data
+
+local function light_scan_reset(name) light_scan_data[name] = {} end
+
 require("mods.vein_miner.globalstep")
 
 local fill_liquid_at_pos = vein_miner.fill_liquid_at_pos
@@ -182,12 +188,6 @@ local seen_dir_set = {}
 local joined_dirs = {}
 local joined_dirs_set = {}
 local known_dir_set = {}
-
----@type table<string, Region[]>
-local light_scan_data = {}
-vein_miner.light_scan_data = light_scan_data
-
-local function light_scan_reset(name) light_scan_data[name] = {} end
 
 local vein_miner_current_state = {}
 
