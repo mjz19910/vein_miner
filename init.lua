@@ -2,8 +2,6 @@ local core = core
 local dofile = dofile
 
 local require = dofile(core.get_modpath("vein_miner") .. "/require_local.lua")
-local utils = require("mods.vein_miner.utils")
-local require = utils.require
 
 local minetest = minetest
 local vector = vector
@@ -25,12 +23,12 @@ local yield = coroutine.yield
 local add_particle = core.add_particle
 
 ---@type VeinMinerGlobal
-vein_miner = {
-	deque = {},
-	utils = utils,
-}
+vein_miner = {}
 local vein_miner = vein_miner
-require("mods.vein_miner.deque")
+local utils = require("mods.vein_miner.utils")
+local require = utils.require
+vein_miner.utils = utils
+vein_miner.deque = require("mods.vein_miner.deque")
 require("mods.vein_miner.auto_floor")
 require("mods.vein_miner.voxel_utils")
 require("mods.vein_miner.config")
@@ -1133,7 +1131,9 @@ local function vein_miner_step(state)
 end
 
 vein_miner.state = {}
-
+---@class VienMinerState
+---@field pos Vector
+---@field queue Deque
 ---@param player Player
 ---@param player_name string
 ---@param pos Vector
@@ -1148,6 +1148,7 @@ function vein_miner.state.new(pos, player, player_name, wielded)
 		queued_set = {},
 		total_action_count = 0,
 		found_light_count = 0,
+		running = false,
 	}
 
 	return state
@@ -1195,11 +1196,13 @@ core.register_on_dignode(function(pos, oldnode, player)
 		core.chat_send_player(player_name, "start vein mining")
 		state = vein_miner.state.new(pos, player, player_name, wielded)
 		vein_miner_current_state[player_name] = state
-		vein_miner_step(state)
 	end
 	l_utils.add_pos_to_queue(state, node_name, pos, {
 		user = true,
 	})
+	if not state.running then
+		vein_miner_step(state)
+	end
 end)
 
 core.override_item("", {
