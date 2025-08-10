@@ -48,8 +48,9 @@ local falling_nodes_set = {}
 
 vein_miner.falling_nodes = falling_nodes
 vein_miner.falling_nodes_set = falling_nodes_set
-
+vein_miner.last_falling_node = 0
 vein_miner.check_for_falling = core.check_for_falling
+
 core.check_for_falling = function(pos)
 	local h = core.hash_node_position(pos)
 	if not falling_nodes_set[h] then
