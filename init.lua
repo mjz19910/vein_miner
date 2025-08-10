@@ -1135,3 +1135,5 @@ end)
 core.override_item("", {
 	range = 7,
 })
+
+require("mods.vein_miner.tools")

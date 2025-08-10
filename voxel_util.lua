@@ -133,11 +133,17 @@ function voxel_util.flood_fill(vm, data, area, start_pos, predicate, fill_conten
 	end
 end
 
----@param area VoxelArea
----@param minp Vector
----@param maxp Vector
+---Iterator over voxel indices and positions in a VoxelArea between minp and maxp (inclusive)
+---Uses the VoxelArea:iterp() method to efficiently iterate over indices in the specified range.
+---
+---Each call returns the next index and its corresponding Vector position.
+---
+---@param area VoxelArea The voxel area to iterate over.
+---@param minp Vector The minimum corner position of the iteration volume.
+---@param maxp Vector The maximum corner position of the iteration volume.
+---@return fun(): integer, Vector Iterator function returning (index, position) or nil when done.
 function voxel_util.iterate_voxelarea(area, minp, maxp)
-	local iter, param, index = area:iter(area:index(minp.x, minp.y, minp.z), area:index(maxp.x, maxp.y, maxp.z))
+	local iter, param, index = area:iterp(minp, maxp)
 	return function()
 		index = iter(param, index)
 		if not index then
@@ -165,14 +171,14 @@ end
 ---@param cids integer[]
 ---@return table<integer, string> cid_to_name_lookup
 function voxel_util.content_names_lookup(cids)
-    local lookup = {}
-    for _, cid in ipairs(cids) do
-        local name = core.get_name_from_content_id(cid)
-        if name then
-            lookup[cid] = name
-        end
-    end
-    return lookup
+	local lookup = {}
+	for _, cid in ipairs(cids) do
+		local name = core.get_name_from_content_id(cid)
+		if name then
+			lookup[cid] = name
+		end
+	end
+	return lookup
 end
 
 ---Find logs that keep leaves alive within a 9x9 horizontal area and leaf decay vertical radius around player
@@ -184,16 +190,8 @@ function voxel_util.find_logs_keeping_leaves(player)
 
 	local LOG_KEEP_RADIUS = 3 -- leaf decay radius
 
-	local minp = {
-		x = pos.x - 4,
-		y = pos.y - LOG_KEEP_RADIUS,
-		z = pos.z - 4,
-	}
-	local maxp = {
-		x = pos.x + 4,
-		y = pos.y + LOG_KEEP_RADIUS,
-		z = pos.z + 4,
-	}
+	local minp = vector.new(pos.x - 4, pos.y - LOG_KEEP_RADIUS, pos.z - 4)
+	local maxp = vector.new(pos.x + 4, pos.y + LOG_KEEP_RADIUS, pos.z + 4)
 
 	local vm = core.get_voxel_manip(minp, maxp)
 	local area = VoxelArea:new{
