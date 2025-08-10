@@ -171,7 +171,9 @@ ia(mine_only_set, {"mesecons_movestones:sticky_movestone"})
 -- ia(mine_only_set, {"default:coral_skeleton"})
 -- ia(mine_only_set, {"default:coral_green", "default:coral_cyan", "default:coral_pink", "default:coral_orange", "default:coral_brown"})
 
+---@type table<string, string[]>
 local mine_groups = vein_miner.CFG.MINE_ONLY_GROUPS
 mine_groups.coral = {"default:coral_skeleton", "default:coral_green", "default:coral_cyan", "default:coral_pink", "default:coral_orange",
 	"default:coral_brown"}
-mine_groups.target_nodes = {"default:dirt", "default:clay"}
+mine_groups.target_nodes = {"default:dirt", "default:clay", "default:dry_dirt"}
+table.insert_all(mine_groups.target_nodes, vein_miner.CFG.SURFACE_NODES)

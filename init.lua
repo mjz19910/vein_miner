@@ -273,6 +273,7 @@ end
 local function fmt_layer(layer) return "y=" .. (layer * 8) .. ".." .. (layer * 8 + 7) end
 
 local function is_valid_pos_to_iter(pos, player_name)
+	---@type PlayerConfig
 	local config = p_config.data[player_name]
 	local maxy = config.maxy
 	local miny = config.miny
@@ -696,8 +697,17 @@ local function dig_pos_process_queue_item(state, item, player_name)
 	local vec_size = vector.new(xz_len, y_len, xz_len);
 
 	local minvec = h.mod_pos(pos, vec_size)
+	local chunk_hash = core.hash_node_position(minvec)
+	local maxvec = vector.add(minvec, vector.subtract(vec_size, 1))
 
-	if state.pos_mod_seen[core.hash_node_position(minvec)] then
+	if minvec.y < config.miny then
+		minvec.y = config.miny
+	end
+	if maxvec.y > config.maxy then
+		maxvec.y = config.maxy
+	end
+
+	if state.pos_mod_seen[chunk_hash] then
 		return
 	end
 
@@ -716,10 +726,7 @@ local function dig_pos_process_queue_item(state, item, player_name)
 		})
 	end
 
-	local vec_max = vector.add(vec_size, -1)
-	local maxvec = vector.add(minvec, vec_max)
 	local center = vector.floor(vector.divide(vector.add(minvec, maxvec), 2))
-
 	if vector.distance(state.player:get_pos(), center) > 150 then
 		return
 	end

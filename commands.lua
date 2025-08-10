@@ -77,6 +77,7 @@ core.register_chatcommand("mine", {
 			return false, "Player not found."
 		end
 
+		---@type PlayerConfig
 		local config = player_config.data[name]
 
 		-- Initialize defaults if missing
@@ -108,7 +109,7 @@ core.register_chatcommand("mine", {
 				if val > maxy then
 					return false, "miny cannot be greater than maxy (" .. maxy .. ")"
 				end
-				config.miny = val
+				config.miny = val - 1
 				return true, "Minimum mining Y set to y=" .. val
 			elseif sub == "max" and val then
 				val = math.floor(val)

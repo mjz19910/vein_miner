@@ -84,6 +84,7 @@ local chunk = {}
 ---@field MINE_ONLY_GROUPS table<string, string[]>
 ---@field VEC_DIRS Vector[]
 ---@field MAX_MINED_NODES number
+---@field SURFACE_NODES string[]
 local config = {}
 
 ---@class VeinMinerGlobal
