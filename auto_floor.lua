@@ -83,6 +83,9 @@ end
 
 local LINE_LENGTH = 48
 
+---@param player Player
+---@param target_pos Vector
+---@param max_hear_distance number
 local function try_place_block_from_inventory(player, target_pos, max_hear_distance)
 	local inv = player:get_inventory()
 	for i = 1, inv:get_size("main") do
