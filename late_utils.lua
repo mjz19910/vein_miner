@@ -62,15 +62,6 @@ function l_utils.handle_pos_notify(state, pos)
 	l_utils.add_pos_to_queue(state, node.name, pos)
 end
 
-function l_utils.is_falling(name)
-	local def = core.registered_nodes[name]
-	return def and def.groups and def.groups.falling_node
-end
-function l_utils.is_liquid_source(name)
-	local def = core.registered_nodes[name]
-	return def and def.liquidtype == "source"
-end
-
 local floating_dirs = CFG.FLOATING_DIRS
 function l_utils.is_floating(pos, expected_name)
 	for _, offset in ipairs(floating_dirs) do

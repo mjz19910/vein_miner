@@ -124,6 +124,8 @@ minetest.register_on_mods_loaded(function()
 		MAX_MINED_NODES = 188
 	end
 
+	CFG.MAX_MINED_NODES = MAX_MINED_NODES
+
 	-- Use namespaces settings if legacy settings are unset
 	if allow_ores == nil then
 		allow_ores = minetest.settings:get_bool("vein_miner_allow_ores", true)
@@ -708,88 +710,6 @@ local function do_update_pos(state)
 		state.teleport_queue.head = 0
 		state.teleport_queue.tail = 0
 	end
-end
-
-local mod_pos = vein_miner.h.mod_pos
-local is_liquid = vein_miner.h.is_liquid
-local function process_node_group(state, node_name, node, repeat_count)
-	local mined_nodes_count = 0
-	if is_liquid(node_name, "water") or is_liquid(node_name, "lava") then
-		if true then
-			return 0, true
-		end
-		for index, pos in pairs(node) do
-			fill_liquid_at_pos(state, pos, utils.handle_pos_notify)
-			mined_nodes_count = mined_nodes_count + 1
-		end
-		if repeat_count <= 2 then
-			log_action("done liquid processing for " .. node_name .. " " .. mined_nodes_count .. " nodes")
-		end
-		return 0
-	end
-	-- calculate durability per block
-	local def = ItemStack(node_name):get_definition()
-	local tp = state.wielded:get_tool_capabilities()
-	local dp = core.get_dig_params(def.groups, tp)
-	if not dp.diggable then
-		return 0
-	end
-	local function dig(pos, node)
-		core.node_dig(pos, node, state.player)
-		state.wielded:add_wear(dp.wear)
-		state.cur_mined_nodes = state.cur_mined_nodes + 1
-		mined_nodes_count = mined_nodes_count + 1
-	end
-	local wear_limit = 65535 - dp.wear
-	for index, pos in pairs(node) do
-		if state.wielded:get_wear() < wear_limit then
-			local p = state.prev_pos
-			local area_sector = mod_pos(pos, vector.new(16, 16, 16))
-			if p then
-				if state.cur_mined_nodes >= state.co_cur_max_nodes then
-					yield(state.cur_mined_nodes)
-					state.co_cur_max_nodes = MAX_MINED_NODES
-					state.mined_nodes = state.mined_nodes + state.cur_mined_nodes
-					state.cur_mined_nodes = 0
-					do_update_pos(state)
-				end
-			end
-			local node = core.get_node(pos)
-			if not BlockDigger.should_dig(node, pos) then
-				goto next_node
-			end
-			local options = utils.get_scan_options(node_name, {})
-			if options.light then
-				state.pending_light_notify:push_left({
-					pos = pos,
-					queue_left = state.queue:length(),
-				})
-				state.found_light_count = state.found_light_count - 1
-			end
-			if not options.light or utils.is_floating(pos, node.name) then
-				dig(pos, node)
-			end
-			if options.light then
-				local nat_light = core.get_natural_light(pos, 0.5)
-				if nat_light > 5 then
-					dig(pos, node)
-				end
-			end
-			do
-				local tool = state.player:get_wielded_item()
-				if tool:get_wear() ~= state.wielded:get_wear() then
-					state.wielded:set_wear(tool:get_wear())
-				end
-				if state.wielded:get_wear() > 65535 - dp.wear * 3 then
-					update_wielded_item(state.player, state.wielded)
-				end
-			end
-			state.prev_pos = pos
-			state.prev_sector = area_sector
-		end
-		::next_node::
-	end
-	return mined_nodes_count
 end
 
 local function iter_node_groups(state, iter_nodes)

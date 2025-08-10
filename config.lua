@@ -1,6 +1,7 @@
 local vector = vector
 local table = table
 local voxel_utils = voxel_utils
+local vein_miner = vein_miner
 local p = vector.new
 local i = table.insert
 local ia = voxel_utils.insert_all
@@ -95,6 +96,7 @@ vein_miner.CFG = {
 		["mesecons_stickyblocks:sticky_block_all"] = true,
 	},
 	cardinal_dirs = {p(1, 0, 0), p(-1, 0, 0), p(0, 1, 0), p(0, -1, 0), p(0, 0, 1), p(0, 0, -1)},
+	MAX_MINED_NODES = 188,
 }
 ---Insert all elements into `vein_miner.CFG.VEC_DIRS`
 ---@param src  Vector[]
