@@ -127,7 +127,7 @@ local vein_miner = {}
 ---@field set_node fun(pos: Vector, node: Node)
 ---@field get_node fun(pos: Vector): Node
 ---@field get_node_or_nil fun(pos: Vector): Node | nil
----@field sound_play fun(spec: string|SimpleSoundSpec, params?: ServerSoundParams)
+---@field sound_play fun(spec: string|SimpleSoundSpec, params: ServerSoundParams|nil, ephemeral: boolean|nil)
 ---@field get_connected_players fun(): Player[]
 core = {}
 local vm = core.get_voxel_manip()
