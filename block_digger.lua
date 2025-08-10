@@ -155,7 +155,7 @@ function BlockDigger.dig_node_list(state, node_name, node_list, repeat_count)
 			if not BlockDigger.should_dig(node, pos) then
 				goto next_node
 			end
-			local options = utils.get_scan_options(node_name, {})
+			local options = l_utils.get_scan_options(node_name, {})
 			if options.light then
 				state.pending_light_notify:push_left({
 					pos = pos,
