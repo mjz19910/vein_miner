@@ -8,7 +8,7 @@ local get_player_by_name = core.get_player_by_name
 local dtime_time = 0
 local dtime_acc = 0
 local dtime_next_falling_check = 0
-local falling_check_delay = 0.5
+local falling_check_delay = 1.5
 
 local light_region_debug = vein_miner.light_region_debug
 local falling_nodes = vein_miner.falling_nodes
@@ -22,15 +22,14 @@ assert(light_scan_data, "need light_scan_data")
 
 core.register_globalstep(function(dtime)
 	dtime_acc = dtime_acc + dtime
-	if dtime_acc > dtime_next_falling_check and #falling_nodes > 0 then
+	if dtime_acc > vein_miner.last_falling_node + falling_check_delay and #falling_nodes > 0 then
 		for i = 1, #falling_nodes do
 			local pos = falling_nodes[i]
-			falling_nodes[i] = nil
 			local h = hash_pos(pos)
+			falling_nodes[i] = nil
 			falling_nodes_set[h] = nil
 			check_for_falling(pos)
 		end
-		dtime_next_falling_check = dtime_acc + falling_check_delay
 	end
 	for name, enabled in pairs(light_region_debug) do
 		local player = get_player_by_name(name)
