@@ -80,6 +80,9 @@ local vein_miner = {}
 ---@field get_voxel_manip fun(): VoxelManip
 ---@field set_node fun(pos: Vector, node: Node)
 ---@field get_node fun(pos: Vector): Node
+---@field get_node_or_nil fun(pos: Vector): Node | nil
+---@field sound_play fun(name: string)
+---@field get_connected_players fun(): Player[]
 core = {}
 local vm = core.get_voxel_manip()
 

@@ -29,40 +29,9 @@ local last_floor_data = {}
 
 local up = new_vec(0, 1, 0)
 local down = new_vec(0, -1, 0)
-local cardinal_dirs = {{
-	x = 1,
-	y = 0,
-	z = 0,
-}, {
-	x = -1,
-	y = 0,
-	z = 0,
-}, {
-	x = 0,
-	y = 0,
-	z = 1,
-}, {
-	x = 0,
-	y = 0,
-	z = -1,
-}}
-local diagonal_dirs = {{
-	x = 1,
-	y = 0,
-	z = 1,
-}, {
-	x = 1,
-	y = 0,
-	z = -1,
-}, {
-	x = -1,
-	y = 0,
-	z = 1,
-}, {
-	x = -1,
-	y = 0,
-	z = -1,
-}}
+local p = new_vec
+local cardinal_dirs = {p(1, 0, 0), p(-1, 0, 0), p(0, 1, 0), p(0, -1, 0), p(0, 0, 1), p(0, 0, -1)}
+local diagonal_dirs = {p(1, 0, 1), p(-1, 0, 1), p(1, 0, -1), p(-1, 0, -1)}
 local support_dirs = {}
 table.insert_all(support_dirs, cardinal_dirs)
 table.insert_all(support_dirs, diagonal_dirs)
