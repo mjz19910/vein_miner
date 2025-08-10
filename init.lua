@@ -42,6 +42,23 @@ local p_config = require("mods.vein_miner.player_config")
 utils:merge(require("mods.vein_miner.late_utils"))
 local BlockDigger = require("mods.vein_miner.block_digger")
 require("mods.vein_miner.commands")
+
+local falling_nodes = {}
+local falling_nodes_set = {}
+
+vein_miner.falling_nodes = falling_nodes
+vein_miner.falling_nodes_set = falling_nodes_set
+
+vein_miner.check_for_falling = core.check_for_falling
+core.check_for_falling = function(pos)
+	local h = core.hash_node_position(pos)
+	if not falling_nodes_set[h] then
+		falling_nodes_set[h] = true
+		table.insert(falling_nodes, pos)
+	end
+	vein_miner.last_falling_node = vein_miner.current_tick_time
+end
+
 require("mods.vein_miner.globalstep")
 
 local fill_liquid_at_pos = vein_miner.fill_liquid_at_pos
@@ -1312,22 +1329,6 @@ core.register_chatcommand("mine", {
 		end
 	end,
 })
-
-local falling_nodes = {}
-local falling_nodes_set = {}
-
-vein_miner.falling_nodes = falling_nodes
-vein_miner.falling_nodes_set = falling_nodes_set
-
-vein_miner.check_for_falling = core.check_for_falling
-core.check_for_falling = function(pos)
-	local h = core.hash_node_position(pos)
-	if not falling_nodes_set[h] then
-		falling_nodes_set[h] = true
-		table.insert(falling_nodes, pos)
-	end
-	vein_miner.last_falling_node = vein_miner.current_tick_time
-end
 
 core.override_item("", {
 	range = 7,
