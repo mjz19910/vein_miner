@@ -1197,8 +1197,6 @@ core.register_on_dignode(function(pos, oldnode, player)
 		vein_miner_current_state[player_name] = state
 		vein_miner_step(state)
 	end
-	local queue = state.queue
-	local qs = state.queued_set
 	utils.add_pos_to_queue(state, node_name, pos, {
 		user = true,
 	})
