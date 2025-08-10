@@ -41,8 +41,8 @@ local player_hud = require("mods.vein_miner.player_hud")
 local p_config = require("mods.vein_miner.player_config")
 utils:merge(require("mods.vein_miner.late_utils"))
 local BlockDigger = require("mods.vein_miner.block_digger")
-require("mods.vein_miner.globalstep")
 require("mods.vein_miner.commands")
+require("mods.vein_miner.globalstep")
 
 local fill_liquid_at_pos = vein_miner.fill_liquid_at_pos
 
@@ -467,20 +467,6 @@ local function scan_region_for_node(state, regions, r, pos, node_name, user_acti
 	end
 end
 
-local light_region_debug = {}
-vein_miner.light_region_debug = light_region_debug
-
-core.register_chatcommand("toggle_light_debug", {
-	description = "Toggle debug view for light scan regions",
-	func = function(name)
-		light_region_debug[name] = not light_region_debug[name]
-		if light_region_debug[name] then
-			return true, "Light region debug ON"
-		else
-			return true, "Light region debug OFF"
-		end
-	end,
-})
 local function stone_part(pos) place_particle(pos, 6 / 3, "default_stone.png") end
 local function mese_blk_part(pos) place_particle(pos, 6 / 3, "default_mese_block.png") end
 local function diamond_blk_part(pos) place_particle(pos, 6 / 3, "default_diamond_block.png") end

@@ -1,3 +1,19 @@
+
+local light_region_debug = {}
+vein_miner.light_region_debug = light_region_debug
+
+core.register_chatcommand("toggle_light_debug", {
+	description = "Toggle debug view for light scan regions",
+	func = function(name)
+		light_region_debug[name] = not light_region_debug[name]
+		if light_region_debug[name] then
+			return true, "Light region debug ON"
+		else
+			return true, "Light region debug OFF"
+		end
+	end,
+})
+
 core.register_chatcommand("pos", {
 	description = "Show your position with 3 decimal places",
 	privs = {},
