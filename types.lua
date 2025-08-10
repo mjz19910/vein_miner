@@ -62,6 +62,8 @@ local config = {}
 
 ---@class VeinMinerGlobal
 ---@field CFG VeinMinerConfig
+---@field utils VeinMinerUtils
+---@field player_config PlayerConfigManager
 local vein_miner = {}
 
 ---@class LuantiCore
@@ -134,3 +136,19 @@ local vec = {}
 ---@field zero fun(): Vector
 ---@type VectorModule
 vector = {}
+
+---@class VeinMinerUtils
+local utils = {}
+
+---@class PlayerConfig
+---@field miny number
+---@field maxy number
+---@field last_maxy number|nil
+---@type PlayerConfig
+local config_data = {}
+
+---@class PlayerConfigManager
+---@field data table<string, PlayerConfig>
+---@field save_player_config fun(name: string): nil
+---@field load_player_config fun(name: string): nil
+local p_config = {}
