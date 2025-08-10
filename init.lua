@@ -33,6 +33,8 @@ require("mods.vein_miner.auto_floor")
 require("mods.vein_miner.voxel_utils")
 require("mods.vein_miner.config")
 require("mods.vein_miner.helpers")
+local h = require("mods.vein_miner.helpers")
+vein_miner.h = h
 local aabb = require("mods.vein_miner.aabb")
 vein_miner.aabb = aabb
 require("mods.vein_miner.liquid_filler")
@@ -784,7 +786,7 @@ local function dig_pos_process_queue_item(state, item, player_name)
 
 	local vec_size = vector.new(xz_len, y_len, xz_len);
 
-	local minvec = mod_pos(pos, vec_size)
+	local minvec = h.mod_pos(pos, vec_size)
 
 	if state.pos_mod_seen[core.hash_node_position(minvec)] then
 		return

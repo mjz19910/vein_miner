@@ -1,6 +1,8 @@
+local assert = assert
 local pairs = pairs
 local ipairs = ipairs
 local vein_miner = vein_miner
+local aabb = vein_miner.aabb
 local draw_region = aabb.draw
 
 local hash_pos = core.hash_node_position
