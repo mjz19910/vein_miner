@@ -207,7 +207,7 @@ local joined_dirs = {}
 local joined_dirs_set = {}
 local known_dir_set = {}
 
----@type table<string, VienMinerState>
+---@type table<string, VeinMinerState>
 local vein_miner_current_state = {}
 
 local check_for_falling_neighbors = {vector.new(-1, -1, 0), vector.new(1, -1, 0), vector.new(0, -1, -1), vector.new(0, -1, 1),
@@ -1060,7 +1060,7 @@ local function vein_miner_step(state)
 end
 
 vein_miner.state = {}
----@class VienMinerState
+---@class VeinMinerState
 ---@field pos Vector
 ---@field queue Deque
 ---@param player Player

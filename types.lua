@@ -73,7 +73,7 @@ local config = {}
 ---@class VeinMinerGlobal
 ---@field CFG VeinMinerConfig
 ---@field utils VeinMinerUtils
----@field l_utils VienMinerLateUtils
+---@field l_utils VeinMinerLateUtils
 ---@field player_config PlayerConfigManager
 ---@field mine_only_cur_set table<string, boolean>
 ---@field mine_only_group_sets table<string, string>
@@ -174,7 +174,7 @@ vector = {}
 ---@class VeinMinerUtils
 local utils = {}
 
----@class VienMinerLateUtils
+---@class VeinMinerLateUtils
 local l_utils = {}
 
 ---@class PlayerConfig
