@@ -57,6 +57,7 @@ local chunk = {}
 ---@class VeinMinerConfig
 ---@field cardinal_dirs Vector[]
 ---@field MINE_ONLY_CUR_SET string[]
+---@field MINE_ONLY_GROUPS table<string, string[]>
 ---@field VEC_DIRS Vector[]
 local config = {}
 
@@ -64,6 +65,8 @@ local config = {}
 ---@field CFG VeinMinerConfig
 ---@field utils VeinMinerUtils
 ---@field player_config PlayerConfigManager
+---@field mine_only_cur_set table<string, boolean>
+---@field mine_only_group_sets table<string, string>
 local vein_miner = {}
 
 ---@class LuantiCore

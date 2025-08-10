@@ -1,7 +1,10 @@
 local minetest = minetest
 local pairs = pairs
 vein_miner.h = {}
+---@param groups table<string, string[]>
+---@param valid_set table<string, boolean>
 function vein_miner.h.generate_mine_only_sets(groups, valid_set)
+	---@type table<string, string>
 	local ret = {}
 	for key, group in pairs(groups) do
 		for idx, value in pairs(group) do
