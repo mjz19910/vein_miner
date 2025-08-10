@@ -106,15 +106,15 @@ local vein_miner = {}
 ---@field sound_play fun(self:ObjectRef, spec:SimpleSoundSpec, params?:ServerSoundParams, ephemeral?:boolean): integer|nil
 
 ---@class SimpleSoundSpec
----@field name string|string[]  # Sound name or list of names to choose from
----@field gain number|nil          # Default gain (volume multiplier)
+---@field name string|string[] Sound name or list of names to choose from
+---@field gain number|nil Default gain (volume multiplier)
 ---@field fade number|nil
----@field pitch number|nil         # Default pitch multiplier
+---@field pitch number|nil Default pitch multiplier
 
 ---@class ServerSoundParams
----@field gain number|nil             # Override gain
----@field fade number|nil             # Override fade
----@field pitch number|nil            # Override pitch
+---@field gain number|nil Override gain
+---@field fade number|nil Override fade
+---@field pitch number|nil Override pitch
 ---@field loop boolean|nil
 ---@field to_player string|nil
 ---@field pos Vector|nil
