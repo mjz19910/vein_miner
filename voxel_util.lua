@@ -7,6 +7,7 @@ local core = core
 local vector = vector
 local table = table
 local ipairs = ipairs
+local VoxelArea = VoxelArea
 local p = vector.new
 local hash_node_position = core.hash_node_position
 local get_position_from_hash = core.get_position_from_hash
@@ -130,6 +131,89 @@ function voxel_util.flood_fill(vm, data, area, start_pos, predicate, fill_conten
 			end
 		end
 	end
+end
+
+---@param area VoxelArea
+---@param minp Vector
+---@param maxp Vector
+function voxel_util.iterate_voxelarea(area, minp, maxp)
+	local iter, param, index = area:iter(area:index(minp.x, minp.y, minp.z), area:index(maxp.x, maxp.y, maxp.z))
+	return function()
+		index = iter(param, index)
+		if not index then
+			return nil
+		end
+		return index, area:position(index)
+	end
+end
+
+---Convert a list of nodenames into a lookup table of content ids for quick checks
+---@param nodenames string[]
+---@return table<integer, boolean> content_id_lookup
+function voxel_util.content_ids_lookup(nodenames)
+	local lookup = {}
+	for _, name in ipairs(nodenames) do
+		local cid = core.get_content_id(name)
+		if cid then
+			lookup[cid] = true
+		end
+	end
+	return lookup
+end
+
+---Create a lookup table from content IDs to nodenames (reverse of content_ids_lookup)
+---@param cids integer[]
+---@return table<integer, string> cid_to_name_lookup
+function voxel_util.content_names_lookup(cids)
+    local lookup = {}
+    for _, cid in ipairs(cids) do
+        local name = core.get_name_from_content_id(cid)
+        if name then
+            lookup[cid] = name
+        end
+    end
+    return lookup
+end
+
+---Find logs that keep leaves alive within a 9x9 horizontal area and leaf decay vertical radius around player
+---@param player Player
+---@return Vector[] logs_positions
+function voxel_util.find_logs_keeping_leaves(player)
+	local pos = player:get_pos()
+	pos = vector.round(pos)
+
+	local LOG_KEEP_RADIUS = 3 -- leaf decay radius
+
+	local minp = {
+		x = pos.x - 4,
+		y = pos.y - LOG_KEEP_RADIUS,
+		z = pos.z - 4,
+	}
+	local maxp = {
+		x = pos.x + 4,
+		y = pos.y + LOG_KEEP_RADIUS,
+		z = pos.z + 4,
+	}
+
+	local vm = core.get_voxel_manip(minp, maxp)
+	local area = VoxelArea:new{
+		MinEdge = minp,
+		MaxEdge = maxp,
+	}
+	local data = vm:get_data()
+
+	local log_nodes = {"default:tree", "default:jungletree", "default:pine_tree", "default:acacia_tree", "default:aspen_tree"}
+	local log_cids = voxel_util.content_ids_lookup(log_nodes)
+
+	local found_logs = {}
+
+	for index, pos in voxel_util.iterate_voxelarea(area, minp, maxp) do
+		if log_cids[data[index]] then
+			table.insert(found_logs, pos)
+		end
+	end
+
+	return found_logs
 end
 
 return voxel_util
