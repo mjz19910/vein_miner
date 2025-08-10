@@ -7,14 +7,14 @@ local p = vector.new
 
 core.register_tool("vein_miner:log_particle_tool", {
 	description = "Log Particle Highlighter",
-	inventory_image = "default_wood.png",
+    inventory_image = "default_torch_on_floor.png",
 
 	on_use = function(itemstack, user, pointed_thing)
 		if not user or not user:is_player() then
 			return itemstack
 		end
 
-		local logs = voxel_util.find_logs_keeping_leaves(user)
+		local logs = voxel_util.find_logs_keeping_leaves(pointed_thing.under)
 		for _, log_pos in ipairs(logs) do
 			local above_pos = log_pos + p(0, 1, 0)
 			local above_node = core.get_node_or_nil(above_pos)

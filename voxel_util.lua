@@ -138,18 +138,66 @@ end
 ---
 ---Each call returns the next index and its corresponding Vector position.
 ---
----@param area VoxelArea The voxel area to iterate over.
+---@param vm VoxelManip The voxel manipulator to iterate over.
 ---@param minp Vector The minimum corner position of the iteration volume.
 ---@param maxp Vector The maximum corner position of the iteration volume.
----@return fun(): integer, Vector Iterator function returning (index, position) or nil when done.
-function voxel_util.iterate_voxelarea(area, minp, maxp)
-	local iter, param, index = area:iterp(minp, maxp)
+---@param full_minp Vector The minimum corner of the full VoxelManip area.
+---@param full_maxp Vector The maximum corner of the full VoxelManip area.
+---@return fun(): Vector, integer, integer Iterator function returning (position, value, index) or nil when done.
+function voxel_util.iterate_voxelarea(vm, full_minp, full_maxp, user_minp, user_maxp)
+	local area = VoxelArea:new{
+		MinEdge = full_minp, -- Assuming you can get these from vm
+		MaxEdge = full_maxp,
+	}
+
+	-- Clamp minp/maxp inside vm area (optional safety)
+	local minx = math.max(user_minp.x, area.MinEdge.x)
+	local miny = math.max(user_minp.y, area.MinEdge.y)
+	local minz = math.max(user_minp.z, area.MinEdge.z)
+	local maxx = math.min(user_maxp.x, area.MaxEdge.x)
+	local maxy = math.min(user_maxp.y, area.MaxEdge.y)
+	local maxz = math.min(user_maxp.z, area.MaxEdge.z)
+
+	local data = vm:get_data()
+
+	-- Start index in the vm area for min corner
+	local i = area:index(minx, miny, minz) - 1
+
+	local xrange = maxx - minx + 1
+	local yrange = maxy - miny + 1
+	local zrange = maxz - minz + 1
+
+	local y = 0
+	local z = 0
+
+	local yreqstride = area.ystride - xrange
+	local multistride = area.zstride - ((yrange - 1) * area.ystride + xrange)
+
+	local nextaction = i + 1 + xrange
+
 	return function()
-		index = iter(param, index)
-		if not index then
-			return nil
+		i = i + 1
+		if i == nextaction then
+			y = y + 1
+			if y == yrange then
+				z = z + 1
+				if z == zrange then
+					return
+				end
+				i = i + multistride
+				y = 0
+				nextaction = i + xrange
+			else
+				i = i + yreqstride
+				nextaction = i + xrange
+			end
 		end
-		return index, area:position(index)
+
+		-- Calculate 3D position from linear index
+		local pos = area:position(i)
+		local val = data[i]
+
+		return pos, val, i
 	end
 end
 
@@ -182,18 +230,19 @@ function voxel_util.content_names_lookup(cids)
 end
 
 ---Find logs that keep leaves alive within a 9x9 horizontal area and leaf decay vertical radius around player
----@param player Player
+---@param pos Vector
 ---@return Vector[] logs_positions
-function voxel_util.find_logs_keeping_leaves(player)
-	local pos = player:get_pos()
-	pos = vector.round(pos)
-
+function voxel_util.find_logs_keeping_leaves(pos)
 	local LOG_KEEP_RADIUS = 3 -- leaf decay radius
 
-	local minp = vector.new(pos.x - 4, pos.y - LOG_KEEP_RADIUS, pos.z - 4)
-	local maxp = vector.new(pos.x + 4, pos.y + LOG_KEEP_RADIUS, pos.z + 4)
+	local minp = vector.new(pos.x - 2, pos.y - LOG_KEEP_RADIUS, pos.z - 2)
+	local maxp = vector.new(pos.x + 2, pos.y + LOG_KEEP_RADIUS, pos.z + 2)
+
+	local minp = vector.new(pos.x, pos.y - 3, pos.z)
+	local maxp = vector.new(pos.x, pos.y + 2, pos.z)
 
 	local vm = core.get_voxel_manip(minp, maxp)
+	local map_minp, map_maxp = vm:read_from_map(minp, maxp)
 	local area = VoxelArea:new{
 		MinEdge = minp,
 		MaxEdge = maxp,
@@ -205,8 +254,8 @@ function voxel_util.find_logs_keeping_leaves(player)
 
 	local found_logs = {}
 
-	for index, pos in voxel_util.iterate_voxelarea(area, minp, maxp) do
-		if log_cids[data[index]] then
+	for pos, cid, idx in voxel_util.iterate_voxelarea(vm, map_minp, map_maxp, minp, maxp) do
+		if log_cids[cid] then
 			table.insert(found_logs, pos)
 		end
 	end
