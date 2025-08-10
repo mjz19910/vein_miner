@@ -44,7 +44,7 @@ local cid = core.get_content_id
 
 -- vein_miner tables
 local vein_miner = vein_miner
-local aabb = aabb
+local aabb = vein_miner.aabb
 local helpers = vein_miner.h
 
 -- vein_miner table functions
