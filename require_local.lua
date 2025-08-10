@@ -9,4 +9,14 @@ local function require(modpath)
 	return load(relative_path)
 end
 
+print = function(...)
+	local args = {...}
+	local parts = {}
+	for i, v in ipairs(args) do
+		parts[#parts + 1] = tostring(v)
+	end
+	local msg = table.concat(parts, " ")
+	core.log("warning", "[vein_miner:print] " .. msg)
+end
+
 return require
