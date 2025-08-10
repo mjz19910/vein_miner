@@ -103,10 +103,12 @@ function BlockDigger.should_dig(node, pos)
 	end
 	return true -- safe to mine
 end
+local h = vein_miner.h
+local log_action = h.log_action
+local mod_pos = h.mod_pos
+local is_liquid = h.is_liquid
+local fill_liquid_at_pos = vein_miner.fill_liquid_at_pos
 
-local log_action = vein_miner.h.log_action
-local mod_pos = vein_miner.h.mod_pos
-local is_liquid = vein_miner.h.is_liquid
 function BlockDigger.dig_node_list(state, node_name, node_list, repeat_count)
 	local mined_nodes_count = 0
 	if is_liquid(node_name, "water") or is_liquid(node_name, "lava") then
@@ -114,7 +116,7 @@ function BlockDigger.dig_node_list(state, node_name, node_list, repeat_count)
 			return 0, true
 		end
 		for index, pos in pairs(node_list) do
-			state:fill_liquid_at_pos(pos, utils.handle_pos_notify)
+			fill_liquid_at_pos(pos, l_utils.handle_pos_notify)
 			mined_nodes_count = mined_nodes_count + 1
 		end
 		if repeat_count <= 2 then
