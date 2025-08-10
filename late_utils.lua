@@ -53,6 +53,13 @@ function l_utils.add_pos_to_queue(state, node_name, pos, options)
 	})
 end
 
+---@param pos Vector
+---@param state VienMinerState
+function l_utils.handle_pos_notify(state, pos)
+	local node = core.get_node(pos)
+	l_utils.add_pos_to_queue(state, node.name, pos)
+end
+
 function l_utils.is_falling(name)
 	local def = core.registered_nodes[name]
 	return def and def.groups and def.groups.falling_node

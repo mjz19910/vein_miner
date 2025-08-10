@@ -201,6 +201,7 @@ local joined_dirs = {}
 local joined_dirs_set = {}
 local known_dir_set = {}
 
+---@type table<string, VienMinerState>
 local vein_miner_current_state = {}
 
 local check_for_falling_neighbors = {vector.new(-1, -1, 0), vector.new(1, -1, 0), vector.new(0, -1, -1), vector.new(0, -1, 1),
@@ -872,7 +873,7 @@ local function dig_pos_process_queue_item(state, item, player_name)
 	end
 
 	if is_liquid(node_name, "water") or is_liquid(node_name, "lava") then
-		fill_liquid_at_pos(state, pos, utils.handle_pos_notify)
+		fill_liquid_at_pos(state, pos, l_utils.handle_pos_notify)
 		return
 	end
 	if options.light then
@@ -1193,7 +1194,6 @@ core.register_on_dignode(function(pos, oldnode, player)
 	end
 	local state = vein_miner_current_state[player_name]
 	if state == nil then
-		core.chat_send_player(player_name, "start vein mining")
 		state = vein_miner.state.new(pos, player, player_name, wielded)
 		vein_miner_current_state[player_name] = state
 	end

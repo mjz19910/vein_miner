@@ -58,11 +58,6 @@ function utils.check_pos(pos)
 	return nil
 end
 
-function utils.handle_pos_notify(state, pos)
-	local node = core.get_node(pos)
-	utils.add_pos_to_queue(state, node.name, pos)
-end
-
 function utils:merge(other)
 	for k, v in pairs(other) do
 		self[k] = v
