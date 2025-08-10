@@ -723,7 +723,7 @@ local function iter_node_groups(state, iter_nodes)
 	local i = 0
 	::again::
 	for node_name, node in pairs(iter_nodes) do
-		local dug_nodes, next_group = process_node_group(state, node_name, node, i)
+		local dug_nodes, next_group = BlockDigger.dig_node_list(state, node_name, node, i)
 		if next_group then
 			goto continue
 		end
