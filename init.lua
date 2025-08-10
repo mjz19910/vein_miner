@@ -1,7 +1,7 @@
 local core = core
 local dofile = dofile
 
-local require = dofile(core.get_modpath("vein_miner") .. "/local_require.lua")
+local require = dofile(core.get_modpath("vein_miner") .. "/require_local.lua")
 local utils = require("mods.vein_miner.utils")
 local require = utils.require
 
