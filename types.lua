@@ -75,13 +75,59 @@ local config = {}
 ---@field mine_only_cur_set table<string, boolean>
 ---@field mine_only_group_sets table<string, string>
 local vein_miner = {}
+---@class ObjectRef
+--- Position & Movement
+---@field get_pos fun(self:ObjectRef): Vector
+---@field set_pos fun(self:ObjectRef, pos:Vector)
+---@field move_to fun(self:ObjectRef, pos:Vector, continuous?:boolean)
+---@field get_velocity fun(self:ObjectRef): Vector
+---@field add_velocity fun(self:ObjectRef, vel:Vector)
+---@field get_acceleration fun(self:ObjectRef): Vector
+---@field set_acceleration fun(self:ObjectRef, acc:Vector)
+---@field get_rotation fun(self:ObjectRef): Vector
+---@field set_rotation fun(self:ObjectRef, rot:Vector)
+---@field get_yaw fun(self:ObjectRef): number
+---@field set_yaw fun(self:ObjectRef, yaw:number)
+---
+--- Appearance
+---@field set_texture_mod fun(self:ObjectRef, mod:string)
+---@field get_texture_mod fun(self:ObjectRef): string
+---@field set_sprite fun(self:ObjectRef, start_frame:number, num_frames:number, framelength:number, select_horiz_by_yawpitch:boolean)
+---
+--- Entity Properties
+---@field get_properties fun(self:ObjectRef): table
+---@field set_properties fun(self:ObjectRef, props:table)
+---
+--- Player Specific (only if this is a player)
+---@field get_player_name fun(self:ObjectRef): string
+---@field is_player fun(self:ObjectRef): boolean
+---
+--- Sound
+---@field sound_play fun(self:ObjectRef, spec:SimpleSoundSpec, params?:ServerSoundParams, ephemeral?:boolean): integer|nil
+
+---@class SimpleSoundSpec
+---@field name string|string[]  # Sound name or list of names to choose from
+---@field gain number|nil          # Default gain (volume multiplier)
+---@field fade number|nil
+---@field pitch number|nil         # Default pitch multiplier
+
+---@class ServerSoundParams
+---@field gain number|nil             # Override gain
+---@field fade number|nil             # Override fade
+---@field pitch number|nil            # Override pitch
+---@field loop boolean|nil
+---@field to_player string|nil
+---@field pos Vector|nil
+---@field max_hear_distance number|nil
+---@field object ObjectRef|nil
+---@field exclude_player string|nil
 
 ---@class LuantiCore
 ---@field get_voxel_manip fun(): VoxelManip
 ---@field set_node fun(pos: Vector, node: Node)
 ---@field get_node fun(pos: Vector): Node
 ---@field get_node_or_nil fun(pos: Vector): Node | nil
----@field sound_play fun(name: string)
+---@field sound_play fun(spec: string|SimpleSoundSpec, params?: ServerSoundParams)
 ---@field get_connected_players fun(): Player[]
 core = {}
 local vm = core.get_voxel_manip()
