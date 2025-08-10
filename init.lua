@@ -1443,7 +1443,7 @@ core.register_on_joinplayer(function(player)
 	end
 
 	light_scan_data[name] = {}
-	light_region_debug[name] = true
+	vein_miner.light_region_debug[name] = true
 
 	-- Init the player hud
 	player_hud.init_player(player)
