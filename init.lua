@@ -764,6 +764,9 @@ table.insert_all(falling_target_nodes, mine_only_groups.silver_sand)
 table.insert_all(falling_target_nodes, mine_only_groups.gravel)
 
 local known_unhandled_nodes = {}
+
+local is_liquid = h.is_liquid
+
 local function dig_pos_process_queue_item(state, item, player_name)
 	local config = p_config.data[player_name]
 
