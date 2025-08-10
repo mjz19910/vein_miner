@@ -47,11 +47,11 @@ end
 
 ---@param self Region
 ---@param margin number
-function Region:shrink_clone(margin) return new_region(vec_add(self.min, margin), vec_add(self.max, -margin)) end
+function Region:shrink_clone(margin) return self:clone():shrink(margin) end
 
 ---@param self Region
 ---@param margin number
-function Region:grow_clone(margin) return new_region(vec_add(self.min, -margin), vec_add(self.max, margin)) end
+function Region:grow_clone(margin) return self:clone():grow(margin) end
 
 ---@param self Region
 ---@param margin number
