@@ -1,8 +1,10 @@
+local assert = assert
 local vector = vector
 local setmetatable = setmetatable
 local ipairs = ipairs
 local table = table
 local math = math
+local core = core
 local aabb = {}
 
 local vec_add = vector.add
@@ -11,23 +13,16 @@ local insert = table.insert
 local remove = table.remove
 local min = math.min
 local max = math.max
+local p = vector.new
 
 ---@class Region
+---@field __index Region
 ---@field min Vector
 ---@field max Vector
----@field shrink fun(self: Region, margin: number): void
----@field grow fun(self: Region, margin: number): void
----@field shrink_parts fun(self: Region, margin: number): Vector, Vector
----@field grow_parts fun(self: Region, margin: number): Vector, Vector
----@field shrink_clone fun(self: Region, margin: number): Region
----@field grow_clone fun(self: Region, margin: number): Region
 
----@class RegionMetatable
----@field __index RegionMetatable
-
----@type RegionMetatable
-local region_mt = {}
-region_mt.__index = region_mt
+---@type Region
+local Region = {}
+Region.__index = Region
 
 ---@param min Vector
 ---@param max Vector
@@ -36,35 +31,38 @@ local function new_region(min, max)
 	return setmetatable({
 		min = min,
 		max = max,
-	}, region_mt)
+	}, Region)
 end
+aabb.new_region = new_region
+
+function Region:clone() return new_region(p(self.min), p(self.max)) end
 
 ---@param self Region
 ---@param min Vector
 ---@param max Vector
-function region_mt:assign_parts(min, max)
+function Region:assign_parts(min, max)
 	self.min = min
 	self.max = max
 end
 
 ---@param self Region
 ---@param margin number
-function region_mt:shrink_clone(margin) return new_region(vec_add(self.min, margin), vec_add(self.max, -margin)) end
+function Region:shrink_clone(margin) return new_region(vec_add(self.min, margin), vec_add(self.max, -margin)) end
 
 ---@param self Region
 ---@param margin number
-function region_mt:grow_clone(margin) return new_region(vec_add(self.min, -margin), vec_add(self.max, margin)) end
+function Region:grow_clone(margin) return new_region(vec_add(self.min, -margin), vec_add(self.max, margin)) end
 
 ---@param self Region
 ---@param margin number
-function region_mt:shrink(margin)
+function Region:shrink(margin)
 	self.min = vec_add(self.min, margin)
 	self.max = vec_sub(self.max, margin)
 end
 
 ---@param self Region
 ---@param margin number
-function region_mt:grow(margin)
+function Region:grow(margin)
 	self.min = vec_sub(self.min, margin)
 	self.max = vec_add(self.max, margin)
 end
@@ -72,28 +70,29 @@ end
 ---@param a Region
 ---@param b Region
 ---@return boolean
-local function regions_overlap(a, b)
-	local x_overlap = a.max.x >= b.min.x and a.min.x <= b.max.x
-	local y_overlap = a.max.y >= b.min.y and a.min.y <= b.max.y
-	local z_overlap = a.max.z >= b.min.z and a.min.z <= b.max.z
+function Region:overlaps(other)
+	local x_overlap = self.max.x >= other.min.x and self.min.x <= other.max.x
+	local y_overlap = self.max.y >= other.min.y and self.min.y <= other.max.y
+	local z_overlap = self.max.z >= other.min.z and self.min.z <= other.max.z
 	return x_overlap and y_overlap and z_overlap
 end
 
 ---@param a Region
 ---@param b Region
 ---@return boolean
-local function region_fully_covered(a, b)
-	local x_covered = a.min.x >= b.min.x and a.max.x <= b.max.x
-	local y_covered = a.min.y >= b.min.y and a.max.y <= b.max.y
-	local z_covered = a.min.z >= b.min.z and a.max.z <= b.max.z
-	return x_covered and y_covered and z_covered
+function Region:is_inside(b)
+	local min, max = self.min, self.max
+	local inside_x = min.x >= b.min.x and max.x <= b.max.x
+	local inside_y = min.y >= b.min.y and max.y <= b.max.y
+	local inside_z = min.z >= b.min.z and max.z <= b.max.z
+	return inside_x and inside_y and inside_z
 end
 
 ---@param a Region
 ---@param b Region
 ---@return Region[]
 local function subtract_box(a, b)
-	if not regions_overlap(a, b) then
+	if not a:overlaps(b) then
 		return {a}
 	end
 
@@ -154,9 +153,9 @@ local function subtract_region(container, filled_list)
 	return remaining
 end
 
----@param r Region
+---@param self Region
 ---@return number
-function aabb.volume(r) return (r.max.x - r.min.x + 1) * (r.max.y - r.min.y + 1) * (r.max.z - r.min.z + 1) end
+function Region:volume() return (self.max.x - self.min.x + 1) * (self.max.y - self.min.y + 1) * (self.max.z - self.min.z + 1) end
 
 -- If they overlap or touch (1-node gap), merge them
 ---@param min1 number
@@ -263,12 +262,12 @@ function aabb.subtract_and_accumulate(r, scanned, opts)
 	local ac_volume = 0
 
 	for _, r in ipairs(uncovered) do
-		local vol = volume(r)
+		local vol = r:volume()
 		if vol >= max_volume then
 			on_flush(r)
 		else
 			if not ac then
-				ac = new_region(r.min, r.max)
+				ac = r:clone()
 				ac_volume = vol
 			else
 				-- Check closeness
@@ -278,15 +277,15 @@ function aabb.subtract_and_accumulate(r, scanned, opts)
 				local dist = dx + dy + dz
 
 				if dist > max_dist then
-					if volume(ac) >= max_volume then
+					if ac:volume() >= max_volume then
 						on_flush(ac)
 					end
-					ac = new_region(r.min, r.max)
+					ac = r:clone()
 					ac_volume = vol
 				else
 					ac.min = vector.new(math.min(ac.min.x, r.min.x), math.min(ac.min.y, r.min.y), math.min(ac.min.z, r.min.z))
 					ac.max = vector.new(math.max(ac.max.x, r.max.x), math.max(ac.max.y, r.max.y), math.max(ac.max.z, r.max.z))
-					ac_volume = volume(ac)
+					ac_volume = ac:volume()
 				end
 
 				if ac_volume >= max_volume then
@@ -319,7 +318,7 @@ end
 ---@param max_distance number
 ---@return Region | nil
 function aabb.between(a, b, max_distance)
-	if regions_overlap(a, b) then
+	if a:overlaps(b) then
 		return nil
 	end
 	if get_gap_distance(a, b) > max_distance then
@@ -339,36 +338,39 @@ end
 ---@return boolean
 function aabb.is_covered_by_any(target, region_list)
 	for _, r in ipairs(region_list) do
-		if region_fully_covered(target, r) then
+		if target:is_inside(r) then
 			return true
 		end
 	end
 	return false
 end
 
----@param r Region
+---@param self Region
 ---@param pos Vector
 ---@return boolean
-local function is_point_in_region(r, pos)
-	return pos.x >= r.min.x and pos.x <= r.max.x and pos.y >= r.min.y and pos.y <= r.max.y and pos.z >= r.min.z and pos.z <= r.max.z
+function Region:is_point_in_region(pos)
+	local min, max = self.min, self.max
+	return pos.x >= min.x and pos.x <= max.x and pos.y >= min.y and pos.y <= max.y and pos.z >= min.z and pos.z <= max.z
 end
 
 ---@param r Region
 ---@return Vector
-local function size(r) return r.max - r.min end
+function Region:size() return self.max - self.min end
 
----@type fun(pos: Vector): string
-local pos_str = core.pos_to_string
-
----@param r Region
+---@param self Region
 ---@return string
-local function size_str(r) return pos_str(size(r)) end
+function Region:__tostring()
+	local size = self.max - self.min
+	return ("%s to %s (%s) Volume=%d"):format(self.min, self.max, self:size(), self:volume())
+end
 
----@param r Region
----@return string
-local function region_str(r)
-	local size = r.max - r.min
-	return ("%s to %s (%s) Volume=%d"):format(pos_str(r.min), pos_str(r.max), size_str(r), volume(r))
+function Region:is_inside_any(region_list)
+	for _, other in ipairs(region_list) do
+		if self:is_inside(other) then
+			return true
+		end
+	end
+	return false
 end
 
 return aabb

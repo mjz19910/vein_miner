@@ -412,11 +412,11 @@ end
 local region_scan_fmt1 = "[LightScan] scanned region (%d) %s"
 local region_scan_fmt2 = " [LightScan] scanned region (%d) %s [%s]"
 local function scan_nearby_region(state, r1, offset_vec, offset_str, pos, node_name)
-	local r2 = aabb.region(r1.min + offset_vec, r1.max + offset_vec)
+	local r2 = aabb.new_region(r1.min + offset_vec, r1.max + offset_vec)
 	local list = core.find_nodes_in_area(r2.min, r2.max, node_name, false)
 	local count = count_found_nodes(list, pos, state.player_name)
 	if count > 0 then
-		log_action(region_scan_fmt2:format(count, aabb.region_str(r2), offset_str))
+		log_action(region_scan_fmt2:format(count, r2, offset_str))
 	end
 end
 local function scan_region_for_node(state, regions, r, pos, node_name, user_action, show_log)
@@ -454,7 +454,7 @@ local function scan_region_for_node(state, regions, r, pos, node_name, user_acti
 		local max_str = core.pos_to_string(r.max)
 		local size = r.max - r.min
 		local size_str = core.pos_to_string(size)
-		log_warning(region_scan_fmt1:format(count, aabb.region_str(r)))
+		log_warning(region_scan_fmt1:format(count, r))
 		scan_nearby_region(state, r, vector.new(size.x, 0, 0), "X+", pos, node_name)
 		scan_nearby_region(state, r, vector.new(-size.x, 0, 0), "X-", pos, node_name)
 		scan_nearby_region(state, r, vector.new(0, size.y, 0), "Y+", pos, node_name)
@@ -577,27 +577,21 @@ local function scan_nearby_lights(state, pos, node_name, options, show_log)
 	end
 	if options.user then
 		for _, r in ipairs(regions) do
-			if aabb.is_point_in_region(r, pos) then
+			if r:is_point_in_region(pos) then
 				full_scan(r)
 			end
 		end
 	end
 	local scan_dist = light_scan_dist
 	local scan_range = scan_dist / 2
-	local minvec = vector.offset(pos, math.ceil(-scan_range), math.ceil(-scan_range), math.ceil(-scan_range))
-	local maxvec = vector.offset(minvec, scan_dist, scan_dist, scan_dist)
+	local minvec = vector.subtract(pos, math.floor(scan_range))
+	local maxvec = vector.add(minvec, scan_dist)
 	if maxvec.y > maxy then
 		maxvec.y = maxy
 	end
 	local total_count = 0
-	local newly_scanned = true
-	local r = aabb.region(minvec, maxvec)
-	for _, s in ipairs(regions) do
-		if aabb.region_fully_covered(r, s) then
-			newly_scanned = false
-			break
-		end
-	end
+	local r = aabb.new_region(minvec, maxvec)
+	local newly_scanned = not r:is_inside_any(regions)
 	if newly_scanned then
 		---@type SubtractAndAccumulateOptions
 		local opts = {
@@ -616,7 +610,7 @@ local function scan_nearby_lights(state, pos, node_name, options, show_log)
 	for i = 1, #regions - 1 do
 		for j = i + 1, #regions do
 			local gap = aabb.between(regions[i], regions[j], MAX_GAP_DIST)
-			if gap and aabb.volume(gap) < GAP_THRESHOLD then
+			if gap and gap:volume() < GAP_THRESHOLD then
 				if not aabb.is_covered_by_any(gap, regions) then
 					normal_scan(r)
 					table.insert(regions, r)
