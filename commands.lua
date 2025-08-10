@@ -109,7 +109,7 @@ core.register_chatcommand("mine", {
 				if val > maxy then
 					return false, "miny cannot be greater than maxy (" .. maxy .. ")"
 				end
-				config.miny = val - 1
+				config.miny = val
 				return true, "Minimum mining Y set to y=" .. val
 			elseif sub == "max" and val then
 				val = math.floor(val)
@@ -120,7 +120,7 @@ core.register_chatcommand("mine", {
 				return true, "Maximum mining Y set to y=" .. val
 			elseif sub == nil then
 				local view_y = player:get_pos().y + 1.6
-				local new_miny = math.floor((view_y - 16) / 8) * 8 - 1
+				local new_miny = math.floor((view_y - 16) / 8) * 8
 				local new_maxy = math.floor((view_y + 48) / 8) * 8
 				config.miny = new_miny
 				config.maxy = new_maxy

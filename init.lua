@@ -48,8 +48,8 @@ vein_miner.l_utils = l_utils
 local BlockDigger = require("mods.vein_miner.block_digger")
 
 function vein_miner.show_layer_bounds(miny, maxy)
-	local y_range = "y=" .. (miny + 1) .. ".." .. maxy
-	local layer_info = "(layers " .. math.floor((miny + 1) / 8) .. " to " .. math.floor(maxy / 8) .. ")"
+	local y_range = "y=" .. miny .. ".." .. maxy
+	local layer_info = "(layers " .. math.floor(miny / 8) .. " to " .. math.floor(maxy / 8) .. ")"
 	return y_range .. " " .. layer_info
 end
 
@@ -277,7 +277,7 @@ local function is_valid_pos_to_iter(pos, player_name)
 	local config = p_config.data[player_name]
 	local maxy = config.maxy
 	local miny = config.miny
-	if pos.y > miny and pos.y <= maxy then
+	if pos.y >= miny and pos.y < maxy then
 		return true
 	end
 	return false
