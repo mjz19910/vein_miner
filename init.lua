@@ -87,6 +87,7 @@ end
 local mine_only_group_sets = vein_miner.h.generate_mine_only_sets(mine_only_groups, mine_only_cur_set)
 vein_miner.mine_only_group_sets = mine_only_group_sets
 require("mods.vein_miner.lit_cobble")
+require("mods.vein_miner.player_lifecycle")
 
 local fill_liquid_at_pos = vein_miner.fill_liquid_at_pos
 
