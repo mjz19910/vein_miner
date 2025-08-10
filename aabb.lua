@@ -3,6 +3,7 @@ local setmetatable = setmetatable
 local ipairs = ipairs
 local table = table
 local math = math
+local aabb = {}
 
 local vec_add = vector.add
 local vec_sub = vector.subtract
@@ -155,7 +156,7 @@ end
 
 ---@param r Region
 ---@return number
-local function volume(r) return (r.max.x - r.min.x + 1) * (r.max.y - r.min.y + 1) * (r.max.z - r.min.z + 1) end
+function aabb.volume(r) return (r.max.x - r.min.x + 1) * (r.max.y - r.min.y + 1) * (r.max.z - r.min.z + 1) end
 
 -- If they overlap or touch (1-node gap), merge them
 ---@param min1 number
@@ -202,7 +203,7 @@ end
 
 ---@param region_list Region[]
 ---@return Region[] unknown_regions
-local function compact_regions(region_list)
+function aabb.compact_regions(region_list)
 	local changed = true
 	local unknown_regions = {}
 
@@ -251,7 +252,7 @@ end
 ---@param r Region
 ---@param scanned Region[]
 ---@param opts SubtractAndAccumulateOptions
-local function subtract_and_accumulate(r, scanned, opts)
+function aabb.subtract_and_accumulate(r, scanned, opts)
 	local max_volume = opts.volume_threshold or 50000
 	local max_dist = opts.max_distance or 16
 	local on_flush = assert(opts.on_flush, "`on_flush` callback required")
@@ -317,7 +318,7 @@ end
 ---@param b Region
 ---@param max_distance number
 ---@return Region | nil
-local function between(a, b, max_distance)
+function aabb.between(a, b, max_distance)
 	if regions_overlap(a, b) then
 		return nil
 	end
@@ -336,7 +337,7 @@ end
 ---@param target Region
 ---@param region_list Region[]
 ---@return boolean
-local function is_covered_by_any(target, region_list)
+function aabb.is_covered_by_any(target, region_list)
 	for _, r in ipairs(region_list) do
 		if region_fully_covered(target, r) then
 			return true
@@ -369,45 +370,5 @@ local function region_str(r)
 	local size = r.max - r.min
 	return ("%s to %s (%s) Volume=%d"):format(pos_str(r.min), pos_str(r.max), size_str(r), volume(r))
 end
----@class AABB
----@field axis_touch_or_overlap fun(min1: number, max1: number, min2: number, max2: number): boolean
----@field between fun(a: Region, b: Region, max_distance: number): Region | nil
----@field compact_regions fun(region_list: Region[]): Region[]
----@field get_gap_distance fun(a: Region, b: Region): number
----@field is_covered_by_any fun(target: Region, region_list: Region[]): boolean
----@field is_point_in_region fun(r: Region, pos: Vector): boolean
----@field merge_regions fun(a: Region, b: Region): Region, Region[]
----@field mergeable fun(a: Region, b: Region): boolean
----@field region fun(min: Vector, max: Vector): Region
----@field region_fully_covered fun(a: Region, b: Region): boolean
----@field region_str fun(r: Region): string
----@field regions_overlap fun(a: Region, b: Region): boolean
----@field size fun(r: Region): Vector
----@field size_str fun(r: Region): string
----@field subtract_and_accumulate fun(r: Region, scanned: Region[], opts: table): nil
----@field subtract_box fun(a: Region, b: Region): Region[]
----@field subtract_region fun(container: Region, filled_list: Region[]): Region[]
----@field subtract_scan fun(r: Region, scanned: Region[], on_region: fun(region: Region)): nil
----@field volume fun(r: Region): number
----@type AABB
-aabb = {
-	axis_touch_or_overlap = axis_touch_or_overlap,
-	between = between,
-	compact_regions = compact_regions,
-	get_gap_distance = get_gap_distance,
-	is_covered_by_any = is_covered_by_any,
-	is_point_in_region = is_point_in_region,
-	merge_regions = merge_regions,
-	mergeable = mergeable,
-	region = new_region,
-	region_fully_covered = region_fully_covered,
-	region_str = region_str,
-	regions_overlap = regions_overlap,
-	size = size,
-	size_str = size_str,
-	subtract_and_accumulate = subtract_and_accumulate,
-	subtract_box = subtract_box,
-	subtract_region = subtract_region,
-	subtract_scan = subtract_scan,
-	volume = volume,
-}
+
+return aabb

@@ -32,7 +32,7 @@ require("mods.vein_miner.auto_floor")
 require("mods.vein_miner.voxel_utils")
 require("mods.vein_miner.config")
 require("mods.vein_miner.helpers")
-require("mods.vein_miner.aabb")
+local aabb = require("mods.vein_miner.aabb")
 require("mods.vein_miner.liquid_filler")
 require("mods.vein_miner.remove_walls")
 local player_hud = require("mods.vein_miner.player_hud")
@@ -162,7 +162,10 @@ local joined_dirs = {}
 local joined_dirs_set = {}
 local known_dir_set = {}
 
+---@type table<string, Region[]>
 local light_scan_data = {}
+vein_miner.light_scan_data = light_scan_data
+
 local function light_scan_reset(name) light_scan_data[name] = {} end
 
 local vein_miner_current_state = {}
@@ -442,6 +445,7 @@ local function scan_region_for_node(state, regions, r, pos, node_name, user_acti
 end
 
 local light_region_debug = {}
+vein_miner.light_region_debug = light_region_debug
 
 core.register_chatcommand("toggle_light_debug", {
 	description = "Toggle debug view for light scan regions",
@@ -539,14 +543,18 @@ function aabb.draw(r)
 	end
 end
 
-local last_center_per_player = {}
+---@param pos Vector
 local function scan_nearby_lights(state, pos, node_name, options, show_log)
 	local player_name = state.player_name
 	local regions = light_scan_data[player_name]
 	local config = p_config.data[player_name]
 	local maxy = config.maxy
+	---@param r Region
+	---@param user_action boolean
 	local function base_scan(r, user_action) scan_region_for_node(state, regions, r, pos, node_name, user_action, show_log) end
+	---@param r Region
 	local function full_scan(r) base_scan(r, true) end
+	---@param r Region
 	local function normal_scan(r) base_scan(r, false) end
 	if config.last_maxy ~= config.maxy then
 		for _, r in ipairs(regions) do
@@ -578,14 +586,17 @@ local function scan_nearby_lights(state, pos, node_name, options, show_log)
 		end
 	end
 	if newly_scanned then
-		aabb.subtract_and_accumulate(r, regions, {
+		---@type SubtractAndAccumulateOptions
+		local opts = {
 			volume_threshold = 80000,
 			max_distance = 26,
+			---@param r Region
 			on_flush = function(r)
 				normal_scan(r)
 				table.insert(regions, r)
 			end,
-		})
+		};
+		aabb.subtract_and_accumulate(r, regions, opts)
 	end
 	local GAP_THRESHOLD = 160000
 	local MAX_GAP_DIST = 11
@@ -1312,95 +1323,21 @@ core.register_chatcommand("mine", {
 	end,
 })
 
-local falling_check_delay = 0.5
-
-local dtime_acc = 0
-local dtime_next_falling_check = falling_check_delay
-
 local falling_nodes = {}
 local falling_nodes_set = {}
 
-local prev_core_check_for_falling = core.check_for_falling
+vein_miner.falling_nodes = falling_nodes
+vein_miner.falling_nodes_set = falling_nodes_set
+
+vein_miner.check_for_falling = core.check_for_falling
 core.check_for_falling = function(pos)
 	local h = core.hash_node_position(pos)
 	if not falling_nodes_set[h] then
 		falling_nodes_set[h] = true
 		table.insert(falling_nodes, pos)
 	end
-	if dtime_next_falling_check < dtime_acc + falling_check_delay then
-		dtime_next_falling_check = dtime_acc + falling_check_delay
-	end
+	vein_miner.last_falling_node = vein_miner.current_tick_time
 end
-
-local dtime_time = 0
-
-core.register_globalstep(function(dtime)
-	dtime_acc = dtime_acc + dtime
-	if dtime_acc > dtime_next_falling_check and #falling_nodes > 0 then
-		for i = 1, #falling_nodes do
-			local pos = falling_nodes[i]
-			falling_nodes[i] = nil
-			local h = core.hash_node_position(pos)
-			falling_nodes_set[h] = nil
-			prev_core_check_for_falling(pos)
-		end
-		dtime_next_falling_check = dtime_acc + falling_check_delay
-	end
-	for name, enabled in pairs(light_region_debug) do
-		local player = core.get_player_by_name(name)
-		if enabled and player then
-			local regions = light_scan_data[name]
-			if dtime_time > 4 then
-				for _, r in ipairs(regions) do
-					aabb.draw(r)
-				end
-				dtime_time = 0
-			end
-		end
-	end
-	dtime_time = dtime_time + dtime
-end)
-
-core.register_chatcommand("yaw", {
-	description = "Change player yaw",
-	params = "[get | set <yaw>]",
-	privs = {},
-	func = function(name, param)
-		local player = core.get_player_by_name(name)
-		if not player then
-			return false, "Player not found."
-		end
-
-		local args = param:split(" ")
-		local cmd = args[1]
-		if cmd == "get" or cmd == nil or cmd == "" then
-			local yaw = player:get_look_horizontal()
-			return true, ("Your current yaw is %.1f degrees"):format(math.deg(yaw))
-		elseif cmd == "set" then
-			local yaw = 0
-			if args[2] ~= nil then
-				yaw = math.rad(tonumber(args[2]))
-			end
-			player:set_look_horizontal(yaw)
-			return true, ("Yaw set to %.1f degrees"):format(math.deg(yaw))
-		end
-	end,
-})
-
-core.register_chatcommand("pos", {
-	description = "Show your position with 3 decimal places",
-	privs = {},
-	func = function(name)
-		local player = core.get_player_by_name(name)
-		if not player then
-			return false, "Player not found."
-		end
-
-		local pos = player:get_pos()
-		local msg = string.format("Your position is: (%.3f, %.3f, %.3f)", pos.x, pos.y, pos.z)
-		return true, msg
-	end,
-})
 
 core.override_item("", {
 	range = 7,

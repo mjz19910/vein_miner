@@ -1,8 +1,8 @@
 local minetest = minetest
 local pcall = pcall
 local type = type
-
 local player_config = {
+	---@type table<string, PlayerConfig>
   data = {}
 }
 local storage = minetest.get_mod_storage()
@@ -29,3 +29,9 @@ function player_config.load_player_config(name)
 end
 
 return player_config
+
+---@class PlayerConfig
+---@field miny number
+---@field maxy number
+---@field last_maxy number|nil
+---@

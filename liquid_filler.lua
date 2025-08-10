@@ -7,48 +7,6 @@ local next = next
 -- local builtin lua tables
 local table = table
 
----@class Vector
----@field x number
----@field y number
----@field z number
-
----@class VectorModule
----@field metatable table
----@field new fun(x: number, y: number, z: number): Vector
----@field zero fun(): Vector
----@field copy fun(v: Vector): Vector
----@field from_string fun(s: string, init?: number): Vector | nil, number | nil
----@field to_string fun(v: Vector): string
----@field equals fun(a: Vector, b: Vector): boolean
----@field length fun(v: Vector): number
----@field normalize fun(v: Vector): Vector
----@field floor fun(v: Vector): Vector
----@field round fun(v: Vector): Vector
----@field ceil fun(v: Vector): Vector
----@field sign fun(v: Vector, tolerance?: number): Vector
----@field abs fun(v: Vector): Vector
----@field apply fun(v: Vector, func: fun(x: number, ...: any): number): Vector
----@field combine fun(a: Vector, b: Vector, func: fun(a: number, b: number): number): Vector
----@field distance fun(a: Vector, b: Vector): number
----@field direction fun(pos1: Vector, pos2: Vector): Vector
----@field angle fun(a: Vector, b: Vector): number
----@field dot fun(a: Vector, b: Vector): number
----@field cross fun(a: Vector, b: Vector): Vector
----@field add fun(a: Vector, b: Vector | number): Vector
----@field subtract fun(a: Vector, b: Vector | number): Vector
----@field multiply fun(a: Vector, b: Vector | number): Vector
----@field divide fun(a: Vector, b: Vector | number): Vector
----@field offset fun(v: Vector, x: number, y: number, z: number): Vector
----@field sort fun(a: Vector, b: Vector): Vector, Vector
----@field check fun(v: any): boolean
----@field rotate_around_axis fun(v: Vector, axis: Vector, angle: number): Vector
----@field rotate fun(v: Vector, rot: Vector): Vector
----@field dir_to_rotation fun(forward: Vector, up?: Vector): Vector
----@field in_area fun(pos: Vector, min: Vector, max: Vector): boolean
----@field random_direction fun(): Vector
----@field random_in_area fun(min: Vector, max: Vector): Vector
----@field zero fun(): Vector
-
 ---@type VectorModule
 local vector = vector
 local coroutine = coroutine
