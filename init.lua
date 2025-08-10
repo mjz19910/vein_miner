@@ -43,6 +43,13 @@ local p_config = require("mods.vein_miner.player_config")
 vein_miner.player_config = p_config
 utils:merge(require("mods.vein_miner.late_utils"))
 local BlockDigger = require("mods.vein_miner.block_digger")
+
+function vein_miner.show_layer_bounds(miny, maxy)
+	local y_range = "y=" .. (miny + 1) .. ".." .. maxy
+	local layer_info = "(layers " .. math.floor((miny + 1) / 8) .. " to " .. math.floor(maxy / 8) .. ")"
+	return y_range .. " " .. layer_info
+end
+
 require("mods.vein_miner.commands")
 
 local falling_nodes = {}
@@ -1182,12 +1189,6 @@ core.register_on_dignode(function(pos, oldnode, player)
 		user = true,
 	})
 end)
-
-function vein_miner.show_layer_bounds(miny, maxy)
-	local y_range = "y=" .. (miny + 1) .. ".." .. maxy
-	local layer_info = "(layers " .. math.floor((miny + 1) / 8) .. " to " .. math.floor(maxy / 8) .. ")"
-	return y_range .. " " .. layer_info
-end
 
 core.override_item("", {
 	range = 7,
