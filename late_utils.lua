@@ -1,7 +1,6 @@
 local CFG = vein_miner.CFG
-local light_nodes = CFG.LIGHT_NODES
 local sticky_nodes = CFG.sticky_nodes
-local utils = {}
+local l_utils = {}
 local contains = table.contains
 local ItemStack = ItemStack
 local core = core
@@ -9,6 +8,8 @@ local ipairs = ipairs
 local offset = vector.offset
 local p = vector.new
 local insert = table.insert
+
+local light_nodes = vein_miner.CFG.LIGHT_NODES
 
 local node_scan_options_cache = {}
 local function get_real_scan_options(node_name, options)
@@ -25,7 +26,8 @@ local function get_real_scan_options(node_name, options)
 	end
 	return options
 end
-function utils.get_scan_options(node_name, options)
+
+function l_utils.get_scan_options(node_name, options)
 	options = options or {}
 	if options.user then
 		return get_real_scan_options(node_name, options)
@@ -38,27 +40,40 @@ function utils.get_scan_options(node_name, options)
 	return options
 end
 
-function utils.is_falling(name)
+function l_utils.add_pos_to_queue(state, node_name, pos, options)
+	local h = core.hash_node_position(pos)
+	if state.queued_set[h] then
+		return
+	end
+	state.queued_set[h] = true
+	state.queue:push_right({
+		node_name = node_name,
+		pos = pos,
+		options = l_utils.get_scan_options(node_name, options),
+	})
+end
+
+function l_utils.is_falling(name)
 	local def = core.registered_nodes[name]
 	return def and def.groups and def.groups.falling_node
 end
-function utils.is_liquid_source(name)
+function l_utils.is_liquid_source(name)
 	local def = core.registered_nodes[name]
 	return def and def.liquidtype == "source"
 end
-function utils.is_sticky_node(name) return sticky_nodes[name] == true end
+function l_utils.is_sticky_node(name) return sticky_nodes[name] == true end
 local cardinal_dirs = {p(1, 0, 0), p(-1, 0, 0), p(0, 1, 0), p(0, -1, 0), p(0, 0, 1), p(0, 0, -1)}
-function utils.get_adjacent_positions(pos)
+function l_utils.get_adjacent_positions(pos)
 	local ret = {}
 	for _, v in ipairs(cardinal_dirs) do
 		insert(ret, pos + v)
 	end
 	return ret
 end
-function utils.is_stuck_to_sticky(pos)
-	for _, adj_pos in ipairs(utils.get_adjacent_positions(pos)) do
+function l_utils.is_stuck_to_sticky(pos)
+	for _, adj_pos in ipairs(l_utils.get_adjacent_positions(pos)) do
 		local node = core.get_node(adj_pos)
-		if utils.is_sticky_node(node.name) then
+		if l_utils.is_sticky_node(node.name) then
 			return true
 		end
 	end
@@ -66,7 +81,7 @@ function utils.is_stuck_to_sticky(pos)
 end
 
 local floating_dirs = CFG.FLOATING_DIRS
-function utils.is_floating(pos, expected_name)
+function l_utils.is_floating(pos, expected_name)
 	for _, offset in ipairs(floating_dirs) do
 		local neighbor_pos = pos + offset
 		local neighbor = core.get_node_or_nil(neighbor_pos)
@@ -77,4 +92,4 @@ function utils.is_floating(pos, expected_name)
 	return true
 end
 
-return utils
+return l_utils

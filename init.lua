@@ -42,7 +42,7 @@ require("mods.vein_miner.remove_walls")
 local player_hud = require("mods.vein_miner.player_hud")
 local p_config = require("mods.vein_miner.player_config")
 vein_miner.player_config = p_config
-utils:merge(require("mods.vein_miner.late_utils"))
+local l_utils = require("mods.vein_miner.late_utils")
 local BlockDigger = require("mods.vein_miner.block_digger")
 
 function vein_miner.show_layer_bounds(miny, maxy)
@@ -347,7 +347,7 @@ local function mark_near_light(state, node_name, pos)
 	local h = core.hash_node_position(pos)
 	if not state.known_lights[h] then
 		state.known_lights[h] = true
-		utils.add_pos_to_queue(state, node_name, pos)
+		l_utils.add_pos_to_queue(state, node_name, pos)
 		return true
 	end
 	return false
@@ -1197,7 +1197,7 @@ core.register_on_dignode(function(pos, oldnode, player)
 		vein_miner_current_state[player_name] = state
 		vein_miner_step(state)
 	end
-	utils.add_pos_to_queue(state, node_name, pos, {
+	l_utils.add_pos_to_queue(state, node_name, pos, {
 		user = true,
 	})
 end)

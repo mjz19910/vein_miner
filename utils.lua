@@ -7,9 +7,11 @@ local math = math
 local floor = math.floor
 local p = vector.new
 local coroutine = coroutine
+local ItemStack = ItemStack
 local yield = coroutine.yield
 local pairs = pairs
 local ipairs = ipairs
+local vein_miner = vein_miner
 
 function table.contains(table, element)
 	for _, value in pairs(table) do
@@ -21,6 +23,8 @@ function table.contains(table, element)
 end
 
 function vector.midpoint(a, b) return p(floor((a.x + b.x) / 2 + 0.5), floor((a.y + b.y) / 2 + 0.5), floor((a.z + b.z) / 2 + 0.5)) end
+
+local contains = table.contains
 
 local modpath = core.get_modpath("vein_miner")
 
@@ -52,19 +56,6 @@ function utils.check_pos(pos)
 		return pos
 	end
 	return nil
-end
-
-function utils.add_pos_to_queue(state, node_name, pos, options)
-	local h = core.hash_node_position(pos)
-	if state.queued_set[h] then
-		return
-	end
-	state.queued_set[h] = true
-	state.queue:push_right({
-		node_name = node_name,
-		pos = pos,
-		options = utils.get_scan_options(node_name, options),
-	})
 end
 
 function utils.handle_pos_notify(state, pos)
