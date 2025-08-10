@@ -77,6 +77,16 @@ vein_miner.light_scan_data = light_scan_data
 function vein_miner.light_scan_reset(name) light_scan_data[name] = {} end
 
 require("mods.vein_miner.globalstep")
+local CFG = vein_miner.CFG
+
+local mine_only_groups = CFG.MINE_ONLY_GROUPS
+local mine_only_cur_set = {}
+vein_miner.mine_only_cur_set = mine_only_cur_set
+for k, v in pairs(CFG.MINE_ONLY_CUR_SET) do
+	mine_only_cur_set[v] = true
+end
+local mine_only_group_sets = vein_miner.h.generate_mine_only_sets(mine_only_groups, mine_only_cur_set)
+vein_miner.mine_only_group_sets = mine_only_group_sets
 require("mods.vein_miner.lit_cobble")
 
 local fill_liquid_at_pos = vein_miner.fill_liquid_at_pos
@@ -180,19 +190,9 @@ local log_error = vein_miner.h.log_error
 local log_warning = vein_miner.h.log_warning
 local log_action = vein_miner.h.log_action
 
-local CFG = vein_miner.CFG
-
 local ignored_nodes = CFG.IGNORED_NODES
 local light_nodes = CFG.LIGHT_NODES
 utils.light_nodes = light_nodes
-local mine_only_groups = CFG.MINE_ONLY_GROUPS
-local mine_only_cur_set = {}
-vein_miner.mine_only_cur_set = mine_only_cur_set
-for k, v in pairs(CFG.MINE_ONLY_CUR_SET) do
-	mine_only_cur_set[v] = true
-end
-local mine_only_group_sets = vein_miner.h.generate_mine_only_sets(mine_only_groups, mine_only_cur_set)
-vein_miner.mine_only_group_sets = mine_only_group_sets
 local surface_nodes = CFG.SURFACE_NODES
 
 local storage = core.get_mod_storage()
