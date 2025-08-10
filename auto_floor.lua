@@ -107,6 +107,8 @@ local function try_place_block_from_inventory(player, target_pos, max_hear_dista
 	return false
 end
 
+local max_recheck_count = 0
+
 core.register_globalstep(function(dtime)
 	for _, player in ipairs(get_connected_players()) do
 		local ctrl = player:get_player_control()
@@ -170,7 +172,11 @@ core.register_globalstep(function(dtime)
 			goto again
 		end
 
-		core.chat_send_player(name, "recheck for support " .. recheck_count .. " times")
+		if recheck_count > 0 then
+			if recheck_count > max_recheck_count then
+				core.chat_send_player(name, "recheck for support max of " .. recheck_count .. " times")
+			end
+		end
 
 		if did_place_some then
 			last_floor_data[name] = vector.new(pos)
