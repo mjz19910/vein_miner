@@ -233,30 +233,51 @@ end
 ---@param pos Vector
 ---@return Vector[] logs_positions
 function voxel_util.find_logs_keeping_leaves(pos)
-	local LOG_KEEP_RADIUS = 3 -- leaf decay radius
+	local LOG_KEEP_RADIUS = 2 -- leaf decay radius
 
-	local minp = vector.new(pos.x - 2, pos.y - LOG_KEEP_RADIUS, pos.z - 2)
-	local maxp = vector.new(pos.x + 2, pos.y + LOG_KEEP_RADIUS, pos.z + 2)
-
-	local minp = vector.new(pos.x, pos.y - 3, pos.z)
-	local maxp = vector.new(pos.x, pos.y + 2, pos.z)
+	local minp = vector.new(pos.x - 5, pos.y - LOG_KEEP_RADIUS - 2, pos.z - 5)
+	local maxp = vector.new(pos.x + 5, pos.y + LOG_KEEP_RADIUS + 2, pos.z + 5)
 
 	local vm = core.get_voxel_manip(minp, maxp)
 	local map_minp, map_maxp = vm:read_from_map(minp, maxp)
 	local area = VoxelArea:new{
-		MinEdge = minp,
-		MaxEdge = maxp,
+		MinEdge = map_minp,
+		MaxEdge = map_maxp,
 	}
 	local data = vm:get_data()
 
 	local log_nodes = {"default:tree", "default:jungletree", "default:pine_tree", "default:acacia_tree", "default:aspen_tree"}
 	local log_cids = voxel_util.content_ids_lookup(log_nodes)
 
+	local leaf_nodes = {"default:leaves", "default:jungleleaves", "default:pine_needles", "default:acacia_leaves", "default:aspen_leaves"}
+	local leaf_cids = voxel_util.content_ids_lookup(leaf_nodes)
+
 	local found_logs = {}
 
 	for pos, cid, idx in voxel_util.iterate_voxelarea(vm, map_minp, map_maxp, minp, maxp) do
 		if log_cids[cid] then
-			table.insert(found_logs, pos)
+			local keeps_leaf = false
+			for x = -LOG_KEEP_RADIUS, LOG_KEEP_RADIUS do
+				for y = -LOG_KEEP_RADIUS, LOG_KEEP_RADIUS do
+					for z = -LOG_KEEP_RADIUS, LOG_KEEP_RADIUS do
+						local leaf_pos = vector.new(pos.x + x, pos.y + y, pos.z + z)
+						local leaf_idx = area:index(leaf_pos.x, leaf_pos.y, leaf_pos.z)
+						if leaf_cids[data[leaf_idx]] then
+							keeps_leaf = true
+							break
+						end
+					end
+					if keeps_leaf then
+						break
+					end
+				end
+				if keeps_leaf then
+					break
+				end
+			end
+			if keeps_leaf then
+				table.insert(found_logs, pos)
+			end
 		end
 	end
 

@@ -180,9 +180,11 @@ local utils = {}
 local l_utils = {}
 
 ---@class PlayerConfig
+---@field mode "small"|"large"
 ---@field miny number
 ---@field maxy number
 ---@field last_maxy number|nil
+---@field blocks_per_tick number
 ---@type PlayerConfig
 local config_data = {}
 

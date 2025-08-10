@@ -8,8 +8,8 @@ local vein_miner = vein_miner
 local light_region_debug = {}
 vein_miner.light_region_debug = light_region_debug
 
-local p_config = vein_miner.player_config
-assert(p_config, "need player_config")
+local player_config = vein_miner.player_config
+assert(player_config, "need player_config")
 
 core.register_chatcommand("toggle_light_debug", {
 	description = "Toggle debug view for light scan regions",
@@ -77,7 +77,7 @@ core.register_chatcommand("mine", {
 			return false, "Player not found."
 		end
 
-		local config = p_config.data[name]
+		local config = player_config.data[name]
 
 		-- Initialize defaults if missing
 		if config.miny == nil then
@@ -191,11 +191,11 @@ core.register_chatcommand("mining_mode", {
 		end
 
 		param = param:lower()
-		if p_config.data[name] == nil then
-			p_config.data[name] = {}
+		if player_config.data[name] == nil then
+			player_config.data[name] = {}
 		end
 
-		local config = p_config.data[name]
+		local config = player_config.data[name]
 
 		if param == "" or param == nil then
 			return true, "Mining mode is " .. config.mode .. " range."
@@ -208,5 +208,21 @@ core.register_chatcommand("mining_mode", {
 		else
 			return false, "Invalid parameter. Use: /mining_mode small OR /mining_mode large"
 		end
+	end,
+})
+
+minetest.register_chatcommand("vm_set_blocks_per_tick", {
+	params = "<count>",
+	description = "Set how many blocks vein miner places per tick",
+	func = function(name, param)
+		local count = tonumber(param)
+		if not count or count < 1 then
+			return false, "Invalid number"
+		end
+		local cfg = player_config.data[name]
+		cfg.blocks_per_tick = count
+
+		player_config.save_player_config()
+		return true, "Blocks per tick set to " .. count
 	end,
 })

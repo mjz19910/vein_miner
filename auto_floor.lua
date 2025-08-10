@@ -3,6 +3,7 @@ local core = core
 ---@type LuantiCore
 local minetest = minetest
 
+local assert = assert
 local vector = vector
 local ipairs = ipairs
 
@@ -20,6 +21,10 @@ local get_connected_players = minetest.get_connected_players
 
 local registered_nodes = minetest.registered_nodes
 
+local vein_miner = vein_miner
+
+local player_config_mgr = vein_miner.player_config
+assert(player_config_mgr, "need vein_miner.player_config")
 minetest.register_tool("vein_miner:auto_floor", {
 	description = "Auto-Floor Builder",
 	inventory_image = "default_wood.png",
@@ -116,10 +121,12 @@ end
 local max_recheck_count = 0
 local sound_info = {}
 
+-- globalstep for vein_miner:auto_floor tool
 core.register_globalstep(function(dtime)
 	for _, player in ipairs(get_connected_players()) do
 		local ctrl = player:get_player_control()
 		local name = player:get_player_name()
+		local player_config = player_config_mgr.data[name]
 		local cur_sound_info = sound_info[name] or {}
 		cur_sound_info.is_playing = false
 		local wielded = player:get_wielded_item():get_name()
@@ -160,16 +167,20 @@ core.register_globalstep(function(dtime)
 		local did_place_some = false
 		local do_recheck_support = false
 		local recheck_count = 0
+		local j = 0
 		::again::
 		for i = 1, LINE_LENGTH do
 			do_recheck_support = false
-
 			local offset_vec = vector.multiply(forward_dir, i)
 			local target_pos = vector.round(base_pos + offset_vec) + down
 
 			local node_below = minetest.get_node(target_pos)
 			if node_below.name == "air" and is_supported(target_pos) then
+				if j >= player_config.blocks_per_tick then
+					break
+				end
 				if try_place_block_from_inventory(player, cur_sound_info, target_pos, LINE_LENGTH + 8) then
+					j = j + 1
 					did_place_some = true
 					do_recheck_support = true
 				end

@@ -29,7 +29,6 @@ local utils = require("mods.vein_miner.utils")
 local require = utils.require
 vein_miner.utils = utils
 vein_miner.deque = require("mods.vein_miner.deque")
-require("mods.vein_miner.auto_floor")
 vein_miner.voxel_util = require("mods.vein_miner.voxel_util")
 require("mods.vein_miner.config")
 require("mods.vein_miner.helpers")
@@ -239,19 +238,6 @@ local function is_node_vein_diggable(nodeName, wieldedName)
 	end
 
 	return nodeCheck and toolCheck
-end
-
--- Update wielded item
-local function update_wielded_item(player, wielded)
-	local tool = player:get_wielded_item()
-	if tool:get_name() == wielded:get_name() then
-		local wear_amount = 1 - (wielded:get_wear() / 65535)
-		if wear_amount < 0.85 then
-			log_action("high wear action " .. wear_amount)
-		end
-		wielded:set_wear(0)
-		player:set_wielded_item(wielded)
-	end
 end
 
 local function handle_unexpected_target_nodes(target_nodes, node_name)
@@ -1059,6 +1045,22 @@ local function vein_miner_step(state)
 	end
 end
 
+local VeinMinerState = {}
+VeinMinerState.__index = VeinMinerState
+
+-- Update wielded item
+function VeinMinerState.update_wielded_item(player, wielded)
+	local tool = player:get_wielded_item()
+	if tool:get_name() == wielded:get_name() then
+		local wear_amount = 1 - (wielded:get_wear() / 65535)
+		if wear_amount < 0.85 then
+			log_action("high wear action " .. wear_amount)
+		end
+		wielded:set_wear(0)
+		player:set_wielded_item(wielded)
+	end
+end
+
 vein_miner.state = {}
 ---@class VeinMinerState
 ---@field pos Vector
@@ -1080,7 +1082,7 @@ function vein_miner.state.new(pos, player, player_name, wielded)
 		running = false,
 	}
 
-	return state
+	return setmetatable(state, VeinMinerState)
 end
 
 ---@class Node
@@ -1136,4 +1138,7 @@ core.override_item("", {
 	range = 7,
 })
 
+-- a tool not in the tools module
+require("mods.vein_miner.auto_floor")
+-- load the tools module
 require("mods.vein_miner.tools")

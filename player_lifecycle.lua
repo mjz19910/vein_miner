@@ -20,6 +20,9 @@ core.register_on_joinplayer(function(player)
 	if config.mode == nil then
 		config.mode = "small" -- default: "small"
 	end
+	if config.blocks_per_tick == nil then
+		config.blocks_per_tick = 1 -- default: 1
+	end
 
 	vein_miner.light_scan_data[name] = {}
 	vein_miner.light_region_debug[name] = true
