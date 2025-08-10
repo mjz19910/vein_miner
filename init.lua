@@ -16,6 +16,7 @@ local string = string
 local math = math
 local ItemStack = ItemStack
 local coroutine = coroutine
+local debug = debug
 local offset = vector.offset
 local string_match = string.match
 local floor = math.floor
