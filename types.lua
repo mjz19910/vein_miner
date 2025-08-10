@@ -78,6 +78,7 @@ local vein_miner = {}
 
 ---@class LuantiCore
 ---@field get_voxel_manip fun(): VoxelManip
+---@field set_node fun(pos: Vector, node: Node)
 core = {}
 local vm = core.get_voxel_manip()
 

@@ -1,6 +1,9 @@
+---@type LuantiCore
+local core = core
+---@type LuantiCore
 local minetest = minetest
-local vector = vector
 
+local vector = vector
 local ipairs = ipairs
 
 -- localize math
@@ -17,14 +20,49 @@ local get_connected_players = minetest.get_connected_players
 
 local registered_nodes = minetest.registered_nodes
 
-minetest.register_tool("vein_miner:auto_floor", {description = "Auto-Floor Builder", inventory_image = "default_wood.png"})
+minetest.register_tool("vein_miner:auto_floor", {
+	description = "Auto-Floor Builder",
+	inventory_image = "default_wood.png",
+})
 
 local last_floor_data = {}
 
 local up = new_vec(0, 1, 0)
 local down = new_vec(0, -1, 0)
-local cardinal_dirs = {{x = 1, y = 0, z = 0}, {x = -1, y = 0, z = 0}, {x = 0, y = 0, z = 1}, {x = 0, y = 0, z = -1}}
-local diagonal_dirs = {{x = 1, y = 0, z = 1}, {x = 1, y = 0, z = -1}, {x = -1, y = 0, z = 1}, {x = -1, y = 0, z = -1}}
+local cardinal_dirs = {{
+	x = 1,
+	y = 0,
+	z = 0,
+}, {
+	x = -1,
+	y = 0,
+	z = 0,
+}, {
+	x = 0,
+	y = 0,
+	z = 1,
+}, {
+	x = 0,
+	y = 0,
+	z = -1,
+}}
+local diagonal_dirs = {{
+	x = 1,
+	y = 0,
+	z = 1,
+}, {
+	x = 1,
+	y = 0,
+	z = -1,
+}, {
+	x = -1,
+	y = 0,
+	z = 1,
+}, {
+	x = -1,
+	y = 0,
+	z = -1,
+}}
 local support_dirs = {}
 table.insert_all(support_dirs, cardinal_dirs)
 table.insert_all(support_dirs, diagonal_dirs)
@@ -82,10 +120,15 @@ local function try_place_block_from_inventory(player, target_pos, max_hear_dista
 		local stack = inv:get_stack("main", i)
 		local name = stack:get_name()
 		if registered_nodes[name] and name ~= "air" then
-			set_node(target_pos, {name = name})
+			set_node(target_pos, {
+				name = name,
+			})
 			stack:take_item(1)
 			inv:set_stack("main", i, stack)
-			sound_play("default_place_node_hard", {pos = target_pos, max_hear_distance = max_hear_distance})
+			sound_play("default_place_node_hard", {
+				pos = target_pos,
+				max_hear_distance = max_hear_distance,
+			})
 			return true
 		end
 	end
@@ -125,23 +168,47 @@ core.register_globalstep(function(dtime)
 		-- Place multiple floor blocks in a line in front of player
 		local base_pos = vector.round(vector.offset(pos, 0, 0.25, 0))
 		local look_dir = player:get_look_dir()
-		local forward_dir = vector.normalize({x = look_dir.x, y = 0, z = look_dir.z})
+		local forward_dir = vector.normalize({
+			x = look_dir.x,
+			y = 0,
+			z = look_dir.z,
+		})
 
+		local did_place_some = false
+		local do_recheck_support = false
+		local recheck_count = 0
+		::again::
 		for i = 1, LINE_LENGTH do
+			do_recheck_support = false
+
 			local offset_vec = vector.multiply(forward_dir, i)
 			local target_pos = vector.round(base_pos + offset_vec) + down
 
 			local node_below = minetest.get_node(target_pos)
 			if node_below.name == "air" and is_supported(target_pos) then
 				if try_place_block_from_inventory(player, target_pos, LINE_LENGTH + 8) then
-					last_floor_data[name] = vector.new(pos)
-					break
+					did_place_some = true
+					do_recheck_support = true
 				end
 			end
+		end
+
+		if do_recheck_support then
+			recheck_count = recheck_count + 1
+			goto again
+		end
+
+		core.chat_send_player(name, "recheck for support " .. recheck_count .. " times")
+
+		if did_place_some then
+			last_floor_data[name] = vector.new(pos)
 		end
 		::continue::
 	end
 end)
 
 local auto_floor_recipe = {{"default:stick", "", "default:stick"}, {"", "default:cobble", ""}, {"", "default:mese_crystal_fragment", ""}};
-minetest.register_craft({output = "vein_miner:auto_floor", recipe = auto_floor_recipe})
+minetest.register_craft({
+	output = "vein_miner:auto_floor",
+	recipe = auto_floor_recipe,
+})

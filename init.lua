@@ -1084,7 +1084,6 @@ function vein_miner.state.new(pos, player, player_name, wielded)
 end
 
 ---@class Node
----@field type string
 ---@field name string
 ---@param pos Vector
 ---@param oldnode Node
