@@ -38,7 +38,11 @@ local p = new_vec
 local cardinal_dirs = {p(1, 0, 0), p(-1, 0, 0), p(0, 1, 0), p(0, -1, 0), p(0, 0, 1), p(0, 0, -1)}
 local diagonal_dirs = {p(1, 0, 1), p(-1, 0, 1), p(1, 0, -1), p(-1, 0, -1)}
 local support_dirs = {}
-table.insert_all(support_dirs, cardinal_dirs)
+for _, dir in ipairs(cardinal_dirs) do
+	if dir.y == 0 then
+		table.insert(support_dirs, dir)
+	end
+end
 table.insert_all(support_dirs, diagonal_dirs)
 local vertical_offsets = {down, up, up * 2}
 
