@@ -1,3 +1,6 @@
+---@class Deque
+---@field push_left fun()
+---@field push_right fun()
 ---@class InvRef
 ---@field get_size fun(self: InvRef, listname: string): integer
 ---@field set_size fun(self: InvRef, listname: string, size: integer)
@@ -333,3 +336,113 @@ local p_config = {}
 
 ---@type ObjectRef
 local ObjectRef = {}
+
+---@class ToolCaps
+local tool_caps = {}
+
+---@class PhysicsOverride
+---@field speed number|nil
+---@field jump number|nil
+---@field gravity number|nil
+---@field sneak boolean|nil
+---@field sneak_glitch boolean|nil
+---@field new_move boolean|nil
+---@field noclip boolean|nil
+
+---@class MetaRef
+---@field get_string fun(self: MetaRef, key: string): string
+---@field set_string fun(self: MetaRef, key: string, value: string): void
+---@field get_int fun(self: MetaRef, key: string): integer
+---@field set_int fun(self: MetaRef, key: string, value: integer): void
+---@field get_float fun(self: MetaRef, key: string): number
+---@field set_float fun(self: MetaRef, key: string, value: number): void
+---@field contains fun(self: MetaRef, key: string): boolean
+---@field to_table fun(self: MetaRef): table
+---@field from_table fun(self: MetaRef, tbl: table): void
+---@field serialize fun(self: MetaRef): string
+---@field deserialize fun(self: MetaRef, data: string): void
+---@field get_inventory fun(self: MetaRef): InventoryRef
+
+---@class InventoryRef
+---@field get_size fun(self: InventoryRef): integer
+---@field get_width fun(self: InventoryRef): integer
+---@field get_stack fun(self: InventoryRef, listname: string, index: integer): ItemStack
+---@field set_stack fun(self: InventoryRef, listname: string, index: integer, stack: ItemStack): boolean
+---@field add_item fun(self: InventoryRef, listname: string, stack: ItemStack | string): ItemStack
+---@field remove_item fun(self: InventoryRef, listname: string, stack: ItemStack | string): ItemStack
+---@field get_list_name fun(self: InventoryRef, index: integer): string
+---@field get_lists fun(self: InventoryRef): table<string, integer> -- map of listname to size
+---@field contains_item fun(self: InventoryRef, listname: string, stack: ItemStack | string): boolean
+---@field room_for_item fun(self: InventoryRef, listname: string, stack: ItemStack | string): boolean
+---@field is_empty fun(self: InventoryRef, listname: string): boolean
+---@field set_list fun(self: InventoryRef, listname: string, list: ItemStack[]): boolean
+---@field get_stack_max fun(self: InventoryRef): integer
+
+---@class HUDDef
+---@field hud_elem_type string
+---@field position Vector|nil
+---@field name string|nil
+---@field text string|nil
+---@field number integer|nil
+
+---@class HUDFlags
+---@field hotbar boolean|nil
+---@field healthbar boolean|nil
+---@field crosshair boolean|nil
+---@field wielditem boolean|nil
+---@field breathbar boolean|nil
+---@field minimap boolean|nil
+---@field minimap_radar boolean|nil
+
+---@class SkyParams
+---@field base_color ColorSpec|nil
+---@field type string|nil
+---@field textures string[]|nil
+---@field clouds boolean|nil
+
+---@class SunParams
+---@field visible boolean|nil
+---@field texture string|nil
+---@field sunrise string|nil
+---@field sunrise_visible boolean|nil
+
+---@class MoonParams
+---@field visible boolean|nil
+---@field texture string|nil
+
+---@class StarParams
+---@field visible boolean|nil
+---@field count number|nil
+---@field star_color ColorSpec|nil
+
+---@class CloudParams
+---@field density number|nil
+---@field color ColorSpec|nil
+---@field ambient ColorSpec|nil
+---@field height number|nil
+---@field thickness number|nil
+---@field speed Vector|nil
+
+---@class CameraParams
+---@field mode integer|nil
+---@field view_offset Vector|nil
+---@field zoom number|nil
+
+---@class LightingParams
+---@field shadows boolean|nil
+---@field light_source number|nil
+---@field day_light number|nil
+---@field night_light number|nil
+
+---@class EntityFlags
+---@field collide_with_objects boolean|nil
+---@field pointable boolean|nil
+---@field immortal boolean|nil
+
+---@alias ColorSpec string | ColorSpecTable
+
+---@class ColorSpecTable
+---@field a number|nil
+---@field r number
+---@field g number
+---@field b number
