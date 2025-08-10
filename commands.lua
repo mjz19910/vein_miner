@@ -1,5 +1,15 @@
+local assert = assert
+local string = string
+local math = math
+local tonumber = tonumber
+local core = core
+local vein_miner = vein_miner
+
 local light_region_debug = {}
 vein_miner.light_region_debug = light_region_debug
+
+local p_config = vein_miner.player_config
+assert(p_config, "need player_config")
 
 core.register_chatcommand("toggle_light_debug", {
 	description = "Toggle debug view for light scan regions",
@@ -53,6 +63,9 @@ core.register_chatcommand("yaw", {
 		end
 	end,
 })
+
+local show_layer_bounds = vein_miner.show_layer_bounds
+assert(show_layer_bounds, "need show_layer_bounds")
 
 core.register_chatcommand("mine", {
 	description = "Change configured mining layer",
@@ -152,10 +165,48 @@ core.register_chatcommand("mine", {
 				return false, "Usage: /mine down [min|max|both]"
 			end
 		elseif cmd == "reset" then
-			light_scan_reset(name)
+			vein_miner.light_scan_reset(name)
 			return false, "Light scan data reset"
 		else
 			return false, "Usage: /mine [get [min|max] | set [min|max <y>] | up [min|max|both] | down [min|max|both] | reset]"
+		end
+	end,
+})
+
+core.register_privilege("vein_miner_config", {
+	description = "Can configure vein miner",
+	give_to_singleplayer = false,
+})
+
+core.register_chatcommand("mining_mode", {
+	description = "Change configured mining range (8 or 32 at y > -32)",
+	params = "[small|large]",
+	privs = {
+		vein_miner_config = true,
+	},
+	func = function(name, param)
+		local player = core.get_player_by_name(name)
+		if not player then
+			return false, "Player not found."
+		end
+
+		param = param:lower()
+		if p_config.data[name] == nil then
+			p_config.data[name] = {}
+		end
+
+		local config = p_config.data[name]
+
+		if param == "" or param == nil then
+			return true, "Mining mode is " .. config.mode .. " range."
+		elseif param == "small" then
+			config.mode = "small"
+			return true, "Mining mode set to small range."
+		elseif param == "large" then
+			config.mode = "large"
+			return true, "Mining mode set to large range."
+		else
+			return false, "Invalid parameter. Use: /mining_mode small OR /mining_mode large"
 		end
 	end,
 })

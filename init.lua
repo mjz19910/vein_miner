@@ -66,7 +66,7 @@ end
 local light_scan_data = {}
 vein_miner.light_scan_data = light_scan_data
 
-local function light_scan_reset(name) light_scan_data[name] = {} end
+function vein_miner.light_scan_reset(name) light_scan_data[name] = {} end
 
 require("mods.vein_miner.globalstep")
 
@@ -1183,45 +1183,7 @@ core.register_on_dignode(function(pos, oldnode, player)
 	})
 end)
 
-core.register_privilege("vein_miner_config", {
-	description = "Can configure vein miner",
-	give_to_singleplayer = false,
-})
-
-core.register_chatcommand("mining_mode", {
-	description = "Change configured mining range (8 or 32 at y > -32)",
-	params = "[small|large]",
-	privs = {
-		vein_miner_config = true,
-	},
-	func = function(name, param)
-		local player = core.get_player_by_name(name)
-		if not player then
-			return false, "Player not found."
-		end
-
-		param = param:lower()
-		if p_config.data[name] == nil then
-			p_config.data[name] = {}
-		end
-
-		local config = p_config.data[name]
-
-		if param == "" or param == nil then
-			return true, "Mining mode is " .. config.mode .. " range."
-		elseif param == "small" then
-			config.mode = "small"
-			return true, "Mining mode set to small range."
-		elseif param == "large" then
-			config.mode = "large"
-			return true, "Mining mode set to large range."
-		else
-			return false, "Invalid parameter. Use: /mining_mode small OR /mining_mode large"
-		end
-	end,
-})
-
-local function show_layer_bounds(miny, maxy)
+function vein_miner.show_layer_bounds(miny, maxy)
 	local y_range = "y=" .. (miny + 1) .. ".." .. maxy
 	local layer_info = "(layers " .. math.floor((miny + 1) / 8) .. " to " .. math.floor(maxy / 8) .. ")"
 	return y_range .. " " .. layer_info
