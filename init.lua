@@ -190,7 +190,6 @@ local log_action = vein_miner.h.log_action
 
 local ignored_nodes = CFG.IGNORED_NODES
 local light_nodes = CFG.LIGHT_NODES
-utils.light_nodes = light_nodes
 local surface_nodes = CFG.SURFACE_NODES
 
 local storage = core.get_mod_storage()

@@ -1,6 +1,6 @@
-local possible_flow_directions = {vector.new(-1, 0, 0), vector.new(1, 0, 0), vector.new(0, 0, -1), vector.new(0, 0, 1), vector.new(0, 1, 0)}
-local check_for_falling_neighbors = {vector.new(-1, -1, 0), vector.new(1, -1, 0), vector.new(0, -1, -1), vector.new(0, -1, 1),
-	vector.new(0, -1, 0), vector.new(-1, 0, 0), vector.new(1, 0, 0), vector.new(0, 0, -1), vector.new(0, 0, 1), vector.new(0, 1, 0)}
+local table = table
+local insert = table.insert
+
 local liquid_set = {
 	["default:water_source"] = true,
 	["default:water_flowing"] = true,
@@ -9,17 +9,55 @@ local liquid_set = {
 }
 
 local BlockDigger = {}
+local vein_miner = vein_miner
+local vector = vector
+local core = core
+local ipairs = ipairs
+local p = vector.new
 local utils = vein_miner.utils
-local dir_down = vector.new(0, -1, 0)
+local l_utils = vein_miner.l_utils
+local dir_down = p(0, -1, 0)
+local possible_flow_directions = {p(-1, 0, 0), p(1, 0, 0), p(0, 0, -1), p(0, 0, 1), p(0, 1, 0)}
+local check_for_falling_neighbors = {p(-1, -1, 0), p(1, -1, 0), p(0, -1, -1), p(0, -1, 1), p(0, -1, 0), p(-1, 0, 0), p(1, 0, 0),
+	p(0, 0, -1), p(0, 0, 1), p(0, 1, 0)}
+
+local contains = table.contains
+local get_node = core.get_node
+
+local CFG = vein_miner.CFG
+local sticky_nodes = CFG.sticky_nodes
+
+local function is_sticky_node(name) return sticky_nodes[name] == true end
+
+local cardinal_dirs = {p(1, 0, 0), p(-1, 0, 0), p(0, 1, 0), p(0, -1, 0), p(0, 0, 1), p(0, 0, -1)}
+local function get_adjacent_positions(pos)
+	local ret = {}
+	for _, v in ipairs(cardinal_dirs) do
+		insert(ret, pos + v)
+	end
+	return ret
+end
+
+local function is_stuck_to_sticky(pos)
+	for _, adj_pos in ipairs(get_adjacent_positions(pos)) do
+		local node = get_node(adj_pos)
+		if is_sticky_node(node.name) then
+			return true
+		end
+	end
+	return false
+end
+
+local light_nodes = CFG.LIGHT_NODES
 
 function BlockDigger.should_dig(node, pos)
 	if node.name == "air" then
 		return false
 	end
-	if table.contains(utils.light_nodes, node.name) then
+	if table.contains(light_nodes, node.name) then
 		return true
 	end
-	if not utils.is_sticky_node(node.name) and utils.is_stuck_to_sticky(pos) then
+	if not is_sticky_node(node.name) and is_stuck_to_sticky(pos) then
 		return false
 	end
 	local above = vector.offset(pos, 0, 1, 0)
