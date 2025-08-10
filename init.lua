@@ -20,6 +20,7 @@ local string_match = string.match
 local floor = math.floor
 local ceil = math.ceil
 local yield = coroutine.yield
+local add_particle = core.add_particle
 
 ---@type VeinMinerGlobal
 vein_miner = {
@@ -32,7 +33,8 @@ require("mods.vein_miner.auto_floor")
 require("mods.vein_miner.voxel_utils")
 require("mods.vein_miner.config")
 require("mods.vein_miner.helpers")
-local aabb = require("mods.vein_miner.aabb")
+aabb = require("mods.vein_miner.aabb")
+local aabb = aabb
 require("mods.vein_miner.liquid_filler")
 require("mods.vein_miner.remove_walls")
 local player_hud = require("mods.vein_miner.player_hud")
@@ -332,6 +334,25 @@ local function count_found_nodes(iter, orig_pos, player_name)
 	return count
 end
 
+local function place_particle(pos, size, texture)
+	add_particle({
+		pos = pos,
+		expirationtime = 4,
+		size = size or 4,
+		texture = texture or "default_mese_block.png",
+		glow = 15,
+	})
+end
+local function notify_pos(pos, color, size, expire_time)
+	add_particle({
+		pos = pos,
+		expirationtime = expire_time or 30,
+		size = size or 6,
+		texture = "bubble.png^[colorize:" .. color .. ":160",
+		glow = 15,
+	})
+end
+
 local function wait_for_player_near_pos(player, target_pos)
 	local out_of_range = vector.distance(player:get_pos(), target_pos) > 220
 	while out_of_range and vector.distance(player:get_pos(), target_pos) > 128 do
@@ -458,25 +479,6 @@ core.register_chatcommand("toggle_light_debug", {
 		end
 	end,
 })
-local add_particle = core.add_particle
-local function place_particle(pos, size, texture)
-	add_particle({
-		pos = pos,
-		expirationtime = 4,
-		size = size or 4,
-		texture = texture or "default_mese_block.png",
-		glow = 15,
-	})
-end
-local function notify_pos(pos, color, size, expire_time)
-	add_particle({
-		pos = pos,
-		expirationtime = expire_time or 30,
-		size = size or 6,
-		texture = "bubble.png^[colorize:" .. color .. ":160",
-		glow = 15,
-	})
-end
 local function stone_part(pos) place_particle(pos, 6 / 3, "default_stone.png") end
 local function mese_blk_part(pos) place_particle(pos, 6 / 3, "default_mese_block.png") end
 local function diamond_blk_part(pos) place_particle(pos, 6 / 3, "default_diamond_block.png") end
@@ -959,7 +961,7 @@ local function dig_pos_process_queue_item(state, item, player_name)
 	if not options.large then
 		local light_timeout = 20
 
-		-- notify_pos(minvec, "#ffff00ff", 6, light_timeout + 15)
+		notify_pos(minvec, "#ffff00ff", 6, 120)
 
 		local lp_north = vector.offset(minvec, 3, 3, 7)
 		local lp_south = vector.offset(minvec, 3, 3, 0)
