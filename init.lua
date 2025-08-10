@@ -44,6 +44,7 @@ vein_miner.player_hud = player_hud
 local p_config = require("mods.vein_miner.player_config")
 vein_miner.player_config = p_config
 local l_utils = require("mods.vein_miner.late_utils")
+vein_miner.l_utils = l_utils
 local BlockDigger = require("mods.vein_miner.block_digger")
 
 function vein_miner.show_layer_bounds(miny, maxy)
