@@ -41,6 +41,8 @@ local player_hud = require("mods.vein_miner.player_hud")
 local p_config = require("mods.vein_miner.player_config")
 utils:merge(require("mods.vein_miner.late_utils"))
 local BlockDigger = require("mods.vein_miner.block_digger")
+require("mods.vein_miner.globalstep")
+require("mods.vein_miner.commands")
 
 local fill_liquid_at_pos = vein_miner.fill_liquid_at_pos
 
