@@ -1134,6 +1134,9 @@ end
 
 vein_miner.state = {}
 
+---@param player Player
+---@param player_name string
+---@param pos Vector
 function vein_miner.state.new(pos, player, player_name, wielded)
 	local state = {
 		pos = pos,
@@ -1150,6 +1153,12 @@ function vein_miner.state.new(pos, player, player_name, wielded)
 	return state
 end
 
+---@class Node
+---@field type string
+---@field name string
+---@param pos Vector
+---@param oldnode Node
+---@param player Player|nil
 core.register_on_dignode(function(pos, oldnode, player)
 	if core.is_async then
 		return

@@ -47,7 +47,12 @@ local stack = {}
 ---@field get_wielded_item fun(self: Player): ItemStack
 ---@field set_wielded_item fun(self: Player, item: ItemStack|string)
 ---@field is_player fun(self: any): boolean
+---@field get_player_control fun(self: Player): PlayerControl
 local player = {}
+
+---@class PlayerControl
+---@field sneak boolean
+local player_control = player.get_player_control()
 
 ---@class Chunk
 ---@field area VoxelArea
