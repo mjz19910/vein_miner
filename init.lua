@@ -1,3 +1,4 @@
+---@type LuantiCore
 local core = core
 local dofile = dofile
 
@@ -358,16 +359,6 @@ local function count_found_nodes(iter, orig_pos, player_name)
 	return count
 end
 
-local function place_particle(pos, size, texture)
-	add_particle({
-		pos = pos,
-		expirationtime = 4,
-		size = size or 4,
-		texture = texture or "default_mese_block.png",
-		glow = 15,
-	})
-end
-
 local function notify_pos(pos, color, size, expire_time)
 	add_particle({
 		pos = pos,
@@ -490,72 +481,6 @@ local function scan_region_for_node(state, regions, r, pos, node_name, user_acti
 	end
 end
 
-local function stone_part(pos) place_particle(pos, 6 / 3, "default_stone.png") end
-local function mese_blk_part(pos) place_particle(pos, 6 / 3, "default_mese_block.png") end
-local function diamond_blk_part(pos) place_particle(pos, 6 / 3, "default_diamond_block.png") end
-local function stone_blk_part(pos) place_particle(pos, 6 / 3, "default_stone_block.png") end
-
-function aabb.draw(r)
-	local min = r.min
-	local max = r.max
-	local step = 8
-
-	-- Center point
-	local center = vector.divide(vector.add(min, max), 2)
-	mese_blk_part(center)
-
-	local x_vals = utils.linspace_centered(min.x, max.x, center.x, step)
-	local y_vals = utils.linspace_centered(min.y, max.y, center.y, step)
-	local z_vals = utils.linspace_centered(min.z, max.z, center.z, step)
-
-	-- Find center indices (should be exact match)
-	local cx = utils.find_closest_index(x_vals, center.x)
-	local cy = utils.find_closest_index(y_vals, center.y)
-	local cz = utils.find_closest_index(z_vals, center.z)
-
-	-- Draw shell
-	for _, x in ipairs(x_vals) do
-		for _, y in ipairs(y_vals) do
-			for _, z in ipairs(z_vals) do
-				local on_x_edge = (x == min.x or x == max.x)
-				local on_y_edge = (y == min.y or y == max.y)
-				local on_z_edge = (z == min.z or z == max.z)
-
-				if on_x_edge or on_y_edge or on_z_edge then
-					local pos = vector.new(x, y, z)
-
-					if not on_y_edge then
-						mese_blk_part(pos)
-					elseif y == max.y then
-						stone_part(pos)
-					elseif y ~= min.y and (on_x_edge or on_z_edge) then
-						stone_blk_part(pos)
-					elseif y == min.y then
-						diamond_blk_part(pos)
-					end
-				end
-			end
-		end
-	end
-
-	-- Draw axis lines through center
-	for i = 2, #x_vals - 1 do
-		if i ~= cx then
-			mese_blk_part(vector.new(x_vals[i], y_vals[cy], z_vals[cz]))
-		end
-	end
-	for i = 2, #y_vals - 1 do
-		if i ~= cy then
-			mese_blk_part(vector.new(x_vals[cx], y_vals[i], z_vals[cz]))
-		end
-	end
-	for i = 2, #z_vals - 1 do
-		if i ~= cz then
-			mese_blk_part(vector.new(x_vals[cx], y_vals[cy], z_vals[i]))
-		end
-	end
-end
-
 ---@param pos Vector
 local function scan_nearby_lights(state, pos, node_name, options, show_log)
 	local player_name = state.player_name
@@ -643,7 +568,7 @@ local function scan_nearby_lights(state, pos, node_name, options, show_log)
 	end
 	if newly_scanned then
 		for _, r in ipairs(regions) do
-			aabb.draw(r)
+			r:draw()
 		end
 	end
 end
@@ -1079,10 +1004,10 @@ function vein_miner.state.new(pos, player, player_name, wielded)
 	return setmetatable(state, VeinMinerState)
 end
 
----@class Node
+---@class MapNode
 ---@field name string
 ---@param pos Vector
----@param oldnode Node
+---@param oldnode MapNode
 ---@param player Player|nil
 core.register_on_dignode(function(pos, oldnode, player)
 	if core.is_async then

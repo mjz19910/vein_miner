@@ -1,6 +1,22 @@
 ---@class Deque
----@field push_left fun()
----@field push_right fun()
+---@generic T
+---@field push_left fun(self: Deque, value: T): nil
+---@field push_right fun(self: Deque, value: T): nil
+---@field peek_left fun(self: Deque): T|nil
+---@field peek_right fun(self: Deque): T|nil
+---@field pop_left fun(self: Deque): T|nil
+---@field pop_right fun(self: Deque): T|nil
+---@field rotate_left fun(self: Deque, n?: integer): nil
+---@field rotate_right fun(self: Deque, n?: integer): nil
+---@field remove_left fun(self: Deque, value: T): boolean
+---@field remove_right fun(self: Deque, value: T): boolean
+---@field length fun(self: Deque): integer
+---@field is_empty fun(self: Deque): boolean
+---@field contents fun(self: Deque): T[]
+---@field iter_left fun(self: Deque): fun(): T|nil
+---@field iter_right fun(self: Deque): fun(): T|nil
+local deq = {}
+
 ---@class InvRef
 ---@field get_size fun(self: InvRef, listname: string): integer
 ---@field set_size fun(self: InvRef, listname: string, size: integer)
@@ -99,11 +115,15 @@ local vein_miner = {}
 
 ---@class LuantiCore
 ---@field get_voxel_manip fun(): VoxelManip
----@field set_node fun(pos: Vector, node: Node)
----@field get_node fun(pos: Vector): Node
----@field get_node_or_nil fun(pos: Vector): Node | nil
+---@field set_node fun(pos: Vector, node: MapNode)
+---@field get_node fun(pos: Vector): MapNode
+---@field get_node_or_nil fun(pos: Vector): MapNode | nil
 ---@field sound_play fun(spec: string|SimpleSoundSpec, params: ServerSoundParams|nil, ephemeral: boolean|nil)
 ---@field get_connected_players fun(): Player[]
+---
+---@field add_particle fun(params: ParticleParameters): boolean
+---@field add_particlespawner fun(params: ParticleSpawnerParameters): integer
+---@field delete_particlespawner fun(id: integer, playername?: string)
 core = {}
 local vm = core.get_voxel_manip()
 
@@ -450,3 +470,62 @@ local tool_caps = {}
 ---@field r number
 ---@field g number
 ---@field b number
+
+---@class ParticleTextureAnimation
+---@field length integer
+---@field frame_length integer
+---@field frames integer[]
+---@field blend string|nil
+
+---@class ParticleTexture
+---@field string string
+---@field animated boolean
+---@field animation ParticleTextureAnimation|nil
+---@field blendmode integer|nil
+---@field alpha any|nil
+---@field scale any|nil
+
+---@class Range
+---@generic T
+---@field min T
+---@field max T
+
+---@class CommonParticleParams
+---@field collisiondetection boolean
+---@field collision_removal boolean
+---@field object_collision boolean
+---@field vertical boolean
+---@field texture ServerParticleTexture
+---@field animation TileAnimationParams
+---@field glow integer
+---@field node MapNode
+---@field node_tile integer
+
+---@class ParticleParameters : CommonParticleParams
+---@field pos Vector
+---@field vel Vector
+---@field acc Vector
+---@field drag Vector
+---@field size number
+---@field expirationtime number
+---@field bounce Range<number>
+---@field jitter Range<Vector>
+
+---@class ParticleSpawnerParameters : CommonParticleParams
+---@field amount integer
+---@field time number
+---@field texpool ServerParticleTexture[]  -- array of textures
+
+---@class TileAnimationParams
+---@field type integer -- e.g. TAT_NONE or other animation types
+---@field length integer
+---@field frame_length integer
+---@field frames integer[]
+
+---@class ServerParticleTexture
+---@field string string           -- texture name or path
+---@field animated boolean
+---@field animation TileAnimationParams
+---@field blendmode integer|nil
+---@field alpha any|nil
+---@field scale any|nil

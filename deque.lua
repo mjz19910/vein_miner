@@ -139,6 +139,7 @@ local methods = {
 	contents = contents,
 }
 
+---@return Deque<T>
 function deque.new()
 	local r = {
 		head = 0,

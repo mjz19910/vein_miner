@@ -39,7 +39,7 @@ core.register_globalstep(function(dtime)
 			local regions = light_scan_data[name]
 			if dtime_time > 4 then
 				for _, r in ipairs(regions) do
-					draw_region(r)
+					r:draw()
 				end
 				dtime_time = 0
 			end
