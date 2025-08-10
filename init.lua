@@ -33,11 +33,12 @@ require("mods.vein_miner.auto_floor")
 require("mods.vein_miner.voxel_utils")
 require("mods.vein_miner.config")
 require("mods.vein_miner.helpers")
-aabb = require("mods.vein_miner.aabb")
-local aabb = aabb
+local aabb = require("mods.vein_miner.aabb")
+vein_miner.aabb = aabb
 require("mods.vein_miner.liquid_filler")
 require("mods.vein_miner.remove_walls")
 local player_hud = require("mods.vein_miner.player_hud")
+vein_miner.player_hud = player_hud
 local p_config = require("mods.vein_miner.player_config")
 vein_miner.player_config = p_config
 local l_utils = require("mods.vein_miner.late_utils")
@@ -1127,38 +1128,3 @@ end)
 core.override_item("", {
 	range = 7,
 })
-
--- Register to handle players
-
-core.register_on_joinplayer(function(player)
-	local name = player:get_player_name()
-	p_config.load_player_config(name)
-	local config = p_config.data[name]
-
-	if config.maxy == nil then
-		config.maxy = 144
-	end
-	if config.target_layer ~= nil then
-		config.maxy = config.target_layer * 8 + 7
-		config.target_layer = nil
-	end
-	if config.miny == nil then
-		config.miny = -144
-	end
-	if config.mode == nil then
-		config.mode = "small" -- default: "small"
-	end
-
-	light_scan_data[name] = {}
-	vein_miner.light_region_debug[name] = true
-
-	-- Init the player hud
-	player_hud.init_player(player)
-end)
-
-core.register_on_leaveplayer(function(player)
-	local name = player:get_player_name()
-	p_config.save_player_config(name)
-
-	player_hud.remove_player(player)
-end)
