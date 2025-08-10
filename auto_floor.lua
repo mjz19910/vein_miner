@@ -82,11 +82,14 @@ local function is_supported(pos)
 end
 
 local LINE_LENGTH = 48
+---@class SoundInfo
+---@field is_playing boolean
 
 ---@param player Player
+---@param sound_info SoundInfo
 ---@param target_pos Vector
 ---@param max_hear_distance number
-local function try_place_block_from_inventory(player, target_pos, max_hear_distance)
+local function try_place_block_from_inventory(player, sound_info, target_pos, max_hear_distance)
 	local inv = player:get_inventory()
 	for i = 1, inv:get_size("main") do
 		local stack = inv:get_stack("main", i)
@@ -97,10 +100,13 @@ local function try_place_block_from_inventory(player, target_pos, max_hear_dista
 			})
 			stack:take_item(1)
 			inv:set_stack("main", i, stack)
-			sound_play("default_place_node_hard", {
-				pos = target_pos,
-				max_hear_distance = max_hear_distance,
-			})
+			if not sound_info.is_playing then
+				sound_play("default_place_node_hard", {
+					pos = target_pos,
+					max_hear_distance = max_hear_distance,
+				})
+				sound_info.is_playing = true
+			end
 			return true
 		end
 	end
@@ -108,11 +114,14 @@ local function try_place_block_from_inventory(player, target_pos, max_hear_dista
 end
 
 local max_recheck_count = 0
+local sound_info = {}
 
 core.register_globalstep(function(dtime)
 	for _, player in ipairs(get_connected_players()) do
 		local ctrl = player:get_player_control()
 		local name = player:get_player_name()
+		local cur_sound_info = sound_info[name] or {}
+		cur_sound_info.is_playing = false
 		local wielded = player:get_wielded_item():get_name()
 		if wielded ~= "vein_miner:auto_floor" then
 			last_floor_data[name] = nil
@@ -160,7 +169,7 @@ core.register_globalstep(function(dtime)
 
 			local node_below = minetest.get_node(target_pos)
 			if node_below.name == "air" and is_supported(target_pos) then
-				if try_place_block_from_inventory(player, target_pos, LINE_LENGTH + 8) then
+				if try_place_block_from_inventory(player, cur_sound_info, target_pos, LINE_LENGTH + 8) then
 					did_place_some = true
 					do_recheck_support = true
 				end
@@ -175,6 +184,7 @@ core.register_globalstep(function(dtime)
 		if recheck_count > 0 then
 			if recheck_count > max_recheck_count then
 				core.chat_send_player(name, "recheck for support max of " .. recheck_count .. " times")
+				max_recheck_count = recheck_count
 			end
 		end
 
