@@ -1192,6 +1192,7 @@ core.register_on_dignode(function(pos, oldnode, player)
 	end
 	local state = vein_miner_current_state[player_name]
 	if state == nil then
+		core.chat_send_player(player_name, "start vein mining")
 		state = vein_miner.state.new(pos, player, player_name, wielded)
 		vein_miner_current_state[player_name] = state
 		vein_miner_step(state)
