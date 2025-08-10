@@ -1,10 +1,10 @@
 local vector = vector
 local table = table
-local voxel_utils = voxel_utils
 local vein_miner = vein_miner
+local voxel_util = vein_miner.voxel_util
 local p = vector.new
 local i = table.insert
-local ia = voxel_utils.insert_all
+local ia = table.insert_all
 
 vein_miner.CFG = {
 	LIGHT_NODES = {"default:mese_post_light_pine_wood", "default:mese_post_light_acacia_wood"},

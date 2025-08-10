@@ -77,6 +77,8 @@ local config = {}
 ---@field player_config PlayerConfigManager
 ---@field mine_only_cur_set table<string, boolean>
 ---@field mine_only_group_sets table<string, string>
+---@field voxel_util VoxelUtil
+
 local vein_miner = {}
 ---@class SimpleSoundSpec
 ---@field name string|string[] Sound name or list of names to choose from

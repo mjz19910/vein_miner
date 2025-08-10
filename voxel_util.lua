@@ -1,14 +1,16 @@
--- voxel_util.lua
--- Utility functions for voxel manipulation in Luanti mods
+---@class VoxelUtil
+--- Utility functions for voxel manipulation in Luanti mods
 local voxel_util = {}
 
-local core = core or minetest
-local vector_new = vector.new
-local hash_node_position = core.hash_node_position
-local get_position_from_hash = core.get_position_from_hash
-local get_name_from_content_id = minetest.get_name_from_content_id
+-- voxel_util.lua
+local core = core
+local vector = vector
 local table = table
 local ipairs = ipairs
+local p = vector.new
+local hash_node_position = core.hash_node_position
+local get_position_from_hash = core.get_position_from_hash
+local get_name_from_content_id = core.get_name_from_content_id
 
 ---Convert position to VoxelArea index
 ---@param area VoxelArea
@@ -41,7 +43,7 @@ function voxel_util.iterate_area(area, func)
 	for z = minp.z, maxp.z do
 		for y = minp.y, maxp.y do
 			for x = minp.x, maxp.x do
-				func(vector_new(x, y, z))
+				func(p(x, y, z))
 			end
 		end
 	end
@@ -82,16 +84,14 @@ function voxel_util.safe_set_node(data, area, pos, content_id)
 	end
 	return false
 end
-(function()
-	local p = vector_new
-	---Get neighboring positions (6-directional)
-	---@param pos Vector
-	---@return Vector[]
-	function voxel_util.get_neighbors(pos)
-		return {p(pos.x + 1, pos.y, pos.z), p(pos.x - 1, pos.y, pos.z), p(pos.x, pos.y + 1, pos.z), p(pos.x, pos.y - 1, pos.z),
-			p(pos.x, pos.y, pos.z + 1), p(pos.x, pos.y, pos.z - 1)}
-	end
-end)()
+
+---Get neighboring positions (6-directional)
+---@param pos Vector
+---@return Vector[]
+function voxel_util.get_neighbors(pos)
+	return {p(pos.x + 1, pos.y, pos.z), p(pos.x - 1, pos.y, pos.z), p(pos.x, pos.y + 1, pos.z), p(pos.x, pos.y - 1, pos.z),
+		p(pos.x, pos.y, pos.z + 1), p(pos.x, pos.y, pos.z - 1)}
+end
 
 ---Fast integer hash for a node position using the engine's built-in method
 ---@param pos Vector
@@ -131,13 +131,6 @@ function voxel_util.flood_fill(vm, data, area, start_pos, predicate, fill_conten
 		end
 	end
 end
-
----Insert all elements from `src` into `dest` (in-place)
----@generic T
----@param dest T[]  -- Destination array
----@param src  T[]  -- Source array
----@return T[]
-function voxel_util.insert_all(dest, src) return table.insert_all(dest, src) end
 
 return voxel_util
 

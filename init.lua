@@ -30,7 +30,7 @@ local require = utils.require
 vein_miner.utils = utils
 vein_miner.deque = require("mods.vein_miner.deque")
 require("mods.vein_miner.auto_floor")
-require("mods.vein_miner.voxel_utils")
+require("mods.vein_miner.voxel_util")
 require("mods.vein_miner.config")
 require("mods.vein_miner.helpers")
 local h = require("mods.vein_miner.helpers")
