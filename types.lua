@@ -58,7 +58,7 @@ local stack = {}
 
 ---@class Player
 ---@field get_player_name fun(self: Player): string
----@field get_pos fun(self: Player): vector
+---@field get_pos fun(self: Player): Vector
 ---@field hud_add fun(self: Player, params: table): integer
 ---@field hud_remove fun(self: Player, id: integer)
 ---@field hud_change fun(self: Player, id: integer, params: table)
@@ -126,6 +126,8 @@ local vein_miner = {}
 ---@field add_particlespawner fun(params: ParticleSpawnerParameters): integer
 ---@field delete_particlespawner fun(id: integer, playername?: string)
 core = {}
+minetest = core
+
 local vm = core.get_voxel_manip()
 
 ---@class VoxelManip
