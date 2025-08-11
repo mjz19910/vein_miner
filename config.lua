@@ -1,51 +1,124 @@
 local vector = vector
 local table = table
+local pairs = pairs
 local vein_miner = vein_miner
 local voxel_util = vein_miner.voxel_util
 local p = vector.new
 local i = table.insert
 local ia = table.insert_all
 
+local dirt = {
+	normal = "default:dirt",
+	dry = "default:dry_dirt",
+	grass = {
+		normal = "default:dirt_with_grass",
+		dry = "default:dry_dirt_with_dry_grass",
+		snow = "default:dirt_with_snow",
+		rainforest = "default:dirt_with_rainforest_litter",
+		coniferous = "default:dirt_with_coniferous_litter",
+	},
+	permafrost = {
+		normal = "default:permafrost",
+		moss = "default:permafrost_with_moss",
+		stones = "default:permafrost_with_stones",
+	},
+}
+
+local clay = "default:clay"
+
+local stone = {
+	normal = "default:stone",
+	ore = {
+		coal = "default:stone_with_coal",
+		copper = "default:stone_with_copper",
+		diamond = "default:stone_with_diamond",
+		gold = "default:stone_with_gold",
+		iron = "default:stone_with_iron",
+		mese = "default:stone_with_mese",
+		tin = "default:stone_with_tin",
+	},
+	variants = {
+		desert = "default:desert_stone",
+		sandstone = "default:sandstone",
+		desert_sandstone = "default:desert_sandstone",
+		silver_sandstone = "default:silver_sandstone",
+		cave_ice = "default:cave_ice",
+	},
+}
+
+local sand = {
+	normal = "default:sand",
+	silver = "default:silver_sand",
+	with_kelp = "default:sand_with_kelp",
+}
+
+local gravel = "default:gravel"
+
+local grass = {
+	normal = {"default:grass_1", "default:grass_2", "default:grass_3", "default:grass_4", "default:grass_5"},
+	jungle = {"default:junglegrass"},
+	dry = {"default:dry_grass_1", "default:dry_grass_2", "default:dry_grass_3", "default:dry_grass_4", "default:dry_grass_5"},
+	marram = {"default:marram_grass_1", "default:marram_grass_2", "default:marram_grass_3", "default:marram_grass_4", "default:marram_grass_5"},
+}
+
+local flowers = {
+	common = {"flowers:chrysanthemum_green", "flowers:dandelion_yellow", "flowers:dandelion_white", "flowers:tulip_black", "flowers:tulip",
+		"flowers:viola", "flowers:rose"},
+	mushroom = {"flowers:mushroom_brown", "flowers:mushroom_red"},
+}
+
+local trees = {
+	stems = {"default:acacia_bush_stem", "default:pine_bush_stem", "default:bush_stem"},
+	trunks = {"default:tree", "default:pine_tree", "default:jungletree", "default:aspen_tree", "default:acacia_tree"},
+}
+
+local cobble = {
+	normal = "default:cobble",
+	mossy = "default:mossycobble",
+	stairs = "stairs:stair_cobble",
+}
+
+local mesecons = {
+	wire = {}, -- Will be dynamically generated as in your code
+	vertical_wire = {"mesecons_extrawires:vertical_top_on", "mesecons_extrawires:vertical_top_off", "mesecons_extrawires:vertical_on",
+		"mesecons_extrawires:vertical_off", "mesecons_extrawires:vertical_bottom_on", "mesecons_extrawires:vertical_bottom_off"},
+	sticky_blocks = {"mesecons_stickyblocks:sticky_block_all"},
+}
+
 vein_miner.CFG = {
 	LIGHT_NODES = {"default:mese_post_light_pine_wood", "default:mese_post_light_acacia_wood"},
-	MINE_ONLY_CUR_SET = {"default:snow", "default:dry_dirt", "default:stone_block", "farming:cotton_wild", "fire:basic_flame",
-		"default:obsidian", "wool:green", "wool:orange"},
+	MINE_ONLY_CUR_SET = {"default:snow", "default:stone_block", "farming:cotton_wild", "fire:basic_flame", "default:obsidian", "wool:green",
+		"wool:orange"},
 	IGNORED_NODES = {"default:chest", "default:leaves", "drawers:trim", "drawers:pine_wood1", "drawers:controller", "digtron:axle",
 		"digtron:light", "digtron:pusher", "digtron:digger", "digtron:builder", "digtron:structure", "digtron:inventory", "digtron:fuelstore",
 		"digtron:empty_crate", "digtron:auto_controller", "digtron:combined_storage", "digtron:inventory_ejector", "digtron:intermittent_digger",
 		"digtron:master_builder", "digtron:controller"},
-	SURFACE_NODES = {"default:dirt_with_grass", "default:dirt_with_snow", "default:dirt_with_rainforest_litter",
-		"default:dirt_with_coniferous_litter", "default:dry_dirt_with_dry_grass", "default:permafrost_with_moss",
-		"default:permafrost_with_stones", "default:sand_with_kelp"},
+	SURFACE_NODES = {dirt.grass.normal, dirt.grass.snow, dirt.grass.rainforest, dirt.grass.coniferous, dirt.grass.dry, dirt.permafrost.moss,
+		dirt.permafrost.stones, sand.with_kelp},
 	MINE_ONLY_GROUPS = {
-		grass = {"default:grass_1", "default:grass_2", "default:grass_3", "default:grass_4", "default:grass_5"},
-		jungle_grass = {"default:junglegrass"},
-		dry_grass = {"default:dry_grass_1", "default:dry_grass_2", "default:dry_grass_3", "default:dry_grass_4", "default:dry_grass_5"},
-		marram_grass = {"default:marram_grass_1", "default:marram_grass_2", "default:marram_grass_3", "default:marram_grass_4",
-			"default:marram_grass_5"},
+		grass = grass.normal,
+		jungle_grass = grass.jungle,
+		dry_grass = grass.dry,
+		marram_grass = grass.marram,
 		fern = {"default:fern_1", "default:fern_2", "default:fern_3"},
 		blueberry = {"default:blueberry_bush_leaves", "default:blueberry_bush_leaves_with_berries"},
-		gravel = {"default:gravel"},
-		silver_sand = {"default:silver_sand"},
-		sand = {"default:sand"},
-		flowers = {"flowers:chrysanthemum_green", "flowers:dandelion_yellow", "flowers:dandelion_white", "flowers:tulip_black", "flowers:tulip",
-			"flowers:viola", "flowers:rose"},
-		mushroom = {"flowers:mushroom_brown", "flowers:mushroom_red"},
-		bush_stem = {"default:acacia_bush_stem", "default:pine_bush_stem", "default:bush_stem"},
-		tree = {"default:tree", "default:pine_tree", "default:jungletree", "default:aspen_tree", "default:acacia_tree"},
-		dirt = {"default:dirt", "default:permafrost"},
-		stone_with_ore = {"default:stone_with_coal", "default:stone_with_copper", "default:stone_with_diamond", "default:stone_with_gold",
-			"default:stone_with_iron", "default:stone_with_mese", "default:stone_with_tin"},
-		stone_like = {},
-		stone = {"default:stone", "default:desert_stone", "default:sandstone", "default:desert_sandstone", "default:silver_sandstone",
-			"default:cave_ice"},
-		mesecons_wire = {},
-		mesecon_vertical_wire = {"mesecons_extrawires:vertical_top_on", "mesecons_extrawires:vertical_top_off", "mesecons_extrawires:vertical_on",
-			"mesecons_extrawires:vertical_off", "mesecons_extrawires:vertical_bottom_on", "mesecons_extrawires:vertical_bottom_off"},
+		gravel = {gravel},
+		silver_sand = {sand.silver},
+		sand = {sand.normal},
+		flowers = flowers.common,
+		mushroom = flowers.mushroom,
+		tree_stems = trees.stems,
+		tree_trunks = trees.trunks,
+		dirt = {dirt.normal, dirt.permafrost.normal},
+		ore = {stone.ore.coal, stone.ore.copper, stone.ore.diamond, stone.ore.gold, stone.ore.iron, stone.ore.mese, stone.ore.tin},
+		stone = {stone.normal, stone.variants.desert, stone.variants.sandstone, stone.variants.desert_sandstone, stone.variants.silver_sandstone,
+			stone.variants.cave_ice},
+		mesecons_wire = mesecons.wire,
+		mesecon_vertical_wire = mesecons.vertical_wire,
 		misc = {"default:silver_sandstone_brick"},
-		cobble = {"default:cobble"},
-		mossy_cobble = {"default:mossycobble"},
-		cobble_stairs = {"stairs:stair_cobble"},
+		cobble = {cobble.normal},
+		mossy_cobble = {cobble.mossy},
+		cobble_stairs = {cobble.stairs},
 	},
 	VEC_DIRS = {},
 	FLOATING_DIRS = {p(1, 0, 0), p(-1, 0, 0), p(0, 1, 0), p(0, -1, 0), p(0, 0, 1), p(0, 0, -1)},
@@ -126,7 +199,7 @@ i_vec_dirs({p(2, 0, 0), p(-2, 0, 0), p(0, 2, 0), p(0, -2, 0), p(0, 0, 2), p(0, 0
 -- distance of 3.1622776601684
 -- i_vec_dirs({p(-3, 0, 1)})
 
-ia(vein_miner.CFG.MINE_ONLY_CUR_SET, {"default:cobble", "default:mossycobble", "stairs:stair_cobble"})
+ia(vein_miner.CFG.MINE_ONLY_CUR_SET, {cobble.normal, cobble.mossy, cobble.stairs})
 
 i(vein_miner.CFG.IGNORED_NODES, "default:mese_post_light")
 
@@ -154,7 +227,7 @@ local function register_wires_group()
 		local nodeid = (nid[0] or "0") .. (nid[1] or "0") .. (nid[2] or "0") .. (nid[3] or "0") .. (nid[4] or "0") .. (nid[5] or "0") ..
 			               (nid[6] or "0") .. (nid[7] or "0")
 
-		ia(vein_miner.CFG.MINE_ONLY_GROUPS.mesecons_wire, {"mesecons:wire_" .. nodeid .. "_off", "mesecons:wire_" .. nodeid .. "_on"})
+		ia(mesecons.wire, {"mesecons:wire_" .. nodeid .. "_off", "mesecons:wire_" .. nodeid .. "_on"})
 
 		if (nid_inc(nid) == false) then
 			return
@@ -175,5 +248,23 @@ ia(mine_only_set, {"mesecons_movestones:sticky_movestone"})
 local mine_groups = vein_miner.CFG.MINE_ONLY_GROUPS
 mine_groups.coral = {"default:coral_skeleton", "default:coral_green", "default:coral_cyan", "default:coral_pink", "default:coral_orange",
 	"default:coral_brown"}
-mine_groups.target_nodes = {"default:dirt", "default:clay", "default:dry_dirt"}
+mine_groups.target_nodes = {clay, dirt.dry}
 table.insert_all(mine_groups.target_nodes, vein_miner.CFG.SURFACE_NODES)
+local ignored_nodes = vein_miner.CFG.IGNORED_NODES
+table.insert_all(ignored_nodes, {dirt.normal, dirt.dry})
+
+local ignored_nodes_set = {}
+for k, v in pairs(vein_miner.CFG.IGNORED_NODES) do
+	ignored_nodes_set[v] = true
+end
+vein_miner.CFG.ignored_nodes_set = ignored_nodes_set
+local light_nodes_set = {}
+for k, v in pairs(vein_miner.CFG.LIGHT_NODES) do
+	light_nodes_set[v] = true
+end
+vein_miner.CFG.light_nodes_set = light_nodes_set
+local surface_nodes_set = {}
+for k, v in pairs(vein_miner.CFG.SURFACE_NODES) do
+	surface_nodes_set[v] = true
+end
+vein_miner.CFG.surface_nodes_set = surface_nodes_set

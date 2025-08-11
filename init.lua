@@ -195,10 +195,6 @@ local log_error = vein_miner.h.log_error
 local log_warning = vein_miner.h.log_warning
 local log_action = vein_miner.h.log_action
 
-local ignored_nodes = CFG.IGNORED_NODES
-local light_nodes = CFG.LIGHT_NODES
-local surface_nodes = CFG.SURFACE_NODES
-
 local storage = core.get_mod_storage()
 
 local vec_dirs = CFG.VEC_DIRS
@@ -241,23 +237,20 @@ local function is_node_vein_diggable(nodeName, wieldedName)
 	return nodeCheck and toolCheck
 end
 
-local function handle_unexpected_target_nodes(target_nodes, node_name)
-	if table.contains(light_nodes, node_name) then
+local function get_scan_mode(node_name)
+	if ignored_nodes_set[node_name] then
+		return "inc_mine_skip"
+	end
+	if light_nodes_set[node_name] then
 		return "add_current"
 	end
-	if not table.contains(target_nodes, node_name) then
-		if table.contains(surface_nodes, node_name) then
-			return "only_current"
-		end
-		if table.contains(ignored_nodes, node_name) then
-			return "inc_mine_skip"
-		end
-		if mine_only_cur_set[node_name] then
-			return "mine_only_cur"
-		end
-		return "error"
+	if surface_nodes_set[node_name] then
+		return "only_current"
 	end
-	return "continue"
+	if mine_only_cur_set[node_name] then
+		return "mine_only_cur"
+	end
+	return "error"
 end
 
 for i, dir in pairs(vec_dirs) do
@@ -742,34 +735,33 @@ local function dig_pos_process_queue_item(state, item, player_name)
 	local target_nodes = {}
 	table.insert_all(target_nodes, mine_only_groups.target_nodes)
 	table.insert_all(target_nodes, mine_only_groups.stone)
-	table.insert_all(target_nodes, mine_only_groups.stone_like)
-	table.insert_all(target_nodes, mine_only_groups.stone_with_ore)
+	table.insert_all(target_nodes, mine_only_groups.ore)
 	local target_flags = {
 		liquid = true,
 		falling = true,
 	}
-	local node_result = handle_unexpected_target_nodes(target_nodes, node_name)
-	if node_result == "error" then
+	local scan_mode = get_scan_mode(node_name)
+	if scan_mode == "error" then
 		if not known_unhandled_nodes[node_name] then
 			known_unhandled_nodes[node_name] = true
 			log_error("unhandled node name " .. node_name)
 		end
 		return
 	end
-	if node_result == "inc_mine_skip" then
+	if scan_mode == "inc_mine_skip" then
 		return
 	end
-	if node_result == "only_current" then
+	if scan_mode == "only_current" then
 		target_nodes = {}
 		target_flags.falling = false
 		target_flags.liquid = false
 		table.insert(target_nodes, node_name)
 	end
-	if node_result == "add_current" then
+	if scan_mode == "add_current" then
 		table.insert(target_nodes, node_name)
 	end
 	local group_target = nil
-	if node_result == "mine_only_cur" then
+	if scan_mode == "mine_only_cur" then
 		if node_name == "wool:green" then
 			target_nodes = {}
 			target_flags.falling = false

@@ -8,7 +8,7 @@ A dynamic and configurable Minetest mod for intelligent vein mining, region scan
 - Async-safe dig start using `register_on_dignode`.
 - Automatic multi-node mining based on player-configurable scan sizes.
 - Queue system for dig positions.
-- Target node group support (`stone`, `stone_with_ore`, etc.).
+- Target node group support (`stone`, `ore`, etc.).
 - Per-player mining mode config (`small` or `large`).
 - Wielded item check for node diggability.
 - Light-scanning logic integrated into mining queue.

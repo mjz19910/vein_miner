@@ -52,7 +52,7 @@ local function is_stuck_to_sticky(pos)
 	return false
 end
 
-local light_nodes = CFG.LIGHT_NODES
+local light_nodes_set = CFG.light_nodes_set
 
 local function is_falling(name)
 	local def = core.registered_nodes[name]
@@ -68,7 +68,7 @@ function BlockDigger.should_dig(node, pos)
 	if node.name == "air" then
 		return false
 	end
-	if table.contains(light_nodes, node.name) then
+	if light_nodes_set[node.name] then
 		return true
 	end
 	if not is_sticky_node(node.name) and is_stuck_to_sticky(pos) then
