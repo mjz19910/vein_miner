@@ -31,11 +31,10 @@ local require = utils.require
 vein_miner.utils = utils
 vein_miner.deque = require("mods.vein_miner.deque")
 vein_miner.voxel_util = require("mods.vein_miner.voxel_util")
-local CFG = require("mods.vein_miner.config")
-vein_miner.CFG = CFG
----@type VeinMinerHelpers
 local h = require("mods.vein_miner.helpers")
 vein_miner.h = h
+local CFG = require("mods.vein_miner.config")
+vein_miner.CFG = CFG
 ---@type AABB
 local aabb = require("mods.vein_miner.aabb")
 vein_miner.aabb = aabb
