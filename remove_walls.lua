@@ -6,6 +6,9 @@ local vector = vector
 local ipairs = ipairs
 local math = math
 
+---@type VeinMinerGlobal
+local vein_miner = vein_miner
+
 local CFG = vein_miner.CFG
 
 local DELAY_SECONDS = 0.5

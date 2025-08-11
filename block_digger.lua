@@ -33,7 +33,7 @@ local sticky_nodes = CFG.sticky_nodes
 
 local function is_sticky_node(name) return sticky_nodes[name] == true end
 
-local cardinal_dirs = {p(1, 0, 0), p(-1, 0, 0), p(0, 1, 0), p(0, -1, 0), p(0, 0, 1), p(0, 0, -1)}
+local cardinal_dirs = vein_miner.CFG.cardinal_dirs
 local function get_adjacent_positions(pos)
 	local ret = {}
 	for _, v in ipairs(cardinal_dirs) do

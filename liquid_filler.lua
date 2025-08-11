@@ -43,6 +43,7 @@ local pos_str = core.pos_to_string
 local cid = core.get_content_id
 
 -- vein_miner tables
+---@type VeinMinerGlobal
 local vein_miner = vein_miner
 local aabb = vein_miner.aabb
 local helpers = vein_miner.h
@@ -52,7 +53,7 @@ local new_region = aabb.region
 local log_action = helpers.log_action
 
 -- constants
-local cardinal_dirs = {vec_new(1, 0, 0), vec_new(-1, 0, 0), vec_new(0, 1, 0), vec_new(0, -1, 0), vec_new(0, 0, 1), vec_new(0, 0, -1)}
+local cardinal_dirs = vein_miner.CFG.cardinal_dirs
 local liquid_set = {
 	["default:water_source"] = true,
 	["default:water_flowing"] = true,

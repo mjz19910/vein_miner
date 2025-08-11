@@ -35,7 +35,7 @@ local last_floor_data = {}
 local up = new_vec(0, 1, 0)
 local down = new_vec(0, -1, 0)
 local p = new_vec
-local cardinal_dirs = {p(1, 0, 0), p(-1, 0, 0), p(0, 1, 0), p(0, -1, 0), p(0, 0, 1), p(0, 0, -1)}
+local cardinal_dirs = vein_miner.CFG.cardinal_dirs
 local diagonal_dirs = {p(1, 0, 1), p(-1, 0, 1), p(1, 0, -1), p(-1, 0, -1)}
 local support_dirs = {}
 for _, dir in ipairs(cardinal_dirs) do
