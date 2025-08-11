@@ -17,7 +17,7 @@ core.register_abm({
 			return
 		end
 
-		-- Look for spreading dirt-type neighbours
+		-- Look for dry dirt neighbours to spread to
 		local p2 = core.find_node_near(pos, 1, "default:dry_dirt")
 		if p2 then
 			local n3 = core.get_node(p2)
