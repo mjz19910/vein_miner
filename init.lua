@@ -232,6 +232,7 @@ end
 local ignored_nodes_set = CFG.ignored_nodes_set
 local surface_nodes_set = CFG.surface_nodes_set
 local light_nodes_set = CFG.light_nodes_set
+local mine_only_cur_set = CFG.mine_only_cur_set
 
 local function get_scan_mode(node_name)
 	if ignored_nodes_set[node_name] then
@@ -733,9 +734,9 @@ local function dig_pos_process_queue_item(state, item, player_name)
 	end
 
 	local target_nodes = {}
-	table.insert_all(target_nodes, CFG.mine_only_groups.target_nodes)
-	table.insert_all(target_nodes, CFG.mine_only_groups.stone)
-	table.insert_all(target_nodes, CFG.mine_only_groups.ore)
+	table.insert_all(target_nodes, mine_only_groups.target_nodes)
+	table.insert_all(target_nodes, mine_only_groups.stone)
+	table.insert_all(target_nodes, mine_only_groups.ore)
 	local target_flags = {
 		liquid = true,
 		falling = true,
@@ -773,7 +774,7 @@ local function dig_pos_process_queue_item(state, item, player_name)
 		end
 		if mine_node_to_group_map[node_name] ~= nil then
 			local target_key = mine_node_to_group_map[node_name]
-			table.insert_all(target_nodes, mine_node_to_group_map[target_key])
+			table.insert_all(target_nodes, mine_only_groups[target_key])
 			group_target = target_key
 		else
 			table.insert(target_nodes, node_name)
