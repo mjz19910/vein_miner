@@ -742,7 +742,7 @@ local function dig_pos_process_queue_item(state, item, player_name)
 		falling = true,
 	}
 	local scan_mode = get_scan_mode(node_name)
-	core.log("warning", "scan_mode " .. scan_mode)
+	-- core.log("warning", "scan_mode " .. scan_mode)
 	if scan_mode == "error" then
 		if not known_unhandled_nodes[node_name] then
 			known_unhandled_nodes[node_name] = true

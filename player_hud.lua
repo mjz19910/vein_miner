@@ -37,9 +37,9 @@ function player_hud.init_player(player)
 
 	cur_hud.nodes_mined = player:hud_add({
 		type = "text",
-		position = vec_2d(0, 0.06),
+		position = vec_2d(0.005, 0.08),
 		offset = vec_2d_zero(),
-		alignment = vec_2d_zero(),
+		alignment = vec_2d(1, 0),
 		scale = vec_2d(1, 1),
 		number = 0xFFFFFF,
 		z_index = 100,
