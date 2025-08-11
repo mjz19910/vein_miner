@@ -140,6 +140,8 @@ local stack = {}
 ---@field maxlevel integer
 
 ---@class ItemStackMetaRef : MetaRef
+---@field set_tool_capabilities fun(self: ItemStackMetaRef, caps: table|nil)
+---@field set_wear_bar_params fun(self: ItemStackMetaRef, params: table|string|nil)
 
 ---@class Player: ObjectRef
 local player = {}
