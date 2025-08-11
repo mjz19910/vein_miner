@@ -53,29 +53,93 @@ local inv = {}
 ---@class InvLocationUndefined
 ---@field type '"undefined"'
 
----@class MetaDataRef
----@field get_string fun(self: MetaDataRef, key: string): string
----@field set_string fun(self: MetaDataRef, key: string, value: string)
----@field get_int fun(self: MetaDataRef, key: string): integer
----@field set_int fun(self: MetaDataRef, key: string, value: integer)
----@field get_float fun(self: MetaDataRef, key: string): number
----@field set_float fun(self: MetaDataRef, key: string, value: number)
----@field to_table fun(self: MetaDataRef): table
----@field from_table fun(self: MetaDataRef, table: table)
----@field get_inventory fun(self: MetaDataRef): InvRef
----@field set_inventory fun(self: MetaDataRef, inv: InvRef)
-local meta = {}
+---@class ItemStackTable
+---@field name string
+---@field count integer
+---@field wear integer
+---@field metadata string
+---@field meta table<string, string>
 
 ---@class ItemStack
----@field get_count fun(self: ItemStack): integer
+---@field is_empty fun(self: ItemStack): boolean
 ---@field get_name fun(self: ItemStack): string
----@field take_item fun(self: ItemStack, count: integer): ItemStack
----@field add_item fun(self: ItemStack, stack: ItemStack|string): ItemStack
+---@field set_name fun(self: ItemStack, name: string): nil
+---@field get_count fun(self: ItemStack): integer
+---@field set_count fun(self: ItemStack, count: integer): nil
 ---@field get_wear fun(self: ItemStack): integer
 ---@field set_wear fun(self: ItemStack, wear: integer)
----@field get_meta fun(self: ItemStack): MetaDataRef
+---@field get_meta fun(self: ItemStack): ItemStackMetaRef
+---@field clear fun(self: ItemStack): nil
+---@field replace fun(self: ItemStack, item: ItemStack|string|table|nil): nil
 ---@field to_string fun(self: ItemStack): string
+---@field to_table fun(self: ItemStack): ItemStackTable|nil
+---@field get_stack_max fun(self: ItemStack): integer
+---@field get_free_space fun(self: ItemStack): integer
+---@field is_known fun(self: ItemStack): boolean
+---@field get_definition fun(self: ItemStack): ItemDefinition
+---@field get_tool_capabilities fun(self: ItemStack): ToolCaps
+---@field add_wear fun(self: ItemStack, amount: integer): nil
+---@field add_item fun(self: ItemStack, item: ItemStack|string|table|nil): ItemStack
+---@field take_item fun(self: ItemStack, count: integer|nil): ItemStack
+---@field peek_item fun(self: ItemStack, count: integer|nil): ItemStack
 local stack = {}
+
+---@alias Node MapNode
+
+---@class ItemDefinition
+---@field name string
+---@field description string
+---@field short_description string|nil
+---@field groups table<string, integer>
+---@field inventory_image string
+---@field wield_image string
+---@field wield_scale number[]|nil
+---@field stack_max integer
+---@field liquids_pointable boolean|nil
+---@field light_source integer|nil
+---@field range number|nil
+---@field tool_capabilities ToolCaps|nil
+---@field damage_groups table<string, number>|nil
+---@field sounds table<string, any>|nil
+---@field after_use AfterUseCallback|nil
+---@field on_use OnUseCallback|nil
+---@field on_place OnPlaceCallback|nil
+---@field on_drop OnDropCallback|nil
+---@field node_placement_prediction string|nil
+
+---@alias AfterUseCallback fun(itemstack: ItemStack, user: ObjectRef, node: Node): ItemStack|nil
+---@alias OnUseCallback fun(itemstack: ItemStack, user: ObjectRef, pointed_thing: PointedThing): ItemStack|nil
+---@alias OnPlaceCallback fun(itemstack: ItemStack, placer: ObjectRef, pointed_thing: PointedThing): ItemStack|nil
+---@alias OnDropCallback fun(itemstack: ItemStack, dropper: ObjectRef, pos: Vector): ItemStack|nil
+
+---@class PointedThingNothing
+---@field type '"nothing"'
+
+---@class PointedThingNode
+---@field type '"node"'
+---@field under Vector
+---@field above Vector
+
+---@class PointedThingObject
+---@field type '"object"'
+---@field under Vector
+---@field above Vector
+---@field ref ObjectRef
+
+---@alias PointedThing PointedThingNothing | PointedThingNode | PointedThingObject
+
+---@class ToolCaps
+---@field full_punch_interval number
+---@field max_drop_level integer
+---@field groupcaps table<string, ToolGroupCap>
+---@field damage_groups table<string, number>
+
+---@class ToolGroupCap
+---@field times table<number, number>  -- [level] = time
+---@field uses integer
+---@field maxlevel integer
+
+---@class ItemStackMetaRef : MetaRef
 
 ---@class Player: ObjectRef
 local player = {}
@@ -375,7 +439,7 @@ local p_config = {}
 ---@type ObjectRef
 local ObjectRef = {}
 
----@class ToolCaps
+---@type ToolCaps
 local tool_caps = {}
 
 ---@class PhysicsOverride
