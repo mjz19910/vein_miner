@@ -1,3 +1,4 @@
+---@class VeinMinerLateUtils
 local l_utils = {}
 local vein_miner = vein_miner
 local table = table

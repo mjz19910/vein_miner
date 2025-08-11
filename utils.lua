@@ -1,5 +1,6 @@
 -- utils.lua
 local error = error
+---@type LuantiCore
 local core = core
 local dofile = dofile
 local vector = vector
@@ -14,6 +15,8 @@ local pairs = pairs
 local ipairs = ipairs
 local vein_miner = vein_miner
 
+---@param table table
+---@param element any
 function table.contains(table, element)
 	for _, value in pairs(table) do
 		if value == element then
@@ -23,14 +26,18 @@ function table.contains(table, element)
 	return false
 end
 
-function vector.midpoint(a, b) return p(floor((a.x + b.x) / 2 + 0.5), floor((a.y + b.y) / 2 + 0.5), floor((a.z + b.z) / 2 + 0.5)) end
+---@param self Vector
+---@param b Vector
+function vector:midpoint(b) return p(floor((self.x + b.x) / 2 + 0.5), floor((self.y + b.y) / 2 + 0.5), floor((self.z + b.z) / 2 + 0.5)) end
 
 local contains = table.contains
 
 local modpath = core.get_modpath("vein_miner")
 
+---@class VeinMinerUtils
 local utils = {}
 
+---@param path string
 function utils.load(path) return dofile(modpath .. "/" .. path) end
 
 ---@param modpath string
@@ -63,12 +70,18 @@ function utils.check_pos(pos)
 	return nil
 end
 
+---@param vmin number
+---@param vmax number
+---@param step number
 function utils.clamp_max(vmin, vmax, step)
 	local range = vmax - vmin
 	local count = math.ceil(range / step)
 	return vmin + count * step, range, count
 end
 
+---@param vmin number
+---@param vmax number
+---@param step number
 function utils.linspace_inclusive(vmin, vmax, step)
 	-- Returns a list starting at vmin and ending at vmax, with intervals ≤ step
 	local result = {}
@@ -83,6 +96,9 @@ function utils.linspace_inclusive(vmin, vmax, step)
 	return result
 end
 
+---@param start_pos number
+---@param end_pos number
+---@param step number
 function utils.linspace_side(start_pos, end_pos, step)
 	-- Generate points from start_pos to end_pos inclusive, stepping by step
 	local points = {}
@@ -99,6 +115,10 @@ function utils.linspace_side(start_pos, end_pos, step)
 	return points
 end
 
+---@param vmin number
+---@param vmax number
+---@param center number
+---@param step number
 function utils.linspace_centered(vmin, vmax, center, step)
 	-- Build linspace that includes center exactly, split into two sides
 	local left = utils.linspace_side(vmin, center, step)
@@ -115,6 +135,8 @@ function utils.linspace_centered(vmin, vmax, center, step)
 	return left
 end
 
+---@param arr number[]
+---@param value number
 function utils.find_closest_index(arr, value)
 	local closest_idx = 1
 	local closest_dist = math.abs(arr[1] - value)

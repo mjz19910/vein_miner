@@ -3,6 +3,7 @@
 local assert = assert
 local setmetatable = setmetatable
 
+---@class DequeModule
 local deque = {}
 
 local function push_right(self, x)

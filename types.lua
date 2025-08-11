@@ -208,15 +208,6 @@ local chunk = {}
 ---@field MAX_MINED_NODES number
 local config = {}
 
--- -@class VeinMinerGlobal
--- -@field CFG VeinMinerConfig
--- -@field utils VeinMinerUtils
--- -@field l_utils VeinMinerLateUtils
--- -@field player_config PlayerConfigManager
--- -@field mine_only_cur_set table<string, boolean>
--- -@field mine_only_group_sets table<string, string>
--- -@field voxel_util VoxelUtil
--- -@field h VeinMinerHelpers
 ---@type VeinMinerGlobal
 local vein_miner = {}
 
@@ -248,6 +239,8 @@ local vein_miner = {}
 ---@field add_particle fun(params: ParticleParameters): boolean
 ---@field add_particlespawner fun(params: ParticleSpawnerParameters): integer
 ---@field delete_particlespawner fun(id: integer, playername?: string)
+---
+---@field get_modpath fun(mod: string): string
 core = {}
 minetest = core
 
@@ -318,12 +311,6 @@ local vec = {}
 ---@field zero fun(): Vector
 ---@type VectorModule
 vector = {}
-
----@class VeinMinerUtils
-local utils = {}
-
----@class VeinMinerLateUtils
-local l_utils = {}
 
 ---@class PlayerConfig
 ---@field mode '"small"'|'"large"'
