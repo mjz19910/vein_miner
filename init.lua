@@ -1059,12 +1059,9 @@ core.register_on_dignode(function(pos, oldnode, player)
 		vein_miner_step(state)
 	end
 end)
-
-core.override_item("", {
-	range = 7,
-})
-
+require("mods.vein_miner.hand_override")
 -- a tool not in the tools module
 require("mods.vein_miner.auto_floor")
 -- load the tools module
 require("mods.vein_miner.tools")
+require("mods.vein_miner.abm")
