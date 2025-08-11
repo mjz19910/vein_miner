@@ -119,6 +119,9 @@ local leaves = {
 ---@class VeinMinerConfig
 local CFG = {}
 
+-- Maximum light scan distance
+CFG.light_scan_dist = 1
+
 ---@type string[]
 local LIGHT_NODES = {mese_post_light.pine, mese_post_light.acacia}
 CFG.LIGHT_NODES = LIGHT_NODES
@@ -143,7 +146,7 @@ local SURFACE_NODES = {dirt.grass[1], dirt.grass.snow, dirt.grass.rainforest, di
 	dirt.permafrost.stones, sand.with_kelp}
 CFG.SURFACE_NODES = SURFACE_NODES
 ---@class MiningGroups
-local MINE_ONLY_GROUPS = {
+local mine_groups = {
 	grass = grass[1],
 	jungle_grass = grass.jungle,
 	dry_grass = grass.dry,
@@ -151,9 +154,9 @@ local MINE_ONLY_GROUPS = {
 	fern = grass.fern,
 	blueberry = {"default:blueberry_bush_leaves", "default:blueberry_bush_leaves_with_berries"},
 	gravel = {gravel},
-	silver_sand = {sand.silver[1]},
+	silver_sand = {sand.silver},
 	sand = {sand[1]},
-	flower = flower.common,
+	flower = flower[1],
 	mushroom = flower.mushroom,
 	stem = trees.stem,
 	tree_trunk = trees.trunk,
@@ -167,8 +170,9 @@ local MINE_ONLY_GROUPS = {
 	mossy_cobble = {cobble.mossy},
 	cobble_stair = {cobble.stair},
 	target_nodes = {},
+	surface = {},
 }
-CFG.MINE_ONLY_GROUPS = MINE_ONLY_GROUPS
+CFG.MINE_ONLY_GROUPS = mine_groups
 ---@type Vector[]
 local VEC_DIRS = {}
 CFG.VEC_DIRS = VEC_DIRS
@@ -266,15 +270,13 @@ i(mine_only_set, "mesecons_powerplant:power_plant")
 ia(mine_only_set, {"mesecons_movestones:sticky_movestone_vertical", "mesecons_stickyblocks:sticky_block_all"})
 ia(mine_only_set, {"mesecons_movestones:sticky_movestone"})
 
----@type MiningGroups
-local mine_groups = CFG.MINE_ONLY_GROUPS
 mine_groups.coral = {"default:coral_skeleton", "default:coral_green", "default:coral_cyan", "default:coral_pink", "default:coral_orange",
 	"default:coral_brown"}
 table.insert_all(mine_groups.target_nodes, CFG.SURFACE_NODES)
-table.insert_all(mine_groups.target_nodes, {dirt[1], clay, dirt.dry})
+table.insert_all(mine_groups.target_nodes, {clay})
 local ignored_nodes = CFG.IGNORED_NODES
-table.insert_all(ignored_nodes, {dirt[1], dirt.dry})
-table.insert_all(ignored_nodes, CFG.SURFACE_NODES)
+-- table.insert_all(ignored_nodes, {dirt[1], dirt.dry})
+-- table.insert_all(ignored_nodes, CFG.SURFACE_NODES)
 
 ---@type table<string, boolean>
 local ignored_nodes_set = {}
@@ -295,6 +297,12 @@ for k, v in pairs(CFG.SURFACE_NODES) do
 end
 CFG.surface_nodes_set = surface_nodes_set
 
+table.insert_all(mine_groups.surface, {dirt.dry, dirt.grass.dry})
+table.insert_all(mine_groups.surface, {dirt[1], dirt.grass[1]})
+table.insert_all(mine_groups.surface, {dirt.grass.snow, dirt.grass.rainforest, dirt.grass.coniferous})
+table.insert_all(mine_groups.surface, {dirt.permafrost.moss, dirt.permafrost.stones})
+table.insert_all(mine_groups.surface, {sand.with_kelp})
+
 local mine_only_groups = CFG.MINE_ONLY_GROUPS
 ---@type table<string, boolean>
 local mine_only_cur_set = {}
@@ -304,9 +312,7 @@ for k, v in pairs(CFG.MINE_ONLY_CUR_SET) do
 end
 ---@type table<string, string>
 local mine_node_to_group_map = vein_miner.h.generate_mine_only_sets(mine_only_groups, mine_only_cur_set)
+---@type table<string, string>
 CFG.mine_node_to_group_map = mine_node_to_group_map
-
--- Maximum light scan distance
-CFG.light_scan_dist = 1
 
 return CFG

@@ -15,10 +15,12 @@ local scanner = {}
 local region_scan_fmt2 = " [LightScan] scanned region (%d) %s [%s]"
 local region_scan_fmt1 = "[LightScan] scanned region (%d) %s"
 
+local is_valid_pos_to_iter = vein_miner.is_valid_pos_to_iter
+
 local function count_found_nodes(state, iter, orig_pos, player_name)
 	local count = 0
 	for idx, next_pos in pairs(iter) do
-		if not state.is_valid_pos_to_iter(next_pos, player_name) then
+		if not is_valid_pos_to_iter(next_pos, player_name) then
 			goto skip
 		end
 		if orig_pos ~= next_pos then
@@ -41,7 +43,7 @@ end
 local VeinMinerState = vein_miner.mt
 
 local function mark_near_light(self, node_name, pos)
-	if not self.is_valid_pos_to_iter(pos, self.player_name) then
+	if not is_valid_pos_to_iter(pos, self.player_name) then
 		return false
 	end
 	local h = core.hash_node_position(pos)

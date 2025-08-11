@@ -426,10 +426,33 @@ local known_unhandled_nodes = {}
 
 local is_liquid = h.is_liquid
 
+local function is_valid_pos_to_iter(pos, player_name)
+	---@type PlayerConfig
+	local config = player_config_mgr.data[player_name]
+	local maxy = config.maxy
+	local miny = config.miny
+	if pos.y >= miny and pos.y < maxy then
+		return true
+	end
+	return false
+end
+vein_miner.is_valid_pos_to_iter = is_valid_pos_to_iter
+
 local scanner = require("mods.vein_miner.scanner")
 vein_miner.scanner = scanner
 
 require("mods.vein_miner.globalstep")
+
+local known_groups = {}
+local wanted_groups = {
+	stone = true,
+	ore = true,
+	gravel = true,
+	sand = true,
+	silver_sand = true,
+	target_nodes = true,
+	surface = true
+}
 
 local function dig_pos_process_queue_item(state, item, player_name)
 	local config = player_config_mgr.data[player_name]
@@ -468,7 +491,7 @@ local function dig_pos_process_queue_item(state, item, player_name)
 		return
 	end
 
-	if not state.is_valid_pos_to_iter(pos, player_name) then
+	if not is_valid_pos_to_iter(pos, player_name) then
 		return
 	end
 
@@ -497,9 +520,6 @@ local function dig_pos_process_queue_item(state, item, player_name)
 	end
 
 	local target_nodes = {}
-	table.insert_all(target_nodes, mine_only_groups.target_nodes)
-	table.insert_all(target_nodes, mine_only_groups.stone)
-	table.insert_all(target_nodes, mine_only_groups.ore)
 	local target_flags = {
 		liquid = true,
 		falling = true,
@@ -560,6 +580,16 @@ local function dig_pos_process_queue_item(state, item, player_name)
 		table.insert_all(target_nodes, mine_only_groups.flower)
 		table.insert_all(target_nodes, mine_only_groups.mushroom)
 		table.insert_all(target_nodes, mine_only_groups.stem)
+	end
+	if group_target and wanted_groups[group_target] then
+		table.insert_all(target_nodes, mine_only_groups.target_nodes)
+		table.insert_all(target_nodes, mine_only_groups.stone)
+		table.insert_all(target_nodes, mine_only_groups.ore)
+		table.insert_all(target_nodes, falling_target_nodes)
+		table.insert_all(target_nodes, surface_nodes)
+	end
+	if group_target and not (known_groups[group_target] or wanted_groups[group_target]) then
+		log_warning("new group target " .. group_target)
 	end
 
 	if options.user and options.light then
@@ -781,17 +811,6 @@ function VeinMinerState.wait_for_player_near_pos(player, target_pos)
 	if out_of_range then
 		utils.async_wait(0.6)
 	end
-end
-
-function VeinMinerState.is_valid_pos_to_iter(pos, player_name)
-	---@type PlayerConfig
-	local config = player_config_mgr.data[player_name]
-	local maxy = config.maxy
-	local miny = config.miny
-	if pos.y >= miny and pos.y < maxy then
-		return true
-	end
-	return false
 end
 
 -- Update wielded item
