@@ -237,6 +237,10 @@ local function is_node_vein_diggable(nodeName, wieldedName)
 	return nodeCheck and toolCheck
 end
 
+local ignored_nodes_set = CFG.ignored_nodes_set
+local surface_nodes_set = CFG.surface_nodes_set
+local light_nodes_set = CFG.light_nodes_set
+
 local function get_scan_mode(node_name)
 	if ignored_nodes_set[node_name] then
 		return "inc_mine_skip"
