@@ -6,6 +6,7 @@ local table = table
 local math = math
 local core = core
 local utils = vein_miner.utils
+---@class AABB
 local aabb = {}
 
 local vec_add = vector.add

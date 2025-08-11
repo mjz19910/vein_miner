@@ -23,8 +23,8 @@ local ceil = math.ceil
 local yield = coroutine.yield
 local add_particle = core.add_particle
 
----@type VeinMinerGlobal
 vein_miner = {}
+---@class VeinMinerGlobal
 local vein_miner = vein_miner
 local utils = require("mods.vein_miner.utils")
 local require = utils.require
@@ -33,14 +33,18 @@ vein_miner.deque = require("mods.vein_miner.deque")
 vein_miner.voxel_util = require("mods.vein_miner.voxel_util")
 require("mods.vein_miner.config")
 require("mods.vein_miner.helpers")
+---@type VeinMinerHelpers
 local h = require("mods.vein_miner.helpers")
 vein_miner.h = h
+---@type AABB
 local aabb = require("mods.vein_miner.aabb")
 vein_miner.aabb = aabb
 require("mods.vein_miner.liquid_filler")
 require("mods.vein_miner.remove_walls")
+---@type PlayerHud
 local player_hud = require("mods.vein_miner.player_hud")
 vein_miner.player_hud = player_hud
+---@type PlayerConfigManager
 local p_config = require("mods.vein_miner.player_config")
 vein_miner.player_config = p_config
 local l_utils = require("mods.vein_miner.late_utils")
@@ -80,15 +84,6 @@ function vein_miner.light_scan_reset(name) light_scan_data[name] = {} end
 
 require("mods.vein_miner.globalstep")
 local CFG = vein_miner.CFG
-
-local mine_only_groups = CFG.MINE_ONLY_GROUPS
-local mine_only_cur_set = {}
-vein_miner.mine_only_cur_set = mine_only_cur_set
-for k, v in pairs(CFG.MINE_ONLY_CUR_SET) do
-	mine_only_cur_set[v] = true
-end
-local mine_only_group_sets = vein_miner.h.generate_mine_only_sets(mine_only_groups, mine_only_cur_set)
-vein_miner.mine_only_group_sets = mine_only_group_sets
 require("mods.vein_miner.lit_cobble")
 require("mods.vein_miner.player_lifecycle")
 
@@ -745,6 +740,7 @@ local function dig_pos_process_queue_item(state, item, player_name)
 		falling = true,
 	}
 	local scan_mode = get_scan_mode(node_name)
+	core.log("warning", "scan_mode " .. scan_mode)
 	if scan_mode == "error" then
 		if not known_unhandled_nodes[node_name] then
 			known_unhandled_nodes[node_name] = true

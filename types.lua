@@ -208,14 +208,16 @@ local chunk = {}
 ---@field MAX_MINED_NODES number
 local config = {}
 
----@class VeinMinerGlobal
----@field CFG VeinMinerConfig
----@field utils VeinMinerUtils
----@field l_utils VeinMinerLateUtils
----@field player_config PlayerConfigManager
----@field mine_only_cur_set table<string, boolean>
----@field mine_only_group_sets table<string, string>
----@field voxel_util VoxelUtil
+-- -@class VeinMinerGlobal
+-- -@field CFG VeinMinerConfig
+-- -@field utils VeinMinerUtils
+-- -@field l_utils VeinMinerLateUtils
+-- -@field player_config PlayerConfigManager
+-- -@field mine_only_cur_set table<string, boolean>
+-- -@field mine_only_group_sets table<string, string>
+-- -@field voxel_util VoxelUtil
+-- -@field h VeinMinerHelpers
+---@type VeinMinerGlobal
 local vein_miner = {}
 
 ---@class SimpleSoundSpec

@@ -1,5 +1,6 @@
 local minetest = minetest
 local pairs = pairs
+---@class VeinMinerHelpers
 local h = {}
 ---@param groups table<string, string[]>
 ---@param valid_set table<string, boolean>

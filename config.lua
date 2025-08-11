@@ -171,9 +171,12 @@ vein_miner.CFG = {
 	cardinal_dirs = {p(1, 0, 0), p(-1, 0, 0), p(0, 1, 0), p(0, -1, 0), p(0, 0, 1), p(0, 0, -1)},
 	MAX_MINED_NODES = 188,
 }
----Insert all elements into `vein_miner.CFG.VEC_DIRS`
+
+local CFG = vein_miner.CFG
+
+---Insert all elements into `CFG.VEC_DIRS`
 ---@param src  Vector[]
-local function i_vec_dirs(src) ia(vein_miner.CFG.VEC_DIRS, src) end
+local function i_vec_dirs(src) ia(CFG.VEC_DIRS, src) end
 -- self
 i_vec_dirs({p(0, 0, 0)})
 -- cardinal directions
@@ -199,9 +202,9 @@ i_vec_dirs({p(2, 0, 0), p(-2, 0, 0), p(0, 2, 0), p(0, -2, 0), p(0, 0, 2), p(0, 0
 -- distance of 3.1622776601684
 -- i_vec_dirs({p(-3, 0, 1)})
 
-ia(vein_miner.CFG.MINE_ONLY_CUR_SET, {cobble.normal, cobble.mossy, cobble.stairs})
+ia(CFG.MINE_ONLY_CUR_SET, {cobble.normal, cobble.mossy, cobble.stairs})
 
-i(vein_miner.CFG.IGNORED_NODES, "default:mese_post_light")
+i(CFG.IGNORED_NODES, "default:mese_post_light")
 
 -- go to the next nodeid (ex.: 01000011 --> 01000100)
 local nid_inc = function() end
@@ -236,7 +239,7 @@ local function register_wires_group()
 end
 register_wires_group()
 
-local mine_only_set = vein_miner.CFG.MINE_ONLY_CUR_SET
+local mine_only_set = CFG.MINE_ONLY_CUR_SET
 i(mine_only_set, "mesecons_powerplant:power_plant")
 ia(mine_only_set, {"mesecons_movestones:sticky_movestone_vertical", "mesecons_stickyblocks:sticky_block_all"})
 ia(mine_only_set, {"mesecons_movestones:sticky_movestone"})
@@ -245,27 +248,36 @@ ia(mine_only_set, {"mesecons_movestones:sticky_movestone"})
 -- ia(mine_only_set, {"default:coral_green", "default:coral_cyan", "default:coral_pink", "default:coral_orange", "default:coral_brown"})
 
 ---@type table<string, string[]>
-local mine_groups = vein_miner.CFG.MINE_ONLY_GROUPS
+local mine_groups = CFG.MINE_ONLY_GROUPS
 mine_groups.coral = {"default:coral_skeleton", "default:coral_green", "default:coral_cyan", "default:coral_pink", "default:coral_orange",
 	"default:coral_brown"}
 mine_groups.target_nodes = {clay, dirt.dry}
-table.insert_all(mine_groups.target_nodes, vein_miner.CFG.SURFACE_NODES)
-local ignored_nodes = vein_miner.CFG.IGNORED_NODES
+table.insert_all(mine_groups.target_nodes, CFG.SURFACE_NODES)
+local ignored_nodes = CFG.IGNORED_NODES
 table.insert_all(ignored_nodes, {dirt.normal, dirt.dry})
-table.insert_all(ignored_nodes, vein_miner.CFG.SURFACE_NODES)
+table.insert_all(ignored_nodes, CFG.SURFACE_NODES)
 
 local ignored_nodes_set = {}
-for k, v in pairs(vein_miner.CFG.IGNORED_NODES) do
+for k, v in pairs(CFG.IGNORED_NODES) do
 	ignored_nodes_set[v] = true
 end
-vein_miner.CFG.ignored_nodes_set = ignored_nodes_set
+CFG.ignored_nodes_set = ignored_nodes_set
 local light_nodes_set = {}
-for k, v in pairs(vein_miner.CFG.LIGHT_NODES) do
+for k, v in pairs(CFG.LIGHT_NODES) do
 	light_nodes_set[v] = true
 end
-vein_miner.CFG.light_nodes_set = light_nodes_set
+CFG.light_nodes_set = light_nodes_set
 local surface_nodes_set = {}
-for k, v in pairs(vein_miner.CFG.SURFACE_NODES) do
+for k, v in pairs(CFG.SURFACE_NODES) do
 	surface_nodes_set[v] = true
 end
-vein_miner.CFG.surface_nodes_set = surface_nodes_set
+CFG.surface_nodes_set = surface_nodes_set
+
+local mine_only_groups = CFG.MINE_ONLY_GROUPS
+local mine_only_cur_set = {}
+CFG.mine_only_cur_set = mine_only_cur_set
+for k, v in pairs(CFG.MINE_ONLY_CUR_SET) do
+	mine_only_cur_set[v] = true
+end
+local mine_only_group_sets = vein_miner.h.generate_mine_only_sets(mine_only_groups, mine_only_cur_set)
+CFG.mine_only_group_sets = mine_only_group_sets
