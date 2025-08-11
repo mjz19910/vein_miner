@@ -60,6 +60,7 @@ local grass = {
 	jungle = {"default:junglegrass"},
 	dry = {"default:dry_grass_1", "default:dry_grass_2", "default:dry_grass_3", "default:dry_grass_4", "default:dry_grass_5"},
 	marram = {"default:marram_grass_1", "default:marram_grass_2", "default:marram_grass_3", "default:marram_grass_4", "default:marram_grass_5"},
+	fern = {"default:fern_1", "default:fern_2", "default:fern_3"}
 }
 
 local flower = {
@@ -118,7 +119,7 @@ local MINE_ONLY_GROUPS = {
 	jungle_grass = grass.jungle,
 	dry_grass = grass.dry,
 	marram_grass = grass.marram,
-	fern = {"default:fern_1", "default:fern_2", "default:fern_3"},
+	fern = grass.fern,
 	blueberry = {"default:blueberry_bush_leaves", "default:blueberry_bush_leaves_with_berries"},
 	gravel = {gravel},
 	silver_sand = {sand.silver},
