@@ -142,9 +142,8 @@ table.insert_all(IGNORED_NODES, digtron_parts)
 table.insert_all(IGNORED_NODES, {"drawers:trim", "drawers:pine_wood1", "drawers:controller"})
 CFG.IGNORED_NODES = IGNORED_NODES
 ---@type string[]
-local SURFACE_NODES = {dirt.grass[1], dirt.grass.snow, dirt.grass.rainforest, dirt.grass.coniferous, dirt.grass.dry, dirt.permafrost.moss,
-	dirt.permafrost.stones, sand.with_kelp}
-CFG.SURFACE_NODES = SURFACE_NODES
+local exclusive_nodes = {}
+CFG.exclusive_nodes = exclusive_nodes
 ---@class MiningGroups
 local mine_groups = {
 	grass = grass[1],
@@ -272,11 +271,8 @@ ia(mine_only_set, {"mesecons_movestones:sticky_movestone"})
 
 mine_groups.coral = {"default:coral_skeleton", "default:coral_green", "default:coral_cyan", "default:coral_pink", "default:coral_orange",
 	"default:coral_brown"}
-table.insert_all(mine_groups.target_nodes, CFG.SURFACE_NODES)
 table.insert_all(mine_groups.target_nodes, {clay})
 local ignored_nodes = CFG.IGNORED_NODES
--- table.insert_all(ignored_nodes, {dirt[1], dirt.dry})
--- table.insert_all(ignored_nodes, CFG.SURFACE_NODES)
 
 ---@type table<string, boolean>
 local ignored_nodes_set = {}
@@ -291,11 +287,11 @@ for k, v in pairs(CFG.LIGHT_NODES) do
 end
 CFG.light_nodes_set = light_nodes_set
 ---@type table<string, boolean>
-local surface_nodes_set = {}
-for k, v in pairs(CFG.SURFACE_NODES) do
-	surface_nodes_set[v] = true
+local exclusive_node_set = {}
+for k, v in pairs(CFG.exclusive_nodes) do
+	exclusive_node_set[v] = true
 end
-CFG.surface_nodes_set = surface_nodes_set
+CFG.exclusive_node_set = exclusive_node_set
 
 table.insert_all(mine_groups.surface, {dirt.dry, dirt.grass.dry})
 table.insert_all(mine_groups.surface, {dirt[1], dirt.grass[1]})

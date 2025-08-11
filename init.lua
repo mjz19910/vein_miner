@@ -229,7 +229,7 @@ local function is_node_vein_diggable(nodeName, wieldedName)
 end
 
 local ignored_nodes_set = CFG.ignored_nodes_set
-local surface_nodes_set = CFG.surface_nodes_set
+local exclusive_node_set = CFG.exclusive_node_set
 local light_nodes_set = CFG.light_nodes_set
 local mine_only_cur_set = CFG.mine_only_cur_set
 
@@ -240,8 +240,8 @@ local function get_scan_mode(node_name)
 	if light_nodes_set[node_name] then
 		return "add_current"
 	end
-	if surface_nodes_set[node_name] then
-		return "only_current"
+	if exclusive_node_set[node_name] then
+		return "exclusive"
 	end
 	if mine_only_cur_set[node_name] then
 		return "mine_only_cur"
@@ -415,12 +415,12 @@ local zneg = vector.new(0, 0, -1)
 local water_targets = {"default:water_flowing", "default:water_source", "default:lava_flowing", "default:lava_source"}
 
 ---@type MiningGroups
-local mine_only_groups = CFG.MINE_ONLY_GROUPS
+local mining_groups = CFG.MINE_ONLY_GROUPS
 local mine_node_to_group_map = CFG.mine_node_to_group_map
 
-local falling_target_nodes = table.copy(mine_only_groups.sand)
-table.insert_all(falling_target_nodes, mine_only_groups.silver_sand)
-table.insert_all(falling_target_nodes, mine_only_groups.gravel)
+local falling_nodes = table.copy(mining_groups.sand)
+table.insert_all(falling_nodes, mining_groups.silver_sand)
+table.insert_all(falling_nodes, mining_groups.gravel)
 
 local known_unhandled_nodes = {}
 
@@ -451,7 +451,7 @@ local wanted_groups = {
 	sand = true,
 	silver_sand = true,
 	target_nodes = true,
-	surface = true
+	surface = true,
 }
 
 local function dig_pos_process_queue_item(state, item, player_name)
@@ -536,11 +536,10 @@ local function dig_pos_process_queue_item(state, item, player_name)
 	if scan_mode == "inc_mine_skip" then
 		return
 	end
-	if scan_mode == "only_current" then
-		target_nodes = {}
+	if scan_mode == "exclusive" then
+		target_nodes = {node_name}
 		target_flags.falling = false
 		target_flags.liquid = false
-		table.insert(target_nodes, node_name)
 	end
 	if scan_mode == "add_current" then
 		table.insert(target_nodes, node_name)
@@ -548,45 +547,35 @@ local function dig_pos_process_queue_item(state, item, player_name)
 	local group_target = nil
 	if scan_mode == "mine_only_cur" then
 		if node_name == "wool:green" then
-			target_nodes = {}
 			target_flags.falling = false
-		elseif not table.contains(falling_target_nodes, node_name) then
-			target_nodes = {}
+		else
 			target_flags.falling = false
 			target_flags.liquid = false
 		end
 		if mine_node_to_group_map[node_name] ~= nil then
 			local target_key = mine_node_to_group_map[node_name]
-			table.insert_all(target_nodes, mine_only_groups[target_key])
+			table.insert_all(target_nodes, mining_groups[target_key])
 			group_target = target_key
 		else
 			table.insert(target_nodes, node_name)
 		end
 	end
-
-	-- grass = grass.normal,
-	-- jungle_grass = grass.jungle,
-	-- dry_grass = grass.dry,
-	-- marram_grass = grass.marram,
-	-- fern = grass.fern,
-	-- flower = flower.common,
-	-- mushroom = flower.mushroom,
 	if group_target == "tree_trunk" then
-		table.insert_all(target_nodes, mine_only_groups.grass)
-		table.insert_all(target_nodes, mine_only_groups.jungle_grass)
-		table.insert_all(target_nodes, mine_only_groups.dry_grass)
-		table.insert_all(target_nodes, mine_only_groups.marram_grass)
-		table.insert_all(target_nodes, mine_only_groups.fern)
-		table.insert_all(target_nodes, mine_only_groups.flower)
-		table.insert_all(target_nodes, mine_only_groups.mushroom)
-		table.insert_all(target_nodes, mine_only_groups.stem)
+		table.insert_all(target_nodes, mining_groups.grass)
+		table.insert_all(target_nodes, mining_groups.jungle_grass)
+		table.insert_all(target_nodes, mining_groups.dry_grass)
+		table.insert_all(target_nodes, mining_groups.marram_grass)
+		table.insert_all(target_nodes, mining_groups.fern)
+		table.insert_all(target_nodes, mining_groups.flower)
+		table.insert_all(target_nodes, mining_groups.mushroom)
+		table.insert_all(target_nodes, mining_groups.stem)
 	end
 	if group_target and wanted_groups[group_target] then
-		table.insert_all(target_nodes, mine_only_groups.target_nodes)
-		table.insert_all(target_nodes, mine_only_groups.stone)
-		table.insert_all(target_nodes, mine_only_groups.ore)
-		table.insert_all(target_nodes, falling_target_nodes)
-		table.insert_all(target_nodes, surface_nodes)
+		table.insert_all(target_nodes, mining_groups.target_nodes)
+		table.insert_all(target_nodes, mining_groups.surface)
+		table.insert_all(target_nodes, mining_groups.stone)
+		table.insert_all(target_nodes, mining_groups.ore)
+		table.insert_all(target_nodes, falling_nodes)
 	end
 	if group_target and not (known_groups[group_target] or wanted_groups[group_target]) then
 		log_warning("new group target " .. group_target)
@@ -606,7 +595,7 @@ local function dig_pos_process_queue_item(state, item, player_name)
 		iter_node_groups(state, core.find_nodes_in_area(minvec, maxvec, water_targets, true))
 	end
 	if target_flags.falling then
-		iter_node_groups(state, core.find_nodes_in_area(minvec, maxvec, falling_target_nodes, true))
+		iter_node_groups(state, core.find_nodes_in_area(minvec, maxvec, falling_nodes, true))
 	end
 	iter_node_groups(state, core.find_nodes_in_area(minvec, maxvec, target_nodes, true))
 
