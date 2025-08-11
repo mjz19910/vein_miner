@@ -195,12 +195,17 @@ local player_control = player.get_player_control()
 local chunk = {}
 
 ---@class VeinMinerConfig
----@field cardinal_dirs Vector[]
+---@field LIGHT_NODES string[]
 ---@field MINE_ONLY_CUR_SET string[]
+---@field IGNORED_NODES string[]
+---@field SURFACE_NODES string[]
 ---@field MINE_ONLY_GROUPS table<string, string[]>
 ---@field VEC_DIRS Vector[]
+---@field FLOATING_DIRS Vector[]
+---@field COLOR_PALETTE string[]
+---@field sticky_nodes table<string, boolean>
+---@field cardinal_dirs Vector[]
 ---@field MAX_MINED_NODES number
----@field SURFACE_NODES string[]
 local config = {}
 
 ---@class VeinMinerGlobal
