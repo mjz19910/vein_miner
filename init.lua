@@ -647,7 +647,7 @@ local function notify_missing_light(pos, attach_dir, expire_time)
 	if attach_node == nil or attach_node.name == "air" then
 		return
 	end
-	if table.contains(light_nodes, attach_node.name) then
+	if light_nodes_set[attach_node.name] then
 		return
 	end
 	local node = core.get_node_or_nil(pos)
