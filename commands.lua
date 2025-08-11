@@ -3,13 +3,12 @@ local string = string
 local math = math
 local tonumber = tonumber
 local core = core
+---@type VeinMinerGlobal
 local vein_miner = vein_miner
 
-local light_region_debug = {}
-vein_miner.light_region_debug = light_region_debug
-
-local player_config = vein_miner.player_config
-assert(player_config, "need player_config")
+local player_config_mgr = vein_miner.player_config_mgr
+assert(player_config_mgr, "need player_config_mgr")
+local light_region_debug = vein_miner.light_region_debug
 
 core.register_chatcommand("toggle_light_debug", {
 	description = "Toggle debug view for light scan regions",
@@ -78,7 +77,7 @@ core.register_chatcommand("mine", {
 		end
 
 		---@type PlayerConfig
-		local config = player_config.data[name]
+		local config = player_config_mgr.data[name]
 
 		-- Initialize defaults if missing
 		if config.miny == nil then
@@ -166,7 +165,7 @@ core.register_chatcommand("mine", {
 				return false, "Usage: /mine down [min|max|both]"
 			end
 		elseif cmd == "reset" then
-			vein_miner.light_scan_reset(name)
+			vein_miner.scanner.light_scan_reset(name)
 			return false, "Light scan data reset"
 		else
 			return false, "Usage: /mine [get [min|max] | set [min|max <y>] | up [min|max|both] | down [min|max|both] | reset]"
@@ -192,11 +191,11 @@ core.register_chatcommand("mining_mode", {
 		end
 
 		param = param:lower()
-		if player_config.data[name] == nil then
-			player_config.data[name] = {}
+		if player_config_mgr.data[name] == nil then
+			player_config_mgr.data[name] = {}
 		end
 
-		local config = player_config.data[name]
+		local config = player_config_mgr.data[name]
 
 		if param == "" or param == nil then
 			return true, "Mining mode is " .. config.mode .. " range."
@@ -220,10 +219,10 @@ minetest.register_chatcommand("vm_set_blocks_per_tick", {
 		if not count or count < 1 then
 			return false, "Invalid number"
 		end
-		local cfg = player_config.data[name]
+		local cfg = player_config_mgr.data[name]
 		cfg.blocks_per_tick = count
 
-		player_config.save_player_config()
+		player_config_mgr.save_player_config()
 		return true, "Blocks per tick set to " .. count
 	end,
 })

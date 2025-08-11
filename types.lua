@@ -304,11 +304,8 @@ vector = {}
 ---@type PlayerConfig
 local config_data = {}
 
----@class PlayerConfigManager
----@field data table<string, PlayerConfig>
----@field save_player_config fun(name: string): nil
----@field load_player_config fun(name: string): nil
-local p_config = {}
+---@type PlayerConfigManager
+local player_config_mgr = {}
 
 ---@class ObjectRef
 ---

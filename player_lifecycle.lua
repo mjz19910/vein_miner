@@ -1,11 +1,13 @@
 local core = core
+---@type VeinMinerGlobal
 local vein_miner = vein_miner
+local player_config_mgr = vein_miner.player_config_mgr
+local player_hud = vein_miner.player_hud
 
 core.register_on_joinplayer(function(player)
-	local p_config = vein_miner.player_config
 	local name = player:get_player_name()
-	vein_miner.player_config.load_player_config(name)
-	local config = p_config.data[name]
+	player_config_mgr.load_player_config(name)
+	local config = player_config_mgr.data[name]
 
 	if config.maxy == nil then
 		config.maxy = 144
@@ -24,16 +26,16 @@ core.register_on_joinplayer(function(player)
 		config.blocks_per_tick = 1 -- default: 1
 	end
 
-	vein_miner.light_scan_data[name] = {}
+	vein_miner.scanner.light_scan_data[name] = {}
 	vein_miner.light_region_debug[name] = true
 
 	-- Init the player hud
-	vein_miner.player_hud.init_player(player)
+	player_hud.init_player(player)
 end)
 
 core.register_on_leaveplayer(function(player)
 	local name = player:get_player_name()
-	vein_miner.player_config.save_player_config(name)
+	player_config_mgr.save_player_config(name)
 
-	vein_miner.player_hud.remove_player(player)
+	player_hud.remove_player(player)
 end)

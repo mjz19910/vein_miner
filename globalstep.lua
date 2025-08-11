@@ -1,6 +1,8 @@
 local assert = assert
 local pairs = pairs
 local ipairs = ipairs
+local core = core
+---@type VeinMinerGlobal
 local vein_miner = vein_miner
 local aabb = vein_miner.aabb
 local draw_region = aabb.draw
@@ -16,7 +18,7 @@ local light_region_debug = vein_miner.light_region_debug
 local falling_nodes = vein_miner.falling_nodes
 local falling_nodes_set = vein_miner.falling_nodes_set
 local check_for_falling = vein_miner.check_for_falling
-local light_scan_data = vein_miner.light_scan_data
+local light_scan_data = vein_miner.scanner.light_scan_data
 assert(light_region_debug, "need light region debug")
 assert(falling_nodes and falling_nodes_set, "need falling_nodes info")
 assert(check_for_falling, "need original core.check_for_falling")

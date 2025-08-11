@@ -23,8 +23,8 @@ local registered_nodes = minetest.registered_nodes
 
 local vein_miner = vein_miner
 
-local player_config_mgr = vein_miner.player_config
-assert(player_config_mgr, "need vein_miner.player_config")
+local player_config_mgr = vein_miner.player_config_mgr
+assert(player_config_mgr, "need vein_miner.player_config_mgr")
 minetest.register_tool("vein_miner:auto_floor", {
 	description = "Auto-Floor Builder",
 	inventory_image = "default_wood.png",
@@ -130,7 +130,7 @@ core.register_globalstep(function(dtime)
 	for _, player in ipairs(get_connected_players()) do
 		local ctrl = player:get_player_control()
 		local name = player:get_player_name()
-		local player_config = player_config_mgr.data[name]
+		local config = player_config_mgr.data[name]
 		local cur_sound_info = sound_info[name] or {}
 		cur_sound_info.is_playing = false
 		local wielded = player:get_wielded_item():get_name()
@@ -180,7 +180,7 @@ core.register_globalstep(function(dtime)
 
 			local node_below = minetest.get_node(target_pos)
 			if node_below.name == "air" and is_supported(target_pos) then
-				if j >= player_config.blocks_per_tick then
+				if j >= config.blocks_per_tick then
 					break
 				end
 				if try_place_block_from_inventory(player, cur_sound_info, target_pos, LINE_LENGTH + 8) then

@@ -306,4 +306,7 @@ end
 local mine_node_to_group_map = vein_miner.h.generate_mine_only_sets(mine_only_groups, mine_only_cur_set)
 CFG.mine_node_to_group_map = mine_node_to_group_map
 
+-- Maximum light scan distance
+CFG.light_scan_dist = 1
+
 return CFG

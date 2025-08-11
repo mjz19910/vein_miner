@@ -29,10 +29,15 @@ local vein_miner = vein_miner
 local utils = require("mods.vein_miner.utils")
 local require = utils.require
 vein_miner.utils = utils
+
+---@type table<string, boolean>
+vein_miner.light_region_debug = {}
+
 vein_miner.deque = require("mods.vein_miner.deque")
 vein_miner.voxel_util = require("mods.vein_miner.voxel_util")
 local h = require("mods.vein_miner.helpers")
 vein_miner.h = h
+---@type VeinMinerConfig
 local CFG = require("mods.vein_miner.config")
 vein_miner.CFG = CFG
 ---@type AABB
@@ -42,8 +47,8 @@ require("mods.vein_miner.liquid_filler")
 require("mods.vein_miner.remove_walls")
 local player_hud = require("mods.vein_miner.player_hud")
 vein_miner.player_hud = player_hud
-local p_config = require("mods.vein_miner.player_config")
-vein_miner.player_config = p_config
+local player_config_mgr = require("mods.vein_miner.player_config")
+vein_miner.player_config_mgr = player_config_mgr
 local l_utils = require("mods.vein_miner.late_utils")
 vein_miner.l_utils = l_utils
 local BlockDigger = require("mods.vein_miner.block_digger")
@@ -56,14 +61,17 @@ end
 
 require("mods.vein_miner.commands")
 
-local falling_nodes = {}
-local falling_nodes_set = {}
-
-vein_miner.falling_nodes = falling_nodes
-vein_miner.falling_nodes_set = falling_nodes_set
+---@type Vector[]
+vein_miner.falling_nodes = {}
+---@type table<integer, boolean>
+vein_miner.falling_nodes_set = {}
 vein_miner.last_falling_node = 0
 vein_miner.check_for_falling = core.check_for_falling
+vein_miner.current_tick_time = 0
 
+local falling_nodes = vein_miner.falling_nodes
+local falling_nodes_set = vein_miner.falling_nodes_set
+---@param pos Vector
 core.check_for_falling = function(pos)
 	local h = core.hash_node_position(pos)
 	if not falling_nodes_set[h] then
@@ -73,13 +81,6 @@ core.check_for_falling = function(pos)
 	vein_miner.last_falling_node = vein_miner.current_tick_time
 end
 
----@type table<string, Region[]>
-local light_scan_data = {}
-vein_miner.light_scan_data = light_scan_data
-
-function vein_miner.light_scan_reset(name) light_scan_data[name] = {} end
-
-require("mods.vein_miner.globalstep")
 local CFG = vein_miner.CFG
 require("mods.vein_miner.lit_cobble")
 require("mods.vein_miner.player_lifecycle")
@@ -90,8 +91,6 @@ local S = minetest.get_translator("vein_miner")
 
 -- Maximum number of nodes that can be vein mined at once
 local MAX_MINED_NODES = 188
--- Maximum light scan distance
-local light_scan_dist = 1
 
 -- PERMISSIONS
 -- If true, prevent registered nodes in rNodes from being vein mined.
@@ -178,7 +177,7 @@ minetest.register_on_mods_loaded(function()
 		end
 	end
 
-	light_scan_dist = tonumber(core.settings:get("vein_miner_light_scan_distance"))
+	CFG.light_scan_dist = tonumber(core.settings:get("vein_miner_light_scan_distance"))
 end)
 
 local log_work_start = false
@@ -262,17 +261,6 @@ for i, dir in pairs(vec_dirs) do
 end
 local function fmt_layer(layer) return "y=" .. (layer * 8) .. ".." .. (layer * 8 + 7) end
 
-local function is_valid_pos_to_iter(pos, player_name)
-	---@type PlayerConfig
-	local config = p_config.data[player_name]
-	local maxy = config.maxy
-	local miny = config.miny
-	if pos.y >= miny and pos.y < maxy then
-		return true
-	end
-	return false
-end
-
 local function on_found_empty_space(dir)
 	local distance = vector.distance(vector.new(0, 0, 0), dir)
 	local hash = core.hash_node_position(dir)
@@ -323,33 +311,6 @@ local function on_light_source(pos)
 	return nil
 end
 
-local function mark_near_light(state, node_name, pos)
-	if not is_valid_pos_to_iter(pos, state.player_name) then
-		return false
-	end
-	local h = core.hash_node_position(pos)
-	if not state.known_lights[h] then
-		state.known_lights[h] = true
-		l_utils.add_pos_to_queue(state, node_name, pos)
-		return true
-	end
-	return false
-end
-
-local function count_found_nodes(iter, orig_pos, player_name)
-	local count = 0
-	for idx, next_pos in pairs(iter) do
-		if not is_valid_pos_to_iter(next_pos, player_name) then
-			goto skip
-		end
-		if orig_pos ~= next_pos then
-			count = count + 1
-		end
-		::skip::
-	end
-	return count
-end
-
 local function notify_pos(pos, color, size, expire_time)
 	add_particle({
 		pos = pos,
@@ -358,210 +319,6 @@ local function notify_pos(pos, color, size, expire_time)
 		texture = "bubble.png^[colorize:" .. color .. ":160",
 		glow = 15,
 	})
-end
-
-local function wait_for_player_near_pos(player, target_pos)
-	local out_of_range = vector.distance(player:get_pos(), target_pos) > 220
-	while out_of_range and vector.distance(player:get_pos(), target_pos) > 128 do
-		local player_pos = player:get_pos()
-		notify_pos(target_pos, "#9900ffff", 25, 1)
-
-		local difference = vector.normalize(target_pos - player_pos)
-
-		player_pos = vector.add(player_pos, difference * 16)
-		player:set_pos(player_pos)
-
-		local world_particle_pos = vector.add(player_pos, difference * 8)
-		local view_particle_pos = vector.offset(player_pos, 0, 1.5, 0)
-		notify_pos(view_particle_pos, "#00ff00ff", 7, 0.5)
-
-		local look_pos = vector.offset(player_pos, 0, 1.5, 0)
-		local dir = vector.subtract(target_pos, look_pos)
-		local flat_dir = vector.new(dir.x, 0, dir.z)
-
-		local yaw = math.atan2(flat_dir.z, flat_dir.x) - math.pi / 2
-		local hyp = math.sqrt(dir.x * dir.x + dir.z * dir.z)
-		local pitch = -math.atan2(dir.y, hyp)
-
-		player:set_look_horizontal(yaw)
-		player:set_look_vertical(pitch)
-		utils.async_wait(0.2)
-	end
-	if out_of_range then
-		utils.async_wait(0.6)
-	end
-end
-local region_scan_fmt1 = "[LightScan] scanned region (%d) %s"
-local region_scan_fmt2 = " [LightScan] scanned region (%d) %s [%s]"
-local function scan_nearby_region(state, r1, offset_vec, offset_str, pos, node_name)
-	local r2 = aabb.new_region(r1.min + offset_vec, r1.max + offset_vec)
-	local list = core.find_nodes_in_area(r2.min, r2.max, node_name, false)
-	local count = count_found_nodes(list, pos, state.player_name)
-	if count > 0 then
-		log_action(region_scan_fmt2:format(count, r2, offset_str))
-	end
-end
-local function scan_region_for_node(state, regions, r, pos, node_name, user_action, show_log)
-	local center = (r.min + r.max) / 2
-	local scan_distance = vector.distance(state.player:get_pos(), center)
-	if scan_distance > 300 then
-		if not show_log then
-			return
-		end
-		local scan_nodes = core.find_nodes_in_area(r.min, r.max, node_name, false)
-		local count = count_found_nodes(scan_nodes, pos, state.player_name)
-		if count > 0 or user_action then
-			local region_scan_fmt = "[LightScan] skipped region (%s) %s to %s (%s) Volume=%d Distance=%d"
-			local min_str = core.pos_to_string(r.min)
-			local max_str = core.pos_to_string(r.max)
-			local size_str = core.pos_to_string(r.max - r.min)
-			log_error(region_scan_fmt:format(count, min_str, max_str, size_str, aabb.volume(r), scan_distance))
-		end
-		return
-	end
-	wait_for_player_near_pos(state.player, center)
-	local scan_nodes = core.find_nodes_in_area(r.min, r.max, node_name, false)
-	local count = count_found_nodes(scan_nodes, pos, state.player_name)
-	for _, p in pairs(scan_nodes) do
-		local is_new_light = mark_near_light(state, node_name, p)
-		if is_new_light then
-			state.found_light_count = state.found_light_count + 1
-		end
-	end
-	if count > 0 or user_action then
-		if not show_log then
-			return
-		end
-		local min_str = core.pos_to_string(r.min)
-		local max_str = core.pos_to_string(r.max)
-		local size = r.max - r.min
-		local size_str = core.pos_to_string(size)
-		log_warning(region_scan_fmt1:format(count, r))
-		scan_nearby_region(state, r, vector.new(size.x, 0, 0), "X+", pos, node_name)
-		scan_nearby_region(state, r, vector.new(-size.x, 0, 0), "X-", pos, node_name)
-		scan_nearby_region(state, r, vector.new(0, size.y, 0), "Y+", pos, node_name)
-		scan_nearby_region(state, r, vector.new(0, -size.y, 0), "Y-", pos, node_name)
-		scan_nearby_region(state, r, vector.new(0, 0, size.z), "Z+", pos, node_name)
-		scan_nearby_region(state, r, vector.new(0, 0, -size.z), "Z-", pos, node_name)
-		scan_nearby_region(state, r, vector.new(size.x, 0, -size.z), "X+ Z-", pos, node_name)
-		scan_nearby_region(state, r, vector.new(size.x, 0, size.z), "X+ Z+", pos, node_name)
-		scan_nearby_region(state, r, vector.new(size.x, size.y, 0), "X+ Y+", pos, node_name)
-		scan_nearby_region(state, r, vector.new(size.x, -size.y, 0), "X+ Y-", pos, node_name)
-		scan_nearby_region(state, r, vector.new(size.x, size.y, -size.z), "X+ Y+ Z-", pos, node_name)
-		scan_nearby_region(state, r, vector.new(size.x, size.y, size.z), "X+ Y+ Z+", pos, node_name)
-		scan_nearby_region(state, r, vector.new(size.x, -size.y, -size.z), "X+ Y- Z-", pos, node_name)
-		scan_nearby_region(state, r, vector.new(size.x, -size.y, size.z), "X+ Y- Z+", pos, node_name)
-		scan_nearby_region(state, r, vector.new(-size.x * 2, 0, 0), "X- X-", pos, node_name)
-		scan_nearby_region(state, r, vector.new(-size.x, 0, size.z), "X- Z+", pos, node_name)
-		scan_nearby_region(state, r, vector.new(-size.x, 0, -size.z), "X- Z-", pos, node_name)
-		scan_nearby_region(state, r, vector.new(-size.x, size.y, 0), "X- Y+", pos, node_name)
-		scan_nearby_region(state, r, vector.new(-size.x, -size.y, 0), "X- Y-", pos, node_name)
-		scan_nearby_region(state, r, vector.new(-size.x, size.y, -size.z), "X- Y+ Z-", pos, node_name)
-		scan_nearby_region(state, r, vector.new(-size.x, -size.y, -size.z), "X- Y- Z-", pos, node_name)
-		scan_nearby_region(state, r, vector.new(-size.x, size.y, size.z), "X- Y+ Z+", pos, node_name)
-		scan_nearby_region(state, r, vector.new(-size.x, -size.y, size.z), "X- Y- Z+", pos, node_name)
-		scan_nearby_region(state, r, vector.new(size.x * 2, 0, 0), "X+ X+", pos, node_name)
-		scan_nearby_region(state, r, vector.new(0, size.y, size.z), "Y+ Z+", pos, node_name)
-		scan_nearby_region(state, r, vector.new(0, size.y, -size.z), "Y+ Z-", pos, node_name)
-		scan_nearby_region(state, r, vector.new(0, -size.y * 2, 0), "Y- Y-", pos, node_name)
-		scan_nearby_region(state, r, vector.new(0, -size.y, size.z), "Y- Z+", pos, node_name)
-		scan_nearby_region(state, r, vector.new(0, -size.y, -size.z), "Y- Z-", pos, node_name)
-		scan_nearby_region(state, r, vector.new(0, size.y * 2, 0), "Y+ Y+", pos, node_name)
-		scan_nearby_region(state, r, vector.new(0, 0, size.z * 2), "Z+ Z+", pos, node_name)
-		scan_nearby_region(state, r, vector.new(0, 0, -size.z * 2), "Z- Z-", pos, node_name)
-	end
-end
-
----@param pos Vector
-local function scan_nearby_lights(state, pos, node_name, options, show_log)
-	local player_name = state.player_name
-	local regions = light_scan_data[player_name]
-	local config = p_config.data[player_name]
-	local maxy = config.maxy
-	---@param r Region
-	---@param user_action boolean
-	local function base_scan(r, user_action) scan_region_for_node(state, regions, r, pos, node_name, user_action, show_log) end
-	---@param r Region
-	local function full_scan(r) base_scan(r, true) end
-	---@param r Region
-	local function normal_scan(r) base_scan(r, false) end
-	if config.last_maxy ~= config.maxy then
-		for _, r in ipairs(regions) do
-			normal_scan(r)
-		end
-		config.last_maxy = config.maxy
-	end
-	if options.user then
-		for _, r in ipairs(regions) do
-			if r:is_point_in_region(pos) then
-				full_scan(r)
-			end
-		end
-	end
-	local scan_dist = light_scan_dist
-	local scan_range = scan_dist / 2
-	local minvec = vector.subtract(pos, math.floor(scan_range))
-	local maxvec = vector.add(minvec, scan_dist)
-	if maxvec.y > maxy then
-		maxvec.y = maxy
-	end
-	local total_count = 0
-	local r = aabb.new_region(minvec, maxvec)
-	local newly_scanned = not r:is_inside_any(regions)
-	if newly_scanned then
-		---@type SubtractAndAccumulateOptions
-		local opts = {
-			volume_threshold = 80000,
-			max_distance = 26,
-			---@param r Region
-			on_flush = function(r)
-				normal_scan(r)
-				table.insert(regions, r)
-			end,
-		};
-		aabb.subtract_and_accumulate(r, regions, opts)
-	end
-	local GAP_THRESHOLD = 160000
-	local MAX_GAP_DIST = 11
-	for i = 1, #regions - 1 do
-		for j = i + 1, #regions do
-			local gap = aabb.between(regions[i], regions[j], MAX_GAP_DIST)
-			if gap and gap:volume() < GAP_THRESHOLD then
-				if not aabb.is_covered_by_any(gap, regions) then
-					normal_scan(r)
-					table.insert(regions, r)
-				end
-			end
-		end
-	end
-	local unknown = aabb.compact_regions(regions)
-	for _, r in ipairs(unknown) do
-		normal_scan(r)
-	end
-	for _, r in ipairs(regions) do
-		local size = r.min - r.max
-		local size_change = math.floor(scan_dist / 2)
-		if size_change < 1 then
-			size_change = 1
-		end
-		if size.x > size_change * 2 then
-			r.min.x = r.min.x + size_change
-			r.max.x = r.max.x - size_change
-		end
-		if size.y > size_change * 2 then
-			r.min.y = r.min.y + size_change
-			r.max.y = r.max.y - size_change
-		end
-		if size.z > size_change * 2 then
-			r.min.z = r.min.z + size_change
-			r.max.z = r.max.z - size_change
-		end
-	end
-	if newly_scanned then
-		for _, r in ipairs(regions) do
-			r:draw()
-		end
-	end
 end
 
 local do_teleport_skip_warn = false
@@ -669,8 +426,13 @@ local known_unhandled_nodes = {}
 
 local is_liquid = h.is_liquid
 
+local scanner = require("mods.vein_miner.scanner")
+vein_miner.scanner = scanner
+
+require("mods.vein_miner.globalstep")
+
 local function dig_pos_process_queue_item(state, item, player_name)
-	local config = p_config.data[player_name]
+	local config = player_config_mgr.data[player_name]
 
 	local pos = item.pos
 	local node_name = item.node_name
@@ -706,7 +468,7 @@ local function dig_pos_process_queue_item(state, item, player_name)
 		return
 	end
 
-	if not is_valid_pos_to_iter(pos, player_name) then
+	if not state.is_valid_pos_to_iter(pos, player_name) then
 		return
 	end
 
@@ -726,7 +488,7 @@ local function dig_pos_process_queue_item(state, item, player_name)
 		return
 	end
 
-	wait_for_player_near_pos(state.player, center)
+	state.wait_for_player_near_pos(state.player, center)
 
 	if options.large then
 		notify_pos(center, "#0000ffff", 6 * 4, 120 + 30)
@@ -826,7 +588,7 @@ local function dig_pos_process_queue_item(state, item, player_name)
 
 	if options.light then
 		state.pending_light_scan:push_left({pos, node_name, options})
-		scan_nearby_lights(state, pos, node_name, options, false)
+		scanner.scan_nearby_lights(state, pos, node_name, options, false)
 	end
 
 	if not options.large then
@@ -900,7 +662,7 @@ local clear_mined_nodes_job = nil
 
 local function dig_finish(state)
 	for v in state.pending_light_scan:iter_right() do
-		scan_nearby_lights(state, v[1], v[2], v[3], true)
+		scanner.scan_nearby_lights(state, v[1], v[2], v[3], true)
 	end
 	if state.total_action_count > 0 then
 		log_warning("vein miner complete in " .. state.total_action_count .. " steps\n" .. '***')
@@ -987,6 +749,51 @@ end
 local VeinMinerState = {}
 VeinMinerState.__index = VeinMinerState
 
+vein_miner.mt = VeinMinerState
+
+function VeinMinerState.wait_for_player_near_pos(player, target_pos)
+	local out_of_range = vector.distance(player:get_pos(), target_pos) > 220
+	while out_of_range and vector.distance(player:get_pos(), target_pos) > 128 do
+		local player_pos = player:get_pos()
+		notify_pos(target_pos, "#9900ffff", 25, 1)
+
+		local difference = vector.normalize(target_pos - player_pos)
+
+		player_pos = vector.add(player_pos, difference * 16)
+		player:set_pos(player_pos)
+
+		local world_particle_pos = vector.add(player_pos, difference * 8)
+		local view_particle_pos = vector.offset(player_pos, 0, 1.5, 0)
+		notify_pos(view_particle_pos, "#00ff00ff", 7, 0.5)
+
+		local look_pos = vector.offset(player_pos, 0, 1.5, 0)
+		local dir = vector.subtract(target_pos, look_pos)
+		local flat_dir = vector.new(dir.x, 0, dir.z)
+
+		local yaw = math.atan2(flat_dir.z, flat_dir.x) - math.pi / 2
+		local hyp = math.sqrt(dir.x * dir.x + dir.z * dir.z)
+		local pitch = -math.atan2(dir.y, hyp)
+
+		player:set_look_horizontal(yaw)
+		player:set_look_vertical(pitch)
+		utils.async_wait(0.2)
+	end
+	if out_of_range then
+		utils.async_wait(0.6)
+	end
+end
+
+function VeinMinerState.is_valid_pos_to_iter(pos, player_name)
+	---@type PlayerConfig
+	local config = player_config_mgr.data[player_name]
+	local maxy = config.maxy
+	local miny = config.miny
+	if pos.y >= miny and pos.y < maxy then
+		return true
+	end
+	return false
+end
+
 -- Update wielded item
 function VeinMinerState.update_wielded_item(player, wielded)
 	local tool = player:get_wielded_item()
@@ -1053,10 +860,10 @@ core.register_on_dignode(function(pos, oldnode, player)
 
 	-- start vein mining
 	local player_name = player:get_player_name()
-	if p_config.data[player_name] == nil then
-		p_config.data[player_name] = {}
+	if player_config_mgr.data[player_name] == nil then
+		player_config_mgr.data[player_name] = {}
 	end
-	local config = p_config.data[player_name]
+	local config = player_config_mgr.data[player_name]
 	if config.mode == nil then
 		config.mode = "small"
 	end
