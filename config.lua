@@ -40,13 +40,11 @@ local stone = {
 		mese = "default:stone_with_mese",
 		tin = "default:stone_with_tin",
 	},
-	variants = {
-		desert = "default:desert_stone",
-		sandstone = "default:sandstone",
-		desert_sandstone = "default:desert_sandstone",
-		silver_sandstone = "default:silver_sandstone",
-		cave_ice = "default:cave_ice",
-	},
+	desert = "default:desert_stone",
+	sandstone = "default:sandstone",
+	desert_sandstone = "default:desert_sandstone",
+	silver_sandstone = "default:silver_sandstone",
+	cave_ice = "default:cave_ice",
 }
 
 local sand = {
@@ -71,8 +69,8 @@ local flower = {
 }
 
 local trees = {
-	stems = {"default:acacia_bush_stem", "default:pine_bush_stem", "default:bush_stem"},
-	trunks = {"default:tree", "default:pine_tree", "default:jungletree", "default:aspen_tree", "default:acacia_tree"},
+	stem = {"default:acacia_bush_stem", "default:pine_bush_stem", "default:bush_stem"},
+	trunk = {"default:tree", "default:pine_tree", "default:jungletree", "default:aspen_tree", "default:acacia_tree"},
 }
 
 local cobble = {
@@ -127,12 +125,12 @@ local MINE_ONLY_GROUPS = {
 	sand = {sand.normal},
 	flower = flower.common,
 	mushroom = flower.mushroom,
-	tree_stems = trees.stems,
-	tree_trunks = trees.trunks,
+	stem = trees.stem,
+	tree_trunk = trees.trunk,
 	dirt = {dirt.normal, dirt.permafrost.normal},
 	ore = {stone.ore.coal, stone.ore.copper, stone.ore.diamond, stone.ore.gold, stone.ore.iron, stone.ore.mese, stone.ore.tin},
-	stone = {stone.normal, stone.variants.desert, stone.variants.sandstone, stone.variants.desert_sandstone, stone.variants.silver_sandstone,
-		stone.variants.cave_ice},
+	stone = {stone.normal, stone.variant.desert, stone.variant.sandstone, stone.variant.desert_sandstone, stone.variant.silver_sandstone,
+		stone.variant.cave_ice},
 	mesecons_wire = mesecons.wire,
 	mesecon_vertical_wire = mesecons.vertical_wire,
 	misc = {"default:silver_sandstone_brick"},
