@@ -457,6 +457,7 @@ local wanted_groups = {
 	surface = true,
 	grass = true,
 	fern = true,
+	dry_grass = true,
 	tree_trunk = true,
 	flower = true,
 }
