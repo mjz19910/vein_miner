@@ -1,13 +1,14 @@
 local core = core
 local table = table
+---@type VeinMinerGlobal
 local vein_miner = vein_miner
 local register_node = core.register_node
 local insert = table.insert
 
 local CFG = vein_miner.CFG
 
-local mine_only_cur_set = vein_miner.mine_only_cur_set
-local mine_only_group_sets = vein_miner.mine_only_group_sets
+local mine_only_cur_set = CFG.mine_only_cur_set
+local mine_only_group_sets = CFG.mine_only_group_sets
 local mine_only_groups = CFG.MINE_ONLY_GROUPS
 
 local function node_sound_defaults(tbl)
