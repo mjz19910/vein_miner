@@ -14,7 +14,10 @@ local CFG = vein_miner.CFG
 
 local light_nodes = CFG.LIGHT_NODES
 
+---@type table<string, ScanOptions>
 local node_scan_options_cache = {}
+---@param node_name string
+---@param options ScanOptions
 local function get_real_scan_options(node_name, options)
 	options = options or {}
 	if contains(light_nodes, node_name) then
@@ -30,6 +33,13 @@ local function get_real_scan_options(node_name, options)
 	return options
 end
 
+---@class ScanOptions
+---@field user boolean|nil
+---@field light boolean|nil
+---@field liquid boolean|nil
+
+---@param node_name string
+---@param options ScanOptions
 function l_utils.get_scan_options(node_name, options)
 	options = options or {}
 	if options.user then
@@ -43,6 +53,10 @@ function l_utils.get_scan_options(node_name, options)
 	return options
 end
 
+---@param state VeinMinerState
+---@param node_name string
+---@param pos Vector
+---@param options ScanOptions
 function l_utils.add_pos_to_queue(state, node_name, pos, options)
 	local h = core.hash_node_position(pos)
 	if state.queued_set[h] then

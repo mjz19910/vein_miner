@@ -41,13 +41,10 @@ local aabb = require("mods.vein_miner.aabb")
 vein_miner.aabb = aabb
 require("mods.vein_miner.liquid_filler")
 require("mods.vein_miner.remove_walls")
----@type PlayerHud
 local player_hud = require("mods.vein_miner.player_hud")
 vein_miner.player_hud = player_hud
----@type PlayerConfigManager
 local p_config = require("mods.vein_miner.player_config")
 vein_miner.player_config = p_config
----@type VeinMinerLateUtils
 local l_utils = require("mods.vein_miner.late_utils")
 vein_miner.l_utils = l_utils
 local BlockDigger = require("mods.vein_miner.block_digger")

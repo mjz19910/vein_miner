@@ -194,23 +194,6 @@ local player_control = player.get_player_control()
 ---@field start_list Vector[]
 local chunk = {}
 
----@class VeinMinerConfig
----@field LIGHT_NODES string[]
----@field MINE_ONLY_CUR_SET string[]
----@field IGNORED_NODES string[]
----@field SURFACE_NODES string[]
----@field MINE_ONLY_GROUPS table<string, string[]>
----@field VEC_DIRS Vector[]
----@field FLOATING_DIRS Vector[]
----@field COLOR_PALETTE string[]
----@field sticky_nodes table<string, boolean>
----@field cardinal_dirs Vector[]
----@field MAX_MINED_NODES number
-local config = {}
-
----@type VeinMinerGlobal
-local vein_miner = {}
-
 ---@class SimpleSoundSpec
 ---@field name string|string[] Sound name or list of names to choose from
 ---@field gain number|nil Default gain (volume multiplier)

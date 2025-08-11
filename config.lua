@@ -1,6 +1,9 @@
+---@type VectorModule
 local vector = vector
 local table = table
 local pairs = pairs
+local math = math
+---@type VeinMinerGlobal
 local vein_miner = vein_miner
 local voxel_util = vein_miner.voxel_util
 local p = vector.new
@@ -85,126 +88,105 @@ local mesecons = {
 	sticky_blocks = {"mesecons_stickyblocks:sticky_block_all"},
 }
 
-vein_miner.CFG = {
-	LIGHT_NODES = {"default:mese_post_light_pine_wood", "default:mese_post_light_acacia_wood"},
-	MINE_ONLY_CUR_SET = {"default:snow", "default:stone_block", "farming:cotton_wild", "fire:basic_flame", "default:obsidian", "wool:green",
-		"wool:orange"},
-	IGNORED_NODES = {"default:chest", "default:leaves", "drawers:trim", "drawers:pine_wood1", "drawers:controller", "digtron:axle",
-		"digtron:light", "digtron:pusher", "digtron:digger", "digtron:builder", "digtron:structure", "digtron:inventory", "digtron:fuelstore",
-		"digtron:empty_crate", "digtron:auto_controller", "digtron:combined_storage", "digtron:inventory_ejector", "digtron:intermittent_digger",
-		"digtron:master_builder", "digtron:controller"},
-	SURFACE_NODES = {dirt.grass.normal, dirt.grass.snow, dirt.grass.rainforest, dirt.grass.coniferous, dirt.grass.dry, dirt.permafrost.moss,
-		dirt.permafrost.stones, sand.with_kelp},
-	MINE_ONLY_GROUPS = {
-		grass = grass.normal,
-		jungle_grass = grass.jungle,
-		dry_grass = grass.dry,
-		marram_grass = grass.marram,
-		fern = {"default:fern_1", "default:fern_2", "default:fern_3"},
-		blueberry = {"default:blueberry_bush_leaves", "default:blueberry_bush_leaves_with_berries"},
-		gravel = {gravel},
-		silver_sand = {sand.silver},
-		sand = {sand.normal},
-		flowers = flowers.common,
-		mushroom = flowers.mushroom,
-		tree_stems = trees.stems,
-		tree_trunks = trees.trunks,
-		dirt = {dirt.normal, dirt.permafrost.normal},
-		ore = {stone.ore.coal, stone.ore.copper, stone.ore.diamond, stone.ore.gold, stone.ore.iron, stone.ore.mese, stone.ore.tin},
-		stone = {stone.normal, stone.variants.desert, stone.variants.sandstone, stone.variants.desert_sandstone, stone.variants.silver_sandstone,
-			stone.variants.cave_ice},
-		mesecons_wire = mesecons.wire,
-		mesecon_vertical_wire = mesecons.vertical_wire,
-		misc = {"default:silver_sandstone_brick"},
-		cobble = {cobble.normal},
-		mossy_cobble = {cobble.mossy},
-		cobble_stairs = {cobble.stairs},
-	},
-	VEC_DIRS = {},
-	FLOATING_DIRS = {p(1, 0, 0), p(-1, 0, 0), p(0, 1, 0), p(0, -1, 0), p(0, 0, 1), p(0, 0, -1)},
-	COLOR_PALETTE = { --
-	--
-	--[[red]] --
-	"#ff0000", "#ff3300", "#ff6600", "#ff3333", --
-	"#cc0000", "#cc3333", "#990000", "#990033", --
-	"#660000", "#660033", "#ff0033", "#ff3366", --
-	"#ff6666", "#ff9999", "#ffcccc", --
-	--[[red+green=yellow / orange]] --
-	"#ff6600", "#ff9900", "#ffcc00", "#ffff00", --
-	"#ffcc33", "#ffff33", "#cccc00", "#cccc33", --
-	"#999900", "#999933", --
-	--[[red+blue=magenta / pink]] --
-	"#ff00ff", "#ff33ff", "#ff66ff", "#ff99ff", --
-	"#ff3399", "#ff6699", "#ff99cc", "#ff66cc", --
-	"#ff33cc", "#cc00cc", "#cc33cc", "#cc66cc", --
-	"#cc99cc", "#cc00ff", "#cc33ff", "#cc66ff", --
-	"#cc99ff", "#9900cc", "#990099", "#660066", --
-	--[[green]] --
-	"#00ff00", "#33ff00", "#66ff00", "#99ff00", --
-	"#ccff00", "#00cc00", "#33cc00", "#66cc00", --
-	"#99cc00", "#ccff33", "#00ff33", "#33ff33", --
-	"#66ff33", "#99ff33", "#00cc33", "#33cc33", --
-	"#66cc33", "#99cc33", --
-	--[[green+blue=cyan / teal]] --
-	"#00ffff", "#33ffff", "#66ffff", "#99ffff", --
-	"#00cccc", "#33cccc", "#66cccc", "#99cccc", --
-	"#00ccff", "#33ccff", "#66ccff", "#99ccff", --
-	"#0099cc", "#3399cc", "#6699cc", "#00cc99", --
-	"#33cc99", "#66cc99", "#99cc99", "#00cc66", --
-	--[[blue]] --
-	"#0000ff", "#3333ff", "#6666ff", "#9999ff", --
-	"#0000cc", "#3333cc", "#6666cc", "#9999cc", --
-	"#000099", "#333399", "#666699", "#000066", --
-	"#333366", "#666666", "#000033", "#333333", --
-	--[[blue+red=violet / purple]] --
-	"#3300ff", "#6600ff", "#9900ff", "#cc00ff", --
-	"#ff00cc", "#ff33cc", "#ff66cc", "#ff99cc", --
-	"#cc3399", "#990066", "#660033", --
-	--[[grayscale]] --
-	"#ffffff", "#cccccc", "#999999", --
-	"#666666", "#333333", "#000000" --
-	},
-	-- Define which nodes are considered "sticky"
-	sticky_nodes = {
-		["mesecons_stickyblocks:sticky_block_all"] = true,
-	},
-	cardinal_dirs = {p(1, 0, 0), p(-1, 0, 0), p(0, 1, 0), p(0, -1, 0), p(0, 0, 1), p(0, 0, -1)},
-	MAX_MINED_NODES = 188,
+---@class VeinMinerConfig
+local CFG = {}
+
+local mese_post_light = {
+	normal = "default:mese_post_light",
+	pine = "default:mese_post_light_pine_wood",
+	acacia = "default:mese_post_light_acacia_wood",
 }
 
-local CFG = vein_miner.CFG
+---@type string[]
+CFG.LIGHT_NODES = {mese_post_light.pine, mese_post_light.acacia}
+---@type string[]
+CFG.MINE_ONLY_CUR_SET = {"default:snow", "default:stone_block", "farming:cotton_wild", "fire:basic_flame", "default:obsidian", "wool:green",
+	"wool:orange"}
+---@type string[]
+CFG.IGNORED_NODES = {"default:chest", "default:leaves", "drawers:trim", "drawers:pine_wood1", "drawers:controller", "digtron:axle",
+	"digtron:light", "digtron:pusher", "digtron:digger", "digtron:builder", "digtron:structure", "digtron:inventory", "digtron:fuelstore",
+	"digtron:empty_crate", "digtron:auto_controller", "digtron:combined_storage", "digtron:inventory_ejector", "digtron:intermittent_digger",
+	"digtron:master_builder", "digtron:controller"}
+---@type string[]
+CFG.SURFACE_NODES = {dirt.grass.normal, dirt.grass.snow, dirt.grass.rainforest, dirt.grass.coniferous, dirt.grass.dry, dirt.permafrost.moss,
+	dirt.permafrost.stones, sand.with_kelp}
+---@type table<string, string[]>
+CFG.MINE_ONLY_GROUPS = {
+	grass = grass.normal,
+	jungle_grass = grass.jungle,
+	dry_grass = grass.dry,
+	marram_grass = grass.marram,
+	fern = {"default:fern_1", "default:fern_2", "default:fern_3"},
+	blueberry = {"default:blueberry_bush_leaves", "default:blueberry_bush_leaves_with_berries"},
+	gravel = {gravel},
+	silver_sand = {sand.silver},
+	sand = {sand.normal},
+	flowers = flowers.common,
+	mushroom = flowers.mushroom,
+	tree_stems = trees.stems,
+	tree_trunks = trees.trunks,
+	dirt = {dirt.normal, dirt.permafrost.normal},
+	ore = {stone.ore.coal, stone.ore.copper, stone.ore.diamond, stone.ore.gold, stone.ore.iron, stone.ore.mese, stone.ore.tin},
+	stone = {stone.normal, stone.variants.desert, stone.variants.sandstone, stone.variants.desert_sandstone, stone.variants.silver_sandstone,
+		stone.variants.cave_ice},
+	mesecons_wire = mesecons.wire,
+	mesecon_vertical_wire = mesecons.vertical_wire,
+	misc = {"default:silver_sandstone_brick"},
+	cobble = {cobble.normal},
+	mossy_cobble = {cobble.mossy},
+	cobble_stairs = {cobble.stairs},
+}
+---@type Vector[]
+CFG.VEC_DIRS = {}
+---@type Vector[]
+CFG.FLOATING_DIRS = {p(1, 0, 0), p(-1, 0, 0), p(0, 1, 0), p(0, -1, 0), p(0, 0, 1), p(0, 0, -1)}
+---@type string[]
+CFG.COLOR_PALETTE = {"#ff0000", "#ff3300", "#ff6600", "#ff3333", "#cc0000", "#cc3333", "#990000", "#990033", "#660000", "#660033",
+	"#ff0033", "#ff3366", "#ff6666", "#ff9999", "#ffcccc", "#ff6600", "#ff9900", "#ffcc00", "#ffff00", "#ffcc33", "#ffff33", "#cccc00",
+	"#cccc33", "#999900", "#999933", "#ff00ff", "#ff33ff", "#ff66ff", "#ff99ff", "#ff3399", "#ff6699", "#ff99cc", "#ff66cc", "#ff33cc",
+	"#cc00cc", "#cc33cc", "#cc66cc", "#cc99cc", "#cc00ff", "#cc33ff", "#cc66ff", "#cc99ff", "#9900cc", "#990099", "#660066", "#00ff00",
+	"#33ff00", "#66ff00", "#99ff00", "#ccff00", "#00cc00", "#33cc00", "#66cc00", "#99cc00", "#ccff33", "#00ff33", "#33ff33", "#66ff33",
+	"#99ff33", "#00cc33", "#33cc33", "#66cc33", "#99cc33", "#00ffff", "#33ffff", "#66ffff", "#99ffff", "#00cccc", "#33cccc", "#66cccc",
+	"#99cccc", "#00ccff", "#33ccff", "#66ccff", "#99ccff", "#0099cc", "#3399cc", "#6699cc", "#00cc99", "#33cc99", "#66cc99", "#99cc99",
+	"#00cc66", "#0000ff", "#3333ff", "#6666ff", "#9999ff", "#0000cc", "#3333cc", "#6666cc", "#9999cc", "#000099", "#333399", "#666699",
+	"#000066", "#333366", "#666666", "#000033", "#333333", "#3300ff", "#6600ff", "#9900ff", "#cc00ff", "#ff00cc", "#ff33cc", "#ff66cc",
+	"#ff99cc", "#cc3399", "#990066", "#660033", "#ffffff", "#cccccc", "#999999", "#666666", "#333333", "#000000"}
+-- Define which nodes are considered "sticky"
+---@type table<string, boolean>
+CFG.sticky_nodes = {
+	["mesecons_stickyblocks:sticky_block_all"] = true,
+}
+---@type Vector[]
+CFG.cardinal_dirs = {p(1, 0, 0), p(-1, 0, 0), p(0, 1, 0), p(0, -1, 0), p(0, 0, 1), p(0, 0, -1)}
+CFG.MAX_MINED_NODES = 188
 
----Insert all elements into `CFG.VEC_DIRS`
----@param src  Vector[]
-local function i_vec_dirs(src) ia(CFG.VEC_DIRS, src) end
--- self
-i_vec_dirs({p(0, 0, 0)})
--- cardinal directions
-i_vec_dirs({p(0, 1, 0), p(0, -1, 0), p(1, 0, 0), p(-1, 0, 0), p(0, 0, 1), p(0, 0, -1)})
--- xz
-i_vec_dirs({p(1, 0, 1), p(-1, 0, 1), p(1, 0, -1), p(-1, 0, -1)})
--- xy
-i_vec_dirs({p(1, 1, 0), p(-1, 1, 0), p(1, -1, 0), p(-1, -1, 0)})
--- yz
-i_vec_dirs({p(0, 1, 1), p(0, -1, 1), p(0, 1, -1), p(0, -1, -1)})
--- x+ yz
-i_vec_dirs({p(1, 1, 1), p(1, -1, 1), p(1, -1, -1), p(1, 1, -1)})
--- x- yz
-i_vec_dirs({p(-1, 1, 1), p(-1, -1, 1), p(-1, -1, -1), p(-1, 1, -1)})
--- cords+ 2
-i_vec_dirs({p(2, 0, 0), p(-2, 0, 0), p(0, 2, 0), p(0, -2, 0), p(0, 0, 2), p(0, 0, -2)})
--- cords+ 2,1
--- i_vec_dirs({p(-1, -2, 0)})
--- cords+ 2,1,1
--- i_vec_dirs({p(1, 2, 1)})
--- cords+ 3
--- i_vec_dirs({p(3, 0, 0), p(-3, 0, 0), p(0, 3, 0), p(0, -3, 0), p(0, 0, 3), p(0, 0, -3)})
--- distance of 3.1622776601684
--- i_vec_dirs({p(-3, 0, 1)})
+---@param radius number
+---@return Vector[]
+local function gen_euclidean_offsets(radius)
+	local dirs = {}
+	local r2 = radius * radius
+	for x = -math.ceil(radius), math.ceil(radius) do
+		for y = -math.ceil(radius), math.ceil(radius) do
+			for z = -math.ceil(radius), math.ceil(radius) do
+				if not (x == 0 and y == 0 and z == 0) then
+					local dist2 = x * x + y * y + z * z
+					if dist2 <= r2 then
+						dirs[#dirs + 1] = p(x, y, z)
+					end
+				end
+			end
+		end
+	end
+	return dirs
+end
+
+table.insert(CFG.VEC_DIRS, p(0, 0, 0))
+-- distance limited to 3.1622776601684, ie 3.2
+table.insert_all(CFG.VEC_DIRS, gen_euclidean_offsets(64 / 20))
 
 ia(CFG.MINE_ONLY_CUR_SET, {cobble.normal, cobble.mossy, cobble.stairs})
 
-i(CFG.IGNORED_NODES, "default:mese_post_light")
+i(CFG.IGNORED_NODES, mese_post_light.normal)
 
 -- go to the next nodeid (ex.: 01000011 --> 01000100)
 local nid_inc = function() end
@@ -230,7 +212,8 @@ local function register_wires_group()
 		local nodeid = (nid[0] or "0") .. (nid[1] or "0") .. (nid[2] or "0") .. (nid[3] or "0") .. (nid[4] or "0") .. (nid[5] or "0") ..
 			               (nid[6] or "0") .. (nid[7] or "0")
 
-		ia(mesecons.wire, {"mesecons:wire_" .. nodeid .. "_off", "mesecons:wire_" .. nodeid .. "_on"})
+		table.insert(mesecons.wire, "mesecons:wire_" .. nodeid .. "_off")
+		table.insert(mesecons.wire, "mesecons:wire_" .. nodeid .. "_on")
 
 		if (nid_inc(nid) == false) then
 			return
@@ -257,16 +240,19 @@ local ignored_nodes = CFG.IGNORED_NODES
 table.insert_all(ignored_nodes, {dirt.normal, dirt.dry})
 table.insert_all(ignored_nodes, CFG.SURFACE_NODES)
 
+---@type table<string, boolean>
 local ignored_nodes_set = {}
 for k, v in pairs(CFG.IGNORED_NODES) do
 	ignored_nodes_set[v] = true
 end
 CFG.ignored_nodes_set = ignored_nodes_set
+---@type table<string, boolean>
 local light_nodes_set = {}
 for k, v in pairs(CFG.LIGHT_NODES) do
 	light_nodes_set[v] = true
 end
 CFG.light_nodes_set = light_nodes_set
+---@type table<string, boolean>
 local surface_nodes_set = {}
 for k, v in pairs(CFG.SURFACE_NODES) do
 	surface_nodes_set[v] = true
@@ -274,10 +260,14 @@ end
 CFG.surface_nodes_set = surface_nodes_set
 
 local mine_only_groups = CFG.MINE_ONLY_GROUPS
+---@type table<string, boolean>
 local mine_only_cur_set = {}
 CFG.mine_only_cur_set = mine_only_cur_set
 for k, v in pairs(CFG.MINE_ONLY_CUR_SET) do
 	mine_only_cur_set[v] = true
 end
+---@type table<string, table<string, boolean>>
 local mine_only_group_sets = vein_miner.h.generate_mine_only_sets(mine_only_groups, mine_only_cur_set)
 CFG.mine_only_group_sets = mine_only_group_sets
+
+return CFG
