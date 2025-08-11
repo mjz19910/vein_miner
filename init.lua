@@ -792,6 +792,8 @@ local function dig_pos_process_queue_item(state, item, player_name)
 		table.insert_all(target_nodes, mine_only_groups.dry_grass)
 		table.insert_all(target_nodes, mine_only_groups.marram_grass)
 		table.insert_all(target_nodes, mine_only_groups.fern)
+		table.insert_all(target_nodes, mine_only_groups.flower)
+		table.insert_all(target_nodes, mine_only_groups.mushroom)
 	end
 
 	if options.user and options.light then

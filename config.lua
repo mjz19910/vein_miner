@@ -64,7 +64,7 @@ local grass = {
 	marram = {"default:marram_grass_1", "default:marram_grass_2", "default:marram_grass_3", "default:marram_grass_4", "default:marram_grass_5"},
 }
 
-local flowers = {
+local flower = {
 	common = {"flowers:chrysanthemum_green", "flowers:dandelion_yellow", "flowers:dandelion_white", "flowers:tulip_black", "flowers:tulip",
 		"flowers:viola", "flowers:rose"},
 	mushroom = {"flowers:mushroom_brown", "flowers:mushroom_red"},
@@ -125,8 +125,8 @@ local MINE_ONLY_GROUPS = {
 	gravel = {gravel},
 	silver_sand = {sand.silver},
 	sand = {sand.normal},
-	flowers = flowers.common,
-	mushroom = flowers.mushroom,
+	flower = flower.common,
+	mushroom = flower.mushroom,
 	tree_stems = trees.stems,
 	tree_trunks = trees.trunks,
 	dirt = {dirt.normal, dirt.permafrost.normal},
