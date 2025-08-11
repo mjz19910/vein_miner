@@ -79,7 +79,7 @@ local cobble = {
 	stair = "stairs:stair_cobble",
 }
 
-local mesecons = {
+local mesecon = {
 	wire = {}, -- Will be dynamically generated as in your code
 	vertical_wire = {"mesecons_extrawires:vertical_top_on", "mesecons_extrawires:vertical_top_off", "mesecons_extrawires:vertical_on",
 		"mesecons_extrawires:vertical_off", "mesecons_extrawires:vertical_bottom_on", "mesecons_extrawires:vertical_bottom_off"},
@@ -130,8 +130,8 @@ local MINE_ONLY_GROUPS = {
 	dirt = {dirt.normal, dirt.permafrost.normal},
 	ore = {stone.ore.coal, stone.ore.copper, stone.ore.diamond, stone.ore.gold, stone.ore.iron, stone.ore.mese, stone.ore.tin},
 	stone = {stone.normal, stone.desert, stone.sandstone, stone.desert_sandstone, stone.silver_sandstone, stone.cave_ice},
-	mesecons_wire = mesecons.wire,
-	mesecon_vertical_wire = mesecons.vertical_wire,
+	mesecon_wire = mesecon.wire,
+	mesecon_vertical_wire = mesecon.vertical_wire,
 	misc = {"default:silver_sandstone_brick"},
 	cobble = {cobble.normal},
 	mossy_cobble = {cobble.mossy},
@@ -219,8 +219,8 @@ local function register_wires_group()
 		local nodeid = (nid[0] or "0") .. (nid[1] or "0") .. (nid[2] or "0") .. (nid[3] or "0") .. (nid[4] or "0") .. (nid[5] or "0") ..
 			               (nid[6] or "0") .. (nid[7] or "0")
 
-		table.insert(mesecons.wire, "mesecons:wire_" .. nodeid .. "_off")
-		table.insert(mesecons.wire, "mesecons:wire_" .. nodeid .. "_on")
+		table.insert(mesecon.wire, "mesecons:wire_" .. nodeid .. "_off")
+		table.insert(mesecon.wire, "mesecons:wire_" .. nodeid .. "_on")
 
 		if (nid_inc(nid) == false) then
 			return
