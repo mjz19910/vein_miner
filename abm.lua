@@ -1,10 +1,10 @@
 core.register_abm({
 	label = "Dry grass spread",
-	nodenames = {"default:dry_dirt"},
-	neighbors = {"air", "default:dry_dirt_with_dry_grass"},
-	interval = 1,
-	chance = 2,
-	catch_up = true,
+	nodenames = {"default:dry_dirt"}, -- Trigger on dry dirt nodes, not dry grass
+	neighbors = {"air", "default:dry_dirt_with_dry_grass"}, -- Check neighbors for dry grass
+	interval = 6,
+	chance = 50,
+	catch_up = false,
 	action = function(pos, node)
 		-- Check for darkness: night, shadow or under a light-blocking node
 		-- Returns if ignore above
@@ -17,14 +17,11 @@ core.register_abm({
 			return
 		end
 
-		-- Look for dry dirt neighbours to spread to
-		local p2 = core.find_node_near(pos, 1, "default:dry_dirt")
+		local p2 = core.find_node_near(pos, 1, "default:dry_dirt_with_dry_grass")
 		if p2 then
-			local n3 = core.get_node(p2)
 			core.set_node(pos, {
-				name = n3.name,
+				name = p2.name,
 			})
-			return
 		end
 	end,
 })
