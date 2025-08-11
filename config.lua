@@ -252,6 +252,7 @@ mine_groups.target_nodes = {clay, dirt.dry}
 table.insert_all(mine_groups.target_nodes, vein_miner.CFG.SURFACE_NODES)
 local ignored_nodes = vein_miner.CFG.IGNORED_NODES
 table.insert_all(ignored_nodes, {dirt.normal, dirt.dry})
+table.insert_all(ignored_nodes, vein_miner.CFG.SURFACE_NODES)
 
 local ignored_nodes_set = {}
 for k, v in pairs(vein_miner.CFG.IGNORED_NODES) do
