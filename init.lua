@@ -787,6 +787,8 @@ local function dig_pos_process_queue_item(state, item, player_name)
 	-- dry_grass = grass.dry,
 	-- marram_grass = grass.marram,
 	-- fern = grass.fern,
+	-- flower = flower.common,
+	-- mushroom = flower.mushroom,
 	if group_target == "tree_trunk" then
 		table.insert_all(target_nodes, mine_only_groups.grass)
 		table.insert_all(target_nodes, mine_only_groups.jungle_grass)
