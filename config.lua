@@ -270,7 +270,6 @@ ia(mine_only_set, {"mesecons_movestones:sticky_movestone"})
 local mine_groups = CFG.MINE_ONLY_GROUPS
 mine_groups.coral = {"default:coral_skeleton", "default:coral_green", "default:coral_cyan", "default:coral_pink", "default:coral_orange",
 	"default:coral_brown"}
-mine_groups.target_nodes = target_nodes
 table.insert_all(mine_groups.target_nodes, CFG.SURFACE_NODES)
 table.insert_all(mine_groups.target_nodes, {dirt[1], clay, dirt.dry})
 local ignored_nodes = CFG.IGNORED_NODES
