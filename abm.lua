@@ -20,7 +20,7 @@ core.register_abm({
 		local p2 = core.find_node_near(pos, 1, "default:dry_dirt_with_dry_grass")
 		if p2 then
 			core.set_node(pos, {
-				name = p2.name,
+				name = "default:dry_dirt_with_dry_grass",
 			})
 		end
 	end,
