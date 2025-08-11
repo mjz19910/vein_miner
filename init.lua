@@ -460,6 +460,7 @@ local wanted_groups = {
 	dry_grass = true,
 	tree_trunk = true,
 	flower = true,
+	stem = true,
 }
 
 local function dig_pos_process_queue_item(state, item, player_name)
@@ -585,8 +586,10 @@ local function dig_pos_process_queue_item(state, item, player_name)
 		table.insert_all(target_nodes, mining_groups.ore)
 		table.insert_all(target_nodes, mining_groups.grass)
 		table.insert_all(target_nodes, mining_groups.fern)
+		table.insert_all(target_nodes, mining_groups.dry_grass)
 		table.insert_all(target_nodes, mining_groups.flower)
 		table.insert_all(target_nodes, mining_groups.tree_trunk)
+		table.insert_all(target_nodes, mining_groups.stem)
 		table.insert_all(target_nodes, falling_nodes)
 	end
 	if group_target and not (known_groups[group_target] or wanted_groups[group_target]) then
