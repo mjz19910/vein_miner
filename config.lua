@@ -93,6 +93,11 @@ local mese_post_light = {
 	acacia = "default:mese_post_light_acacia_wood",
 }
 
+local leaves = {
+	normal = "default:leaves",
+	jungle = "default:jungleleaves",
+}
+
 ---@class VeinMinerConfig
 local CFG = {}
 
@@ -104,10 +109,16 @@ local MINE_ONLY_CUR_SET = {"default:snow", "default:stone_block", "farming:cotto
 	"wool:green", "wool:orange"}
 CFG.MINE_ONLY_CUR_SET = MINE_ONLY_CUR_SET
 ---@type string[]
-local IGNORED_NODES = {"default:chest", "default:leaves", "drawers:trim", "drawers:pine_wood1", "drawers:controller", "digtron:axle",
-	"digtron:light", "digtron:pusher", "digtron:digger", "digtron:builder", "digtron:structure", "digtron:inventory", "digtron:fuelstore",
-	"digtron:empty_crate", "digtron:auto_controller", "digtron:combined_storage", "digtron:inventory_ejector", "digtron:intermittent_digger",
-	"digtron:master_builder", "digtron:controller"}
+local ignore_list_default = {leaves.normal, leaves.jungle, "default:chest"}
+---@type string[]
+local digtron_parts = {"digtron:axle", "digtron:light", "digtron:pusher", "digtron:digger", "digtron:builder", "digtron:structure",
+	"digtron:inventory", "digtron:fuelstore", "digtron:empty_crate", "digtron:auto_controller", "digtron:combined_storage",
+	"digtron:inventory_ejector", "digtron:intermittent_digger", "digtron:master_builder", "digtron:controller"}
+---@type string[]
+local IGNORED_NODES = {}
+table.insert_all(IGNORED_NODES, ignore_list_default)
+table.insert_all(IGNORED_NODES, digtron_parts)
+table.insert_all(IGNORED_NODES, {"drawers:trim", "drawers:pine_wood1", "drawers:controller"})
 CFG.IGNORED_NODES = IGNORED_NODES
 ---@type string[]
 local SURFACE_NODES = {dirt.grass.normal, dirt.grass.snow, dirt.grass.rainforest, dirt.grass.coniferous, dirt.grass.dry,
