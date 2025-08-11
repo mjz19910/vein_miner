@@ -76,7 +76,7 @@ local trees = {
 local cobble = {
 	normal = "default:cobble",
 	mossy = "default:mossycobble",
-	stairs = "stairs:stair_cobble",
+	stair = "stairs:stair_cobble",
 }
 
 local mesecons = {
@@ -135,7 +135,7 @@ local MINE_ONLY_GROUPS = {
 	misc = {"default:silver_sandstone_brick"},
 	cobble = {cobble.normal},
 	mossy_cobble = {cobble.mossy},
-	cobble_stairs = {cobble.stairs},
+	cobble_stair = {cobble.stair},
 }
 CFG.MINE_ONLY_GROUPS = MINE_ONLY_GROUPS
 ---@type Vector[]
@@ -191,7 +191,7 @@ table.insert(CFG.VEC_DIRS, p(0, 0, 0))
 -- distance limited to 3.1622776601684, ie 3.2
 table.insert_all(CFG.VEC_DIRS, gen_euclidean_offsets(64 / 20))
 
-ia(CFG.MINE_ONLY_CUR_SET, {cobble.normal, cobble.mossy, cobble.stairs})
+ia(CFG.MINE_ONLY_CUR_SET, {cobble.normal, cobble.mossy, cobble.stair})
 
 i(CFG.IGNORED_NODES, mese_post_light.normal)
 
