@@ -60,7 +60,7 @@ local grass = {
 	jungle = {"default:junglegrass"},
 	dry = {"default:dry_grass_1", "default:dry_grass_2", "default:dry_grass_3", "default:dry_grass_4", "default:dry_grass_5"},
 	marram = {"default:marram_grass_1", "default:marram_grass_2", "default:marram_grass_3", "default:marram_grass_4", "default:marram_grass_5"},
-	fern = {"default:fern_1", "default:fern_2", "default:fern_3"}
+	fern = {"default:fern_1", "default:fern_2", "default:fern_3"},
 }
 
 local flower = {
@@ -113,7 +113,7 @@ CFG.IGNORED_NODES = IGNORED_NODES
 local SURFACE_NODES = {dirt.grass.normal, dirt.grass.snow, dirt.grass.rainforest, dirt.grass.coniferous, dirt.grass.dry,
 	dirt.permafrost.moss, dirt.permafrost.stones, sand.with_kelp}
 CFG.SURFACE_NODES = SURFACE_NODES
----@type table<string, string[]>
+---@class MiningGroups
 local MINE_ONLY_GROUPS = {
 	grass = grass.normal,
 	jungle_grass = grass.jungle,
@@ -240,7 +240,9 @@ ia(mine_only_set, {"mesecons_movestones:sticky_movestone"})
 local mine_groups = CFG.MINE_ONLY_GROUPS
 mine_groups.coral = {"default:coral_skeleton", "default:coral_green", "default:coral_cyan", "default:coral_pink", "default:coral_orange",
 	"default:coral_brown"}
-mine_groups.target_nodes = {clay, dirt.dry}
+---@type string[]
+local target_nodes = {clay, dirt.dry}
+mine_groups.target_nodes = target_nodes
 table.insert_all(mine_groups.target_nodes, CFG.SURFACE_NODES)
 local ignored_nodes = CFG.IGNORED_NODES
 table.insert_all(ignored_nodes, {dirt.normal, dirt.dry})

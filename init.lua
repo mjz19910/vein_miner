@@ -657,6 +657,7 @@ local zneg = vector.new(0, 0, -1)
 
 local water_targets = {"default:water_flowing", "default:water_source", "default:lava_flowing", "default:lava_source"}
 
+---@type MiningGroups
 local mine_only_groups = CFG.MINE_ONLY_GROUPS
 local mine_node_to_group_map = CFG.mine_node_to_group_map
 
@@ -786,7 +787,7 @@ local function dig_pos_process_queue_item(state, item, player_name)
 	-- dry_grass = grass.dry,
 	-- marram_grass = grass.marram,
 	-- fern = grass.fern,
-	if group_target == "tree_trunks" then
+	if group_target == "tree_trunk" then
 		table.insert_all(target_nodes, mine_only_groups.grass)
 		table.insert_all(target_nodes, mine_only_groups.jungle_grass)
 		table.insert_all(target_nodes, mine_only_groups.dry_grass)
