@@ -126,10 +126,6 @@ local mg_tree_trunk = {jt, aspen, def_tree, acacia, pine, cobble}
 ---@param player Player
 ---@param skip_pos table<integer, boolean>
 local function place_log_over_dirt(pos, oldnode, player, skip_pos)
-	if table.contains(mg_tree_trunk, oldnode.name) then
-		return
-	end
-
 	-- The dirt is below the dug node
 	local under_pos = pos + yneg
 	local under_node = core.get_node_or_nil(under_pos)
@@ -146,9 +142,6 @@ local function place_log_over_dirt(pos, oldnode, player, skip_pos)
 
 		-- Try to find a block in main inventory
 		for _, log_name in ipairs(mg_tree_trunk) do
-			if oldnode.name == log_name then
-				return
-			end
 			if inv:contains_item("main", log_name) then
 				local node = core.get_node_or_nil(pos)
 				if node and node.name == "air" then

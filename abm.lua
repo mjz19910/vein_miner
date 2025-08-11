@@ -30,8 +30,8 @@ core.register_abm({
 	label = "Remove invalid dirt towers",
 	nodenames = {"default:dirt_with_rainforest_litter"},
 	neighbors = {"air", "default:dirt"},
-	interval = 2,
-	chance = 2,
+	interval = 15,
+	chance = 50,
 	catch_up = false,
 	action = function(pos, node)
 		local above = vector.offset(pos, 0, 1, 0)
