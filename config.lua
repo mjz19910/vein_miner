@@ -274,8 +274,8 @@ CFG.mine_only_cur_set = mine_only_cur_set
 for k, v in pairs(CFG.MINE_ONLY_CUR_SET) do
 	mine_only_cur_set[v] = true
 end
----@type table<string, table<string, boolean>>
-local mine_only_group_sets = vein_miner.h.generate_mine_only_sets(mine_only_groups, mine_only_cur_set)
-CFG.mine_only_group_sets = mine_only_group_sets
+---@type table<string, string>
+local mine_node_to_group_map = vein_miner.h.generate_mine_only_sets(mine_only_groups, mine_only_cur_set)
+CFG.mine_node_to_group_map = mine_node_to_group_map
 
 return CFG

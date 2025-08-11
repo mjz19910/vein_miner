@@ -655,6 +655,10 @@ local zpos = vector.new(0, 0, 1)
 local zneg = vector.new(0, 0, -1)
 
 local water_targets = {"default:water_flowing", "default:water_source", "default:lava_flowing", "default:lava_source"}
+
+local mine_only_groups = CFG.MINE_ONLY_GROUPS
+local mine_node_to_group_map = CFG.mine_node_to_group_map
+
 local falling_target_nodes = table.copy(mine_only_groups.sand)
 table.insert_all(falling_target_nodes, mine_only_groups.silver_sand)
 table.insert_all(falling_target_nodes, mine_only_groups.gravel)
@@ -767,9 +771,9 @@ local function dig_pos_process_queue_item(state, item, player_name)
 			target_flags.falling = false
 			target_flags.liquid = false
 		end
-		if mine_only_group_sets[node_name] ~= nil then
-			local target_key = mine_only_group_sets[node_name]
-			table.insert_all(target_nodes, mine_only_groups[target_key])
+		if mine_node_to_group_map[node_name] ~= nil then
+			local target_key = mine_node_to_group_map[node_name]
+			table.insert_all(target_nodes, mine_node_to_group_map[target_key])
 			group_target = target_key
 		else
 			table.insert(target_nodes, node_name)
