@@ -33,7 +33,6 @@ vein_miner.deque = require("mods.vein_miner.deque")
 vein_miner.voxel_util = require("mods.vein_miner.voxel_util")
 local CFG = require("mods.vein_miner.config")
 vein_miner.CFG = CFG
-require("mods.vein_miner.helpers")
 ---@type VeinMinerHelpers
 local h = require("mods.vein_miner.helpers")
 vein_miner.h = h
