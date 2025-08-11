@@ -88,30 +88,34 @@ local mesecons = {
 	sticky_blocks = {"mesecons_stickyblocks:sticky_block_all"},
 }
 
----@class VeinMinerConfig
-local CFG = {}
-
 local mese_post_light = {
 	normal = "default:mese_post_light",
 	pine = "default:mese_post_light_pine_wood",
 	acacia = "default:mese_post_light_acacia_wood",
 }
 
+---@class VeinMinerConfig
+local CFG = {}
+
 ---@type string[]
-CFG.LIGHT_NODES = {mese_post_light.pine, mese_post_light.acacia}
+local LIGHT_NODES = {mese_post_light.pine, mese_post_light.acacia}
+CFG.LIGHT_NODES = LIGHT_NODES
 ---@type string[]
-CFG.MINE_ONLY_CUR_SET = {"default:snow", "default:stone_block", "farming:cotton_wild", "fire:basic_flame", "default:obsidian", "wool:green",
-	"wool:orange"}
+local MINE_ONLY_CUR_SET = {"default:snow", "default:stone_block", "farming:cotton_wild", "fire:basic_flame", "default:obsidian",
+	"wool:green", "wool:orange"}
+CFG.MINE_ONLY_CUR_SET = MINE_ONLY_CUR_SET
 ---@type string[]
-CFG.IGNORED_NODES = {"default:chest", "default:leaves", "drawers:trim", "drawers:pine_wood1", "drawers:controller", "digtron:axle",
+local IGNORED_NODES = {"default:chest", "default:leaves", "drawers:trim", "drawers:pine_wood1", "drawers:controller", "digtron:axle",
 	"digtron:light", "digtron:pusher", "digtron:digger", "digtron:builder", "digtron:structure", "digtron:inventory", "digtron:fuelstore",
 	"digtron:empty_crate", "digtron:auto_controller", "digtron:combined_storage", "digtron:inventory_ejector", "digtron:intermittent_digger",
 	"digtron:master_builder", "digtron:controller"}
+CFG.IGNORED_NODES = IGNORED_NODES
 ---@type string[]
-CFG.SURFACE_NODES = {dirt.grass.normal, dirt.grass.snow, dirt.grass.rainforest, dirt.grass.coniferous, dirt.grass.dry, dirt.permafrost.moss,
-	dirt.permafrost.stones, sand.with_kelp}
+local SURFACE_NODES = {dirt.grass.normal, dirt.grass.snow, dirt.grass.rainforest, dirt.grass.coniferous, dirt.grass.dry,
+	dirt.permafrost.moss, dirt.permafrost.stones, sand.with_kelp}
+CFG.SURFACE_NODES = SURFACE_NODES
 ---@type table<string, string[]>
-CFG.MINE_ONLY_GROUPS = {
+local MINE_ONLY_GROUPS = {
 	grass = grass.normal,
 	jungle_grass = grass.jungle,
 	dry_grass = grass.dry,
@@ -136,12 +140,15 @@ CFG.MINE_ONLY_GROUPS = {
 	mossy_cobble = {cobble.mossy},
 	cobble_stairs = {cobble.stairs},
 }
+CFG.MINE_ONLY_GROUPS = MINE_ONLY_GROUPS
 ---@type Vector[]
-CFG.VEC_DIRS = {}
+local VEC_DIRS = {}
+CFG.VEC_DIRS = VEC_DIRS
 ---@type Vector[]
-CFG.FLOATING_DIRS = {p(1, 0, 0), p(-1, 0, 0), p(0, 1, 0), p(0, -1, 0), p(0, 0, 1), p(0, 0, -1)}
+local FLOATING_DIRS = {p(1, 0, 0), p(-1, 0, 0), p(0, 1, 0), p(0, -1, 0), p(0, 0, 1), p(0, 0, -1)}
+CFG.FLOATING_DIRS = FLOATING_DIRS
 ---@type string[]
-CFG.COLOR_PALETTE = {"#ff0000", "#ff3300", "#ff6600", "#ff3333", "#cc0000", "#cc3333", "#990000", "#990033", "#660000", "#660033",
+local COLOR_PALETTE = {"#ff0000", "#ff3300", "#ff6600", "#ff3333", "#cc0000", "#cc3333", "#990000", "#990033", "#660000", "#660033",
 	"#ff0033", "#ff3366", "#ff6666", "#ff9999", "#ffcccc", "#ff6600", "#ff9900", "#ffcc00", "#ffff00", "#ffcc33", "#ffff33", "#cccc00",
 	"#cccc33", "#999900", "#999933", "#ff00ff", "#ff33ff", "#ff66ff", "#ff99ff", "#ff3399", "#ff6699", "#ff99cc", "#ff66cc", "#ff33cc",
 	"#cc00cc", "#cc33cc", "#cc66cc", "#cc99cc", "#cc00ff", "#cc33ff", "#cc66ff", "#cc99ff", "#9900cc", "#990099", "#660066", "#00ff00",
@@ -151,13 +158,16 @@ CFG.COLOR_PALETTE = {"#ff0000", "#ff3300", "#ff6600", "#ff3333", "#cc0000", "#cc
 	"#00cc66", "#0000ff", "#3333ff", "#6666ff", "#9999ff", "#0000cc", "#3333cc", "#6666cc", "#9999cc", "#000099", "#333399", "#666699",
 	"#000066", "#333366", "#666666", "#000033", "#333333", "#3300ff", "#6600ff", "#9900ff", "#cc00ff", "#ff00cc", "#ff33cc", "#ff66cc",
 	"#ff99cc", "#cc3399", "#990066", "#660033", "#ffffff", "#cccccc", "#999999", "#666666", "#333333", "#000000"}
+CFG.COLOR_PALETTE = COLOR_PALETTE
 -- Define which nodes are considered "sticky"
 ---@type table<string, boolean>
-CFG.sticky_nodes = {
+local sticky_nodes = {
 	["mesecons_stickyblocks:sticky_block_all"] = true,
 }
+CFG.sticky_nodes = sticky_nodes
 ---@type Vector[]
-CFG.cardinal_dirs = {p(1, 0, 0), p(-1, 0, 0), p(0, 1, 0), p(0, -1, 0), p(0, 0, 1), p(0, 0, -1)}
+local cardinal_dirs = {p(1, 0, 0), p(-1, 0, 0), p(0, 1, 0), p(0, -1, 0), p(0, 0, 1), p(0, 0, -1)}
+CFG.cardinal_dirs = cardinal_dirs
 CFG.MAX_MINED_NODES = 188
 
 ---@param radius number

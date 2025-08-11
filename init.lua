@@ -31,7 +31,8 @@ local require = utils.require
 vein_miner.utils = utils
 vein_miner.deque = require("mods.vein_miner.deque")
 vein_miner.voxel_util = require("mods.vein_miner.voxel_util")
-require("mods.vein_miner.config")
+local CFG = require("mods.vein_miner.config")
+vein_miner.CFG = CFG
 require("mods.vein_miner.helpers")
 ---@type VeinMinerHelpers
 local h = require("mods.vein_miner.helpers")
@@ -730,9 +731,9 @@ local function dig_pos_process_queue_item(state, item, player_name)
 	end
 
 	local target_nodes = {}
-	table.insert_all(target_nodes, mine_only_groups.target_nodes)
-	table.insert_all(target_nodes, mine_only_groups.stone)
-	table.insert_all(target_nodes, mine_only_groups.ore)
+	table.insert_all(target_nodes, CFG.mine_only_groups.target_nodes)
+	table.insert_all(target_nodes, CFG.mine_only_groups.stone)
+	table.insert_all(target_nodes, CFG.mine_only_groups.ore)
 	local target_flags = {
 		liquid = true,
 		falling = true,
