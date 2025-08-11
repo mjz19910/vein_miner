@@ -5,10 +5,14 @@ local vein_miner = vein_miner
 local register_node = core.register_node
 local insert = table.insert
 
+---@type VeinMinerConfig
 local CFG = vein_miner.CFG
 
+---@type table<string, boolean>
 local mine_only_cur_set = CFG.mine_only_cur_set
+---@type table<string, table<string, boolean>>
 local mine_only_group_sets = CFG.mine_only_group_sets
+---@type table<string, string[]>
 local mine_only_groups = CFG.MINE_ONLY_GROUPS
 
 local function node_sound_defaults(tbl)
