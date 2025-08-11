@@ -11,17 +11,17 @@ local i = table.insert
 local ia = table.insert_all
 
 local dirt = {
-	normal = "default:dirt",
+	"default:dirt",
 	dry = "default:dry_dirt",
 	grass = {
-		normal = "default:dirt_with_grass",
+		"default:dirt_with_grass",
 		dry = "default:dry_dirt_with_dry_grass",
 		snow = "default:dirt_with_snow",
 		rainforest = "default:dirt_with_rainforest_litter",
 		coniferous = "default:dirt_with_coniferous_litter",
 	},
 	permafrost = {
-		normal = "default:permafrost",
+		"default:permafrost",
 		moss = "default:permafrost_with_moss",
 		stones = "default:permafrost_with_stones",
 	},
@@ -30,7 +30,7 @@ local dirt = {
 local clay = "default:clay"
 
 local stone = {
-	normal = "default:stone",
+	"default:stone",
 	ore = {
 		coal = "default:stone_with_coal",
 		copper = "default:stone_with_copper",
@@ -48,15 +48,33 @@ local stone = {
 }
 
 local sand = {
-	normal = "default:sand",
+	"default:sand",
 	silver = "default:silver_sand",
 	with_kelp = "default:sand_with_kelp",
+}
+
+local sandstone = {
+	{
+		"default:sandstone",
+		block = "default:sandstone_block",
+		brick = "default:sandstonebrick",
+	},
+	desert = {
+		"default:desert_sandstone",
+		block = "default:desert_sandstone_block",
+		brick = "default:desert_sandstone_brick",
+	},
+	silver = {
+		"default:silver_sandstone",
+		block = "default:silver_sandstone_block",
+		brick = "default:silver_sandstone_brick",
+	},
 }
 
 local gravel = "default:gravel"
 
 local grass = {
-	normal = {"default:grass_1", "default:grass_2", "default:grass_3", "default:grass_4", "default:grass_5"},
+	{"default:grass_1", "default:grass_2", "default:grass_3", "default:grass_4", "default:grass_5"},
 	jungle = {"default:junglegrass"},
 	dry = {"default:dry_grass_1", "default:dry_grass_2", "default:dry_grass_3", "default:dry_grass_4", "default:dry_grass_5"},
 	marram = {"default:marram_grass_1", "default:marram_grass_2", "default:marram_grass_3", "default:marram_grass_4", "default:marram_grass_5"},
@@ -64,7 +82,7 @@ local grass = {
 }
 
 local flower = {
-	common = {"flowers:chrysanthemum_green", "flowers:dandelion_yellow", "flowers:dandelion_white", "flowers:tulip_black", "flowers:tulip",
+	{"flowers:chrysanthemum_green", "flowers:dandelion_yellow", "flowers:dandelion_white", "flowers:tulip_black", "flowers:tulip",
 		"flowers:viola", "flowers:rose"},
 	mushroom = {"flowers:mushroom_brown", "flowers:mushroom_red"},
 }
@@ -75,7 +93,7 @@ local trees = {
 }
 
 local cobble = {
-	normal = "default:cobble",
+	"default:cobble",
 	mossy = "default:mossycobble",
 	stair = "stairs:stair_cobble",
 }
@@ -88,13 +106,13 @@ local mesecon = {
 }
 
 local mese_post_light = {
-	normal = "default:mese_post_light",
+	"default:mese_post_light",
 	pine = "default:mese_post_light_pine_wood",
 	acacia = "default:mese_post_light_acacia_wood",
 }
 
 local leaves = {
-	normal = "default:leaves",
+	"default:leaves",
 	jungle = "default:jungleleaves",
 }
 
@@ -109,7 +127,7 @@ local MINE_ONLY_CUR_SET = {"default:snow", "default:stone_block", "farming:cotto
 	"wool:green", "wool:orange"}
 CFG.MINE_ONLY_CUR_SET = MINE_ONLY_CUR_SET
 ---@type string[]
-local ignore_list_default = {leaves.normal, leaves.jungle, "default:chest"}
+local ignore_list_default = {leaves[1], leaves.jungle, "default:chest"}
 ---@type string[]
 local digtron_parts = {"digtron:axle", "digtron:light", "digtron:pusher", "digtron:digger", "digtron:builder", "digtron:structure",
 	"digtron:inventory", "digtron:fuelstore", "digtron:empty_crate", "digtron:auto_controller", "digtron:combined_storage",
@@ -121,33 +139,34 @@ table.insert_all(IGNORED_NODES, digtron_parts)
 table.insert_all(IGNORED_NODES, {"drawers:trim", "drawers:pine_wood1", "drawers:controller"})
 CFG.IGNORED_NODES = IGNORED_NODES
 ---@type string[]
-local SURFACE_NODES = {dirt.grass.normal, dirt.grass.snow, dirt.grass.rainforest, dirt.grass.coniferous, dirt.grass.dry,
-	dirt.permafrost.moss, dirt.permafrost.stones, sand.with_kelp}
+local SURFACE_NODES = {dirt.grass[1], dirt.grass.snow, dirt.grass.rainforest, dirt.grass.coniferous, dirt.grass.dry, dirt.permafrost.moss,
+	dirt.permafrost.stones, sand.with_kelp}
 CFG.SURFACE_NODES = SURFACE_NODES
 ---@class MiningGroups
 local MINE_ONLY_GROUPS = {
-	grass = grass.normal,
+	grass = grass[1],
 	jungle_grass = grass.jungle,
 	dry_grass = grass.dry,
 	marram_grass = grass.marram,
 	fern = grass.fern,
 	blueberry = {"default:blueberry_bush_leaves", "default:blueberry_bush_leaves_with_berries"},
 	gravel = {gravel},
-	silver_sand = {sand.silver},
-	sand = {sand.normal},
+	silver_sand = {sand.silver[1]},
+	sand = {sand[1]},
 	flower = flower.common,
 	mushroom = flower.mushroom,
 	stem = trees.stem,
 	tree_trunk = trees.trunk,
-	dirt = {dirt.normal, dirt.permafrost.normal},
+	dirt = {dirt[1], dirt.permafrost[1]},
 	ore = {stone.ore.coal, stone.ore.copper, stone.ore.diamond, stone.ore.gold, stone.ore.iron, stone.ore.mese, stone.ore.tin},
-	stone = {stone.normal, stone.desert, stone.sandstone, stone.desert_sandstone, stone.silver_sandstone, stone.cave_ice},
+	stone = {stone[1], stone.desert, stone.sandstone, stone.desert_sandstone, stone.silver_sandstone, stone.cave_ice},
 	mesecon_wire = mesecon.wire,
 	mesecon_vertical_wire = mesecon.vertical_wire,
-	misc = {"default:silver_sandstone_brick"},
-	cobble = {cobble.normal},
+	misc = {sandstone.silver.brick},
+	cobble = {cobble[1]},
 	mossy_cobble = {cobble.mossy},
 	cobble_stair = {cobble.stair},
+	target_nodes = {},
 }
 CFG.MINE_ONLY_GROUPS = MINE_ONLY_GROUPS
 ---@type Vector[]
@@ -169,7 +188,7 @@ local COLOR_PALETTE = {"#ff0000", "#ff3300", "#ff6600", "#ff3333", "#cc0000", "#
 	"#ff99cc", "#cc3399", "#990066", "#660033", "#ffffff", "#cccccc", "#999999", "#666666", "#333333", "#000000"}
 CFG.COLOR_PALETTE = COLOR_PALETTE
 -- Define which nodes are considered "sticky"
----@type table<string, boolean>
+---@class StickyNodes
 local sticky_nodes = {
 	["mesecons_stickyblocks:sticky_block_all"] = true,
 }
@@ -203,9 +222,9 @@ table.insert(CFG.VEC_DIRS, p(0, 0, 0))
 -- distance limited to 3.1622776601684, ie 3.2
 table.insert_all(CFG.VEC_DIRS, gen_euclidean_offsets(64 / 20))
 
-ia(CFG.MINE_ONLY_CUR_SET, {cobble.normal, cobble.mossy, cobble.stair})
+ia(CFG.MINE_ONLY_CUR_SET, {cobble[1], cobble.mossy, cobble.stair})
 
-i(CFG.IGNORED_NODES, mese_post_light.normal)
+i(CFG.IGNORED_NODES, mese_post_light[1])
 
 -- go to the next nodeid (ex.: 01000011 --> 01000100)
 local nid_inc = function() end
@@ -247,16 +266,15 @@ i(mine_only_set, "mesecons_powerplant:power_plant")
 ia(mine_only_set, {"mesecons_movestones:sticky_movestone_vertical", "mesecons_stickyblocks:sticky_block_all"})
 ia(mine_only_set, {"mesecons_movestones:sticky_movestone"})
 
----@type table<string, string[]>
+---@type MiningGroups
 local mine_groups = CFG.MINE_ONLY_GROUPS
 mine_groups.coral = {"default:coral_skeleton", "default:coral_green", "default:coral_cyan", "default:coral_pink", "default:coral_orange",
 	"default:coral_brown"}
----@type string[]
-local target_nodes = {clay, dirt.dry}
 mine_groups.target_nodes = target_nodes
 table.insert_all(mine_groups.target_nodes, CFG.SURFACE_NODES)
+table.insert_all(mine_groups.target_nodes, {dirt[1], clay, dirt.dry})
 local ignored_nodes = CFG.IGNORED_NODES
-table.insert_all(ignored_nodes, {dirt.normal, dirt.dry})
+table.insert_all(ignored_nodes, {dirt[1], dirt.dry})
 table.insert_all(ignored_nodes, CFG.SURFACE_NODES)
 
 ---@type table<string, boolean>
