@@ -135,19 +135,58 @@ local stack = {}
 ---@field damage_groups table<string, number>
 
 ---@class ToolGroupCap
----@field times table<number, number>  -- [level] = time
----@field uses integer
----@field maxlevel integer
+---@field maxlevel integer|nil
+---@field uses integer|nil
+---@field times table<number, number>|nil -- map from rating (int) to time (float)
+
+---@class ToolCapabilities
+---@field full_punch_interval number|nil
+---@field max_drop_level integer|nil
+---@field punch_attack_uses integer|nil
+---@field groupcaps table<string, ToolGroupCap>|nil
+---@field damage_groups table<string, integer>|nil
+
+---@alias WearBarBlendMode '"constant"' | '"linear"' | '"smooth"'
+
+---@class ARGBColor
+---@field a integer|nil @Alpha channel (0-255), defaults to 255 if omitted
+---@field r integer @Red channel (0-255), required
+---@field g integer @Green channel (0-255), required
+---@field b integer @Blue channel (0-255), required
+
+---@alias ColorParam ARGBColor|integer|string
+-- ColorParam can be:
+-- - a table with `a`, `r`, `g`, `b` integer fields (ARGBColor),
+-- - a integer representing a packed color
+-- - or a string color name or hex string.
+
+---@class WearBarParams
+---@field color_stops table<number, ColorParam> -- keys 0..1, values color specs
+---@field blend WearBarBlendMode|nil
+--- from read_wear_bar_params
 
 ---@class ItemStackMetaRef : MetaRef
----@field set_tool_capabilities fun(self: ItemStackMetaRef, caps: table|nil)
----@field set_wear_bar_params fun(self: ItemStackMetaRef, params: table|string|nil)
+---@field set_tool_capabilities fun(self: ItemStackMetaRef, caps: ToolCapabilities|nil)
+---@field set_wear_bar_params fun(self: ItemStackMetaRef, params: WearBarParams|string|nil)
 
 ---@class Player: ObjectRef
 local player = {}
 
 ---@class PlayerControl
+---@field up boolean
+---@field down boolean
+---@field left boolean
+---@field right boolean
+---@field jump boolean
+---@field aux1 boolean
 ---@field sneak boolean
+---@field dig boolean
+---@field place boolean
+---@field movement_x number
+---@field movement_y number
+---@field LMB boolean
+---@field RMB boolean
+---@field zoom boolean
 local player_control = player.get_player_control()
 
 ---@class Chunk
