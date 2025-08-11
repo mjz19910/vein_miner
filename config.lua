@@ -171,7 +171,8 @@ local mine_groups = {
 	target_nodes = {},
 	surface = {},
 }
-CFG.MINE_ONLY_GROUPS = mine_groups
+---@type MiningGroups
+CFG.mining_groups = mine_groups
 ---@type Vector[]
 local VEC_DIRS = {}
 CFG.VEC_DIRS = VEC_DIRS
@@ -299,7 +300,7 @@ table.insert_all(mine_groups.surface, {dirt.grass.snow, dirt.grass.rainforest, d
 table.insert_all(mine_groups.surface, {dirt.permafrost.moss, dirt.permafrost.stones})
 table.insert_all(mine_groups.surface, {sand.with_kelp})
 
-local mine_only_groups = CFG.MINE_ONLY_GROUPS
+local mining_groups = CFG.mining_groups
 ---@type table<string, boolean>
 local mine_only_cur_set = {}
 CFG.mine_only_cur_set = mine_only_cur_set
@@ -307,7 +308,7 @@ for k, v in pairs(CFG.MINE_ONLY_CUR_SET) do
 	mine_only_cur_set[v] = true
 end
 ---@type table<string, string>
-local mine_node_to_group_map = vein_miner.h.generate_mine_only_sets(mine_only_groups, mine_only_cur_set)
+local mine_node_to_group_map = vein_miner.h.generate_mine_only_sets(mining_groups, mine_only_cur_set)
 ---@type table<string, string>
 CFG.mine_node_to_group_map = mine_node_to_group_map
 

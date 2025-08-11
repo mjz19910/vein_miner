@@ -415,7 +415,7 @@ local zneg = vector.new(0, 0, -1)
 local water_targets = {"default:water_flowing", "default:water_source", "default:lava_flowing", "default:lava_source"}
 
 ---@type MiningGroups
-local mining_groups = CFG.MINE_ONLY_GROUPS
+local mining_groups = CFG.mining_groups
 local mine_node_to_group_map = CFG.mine_node_to_group_map
 
 local falling_nodes = table.copy(mining_groups.sand)
@@ -443,7 +443,9 @@ vein_miner.scanner = scanner
 
 require("mods.vein_miner.globalstep")
 
-local known_groups = {}
+local known_groups = {
+	cobble = true
+}
 local wanted_groups = {
 	stone = true,
 	dirt = true,
@@ -828,9 +830,13 @@ vein_miner.state = {}
 ---@class VeinMinerState
 ---@field pos Vector
 ---@field queue Deque
+---@field player Player
+---@field player_name string
+---@field skip_pos table<integer, boolean>
 ---@param player Player
 ---@param player_name string
 ---@param pos Vector
+---@param wielded ItemStack
 function vein_miner.state.new(pos, player, player_name, wielded)
 	local state = {
 		pos = pos,
@@ -843,6 +849,7 @@ function vein_miner.state.new(pos, player, player_name, wielded)
 		total_action_count = 0,
 		found_light_count = 0,
 		running = false,
+		skip_pos = {},
 	}
 
 	return setmetatable(state, VeinMinerState)

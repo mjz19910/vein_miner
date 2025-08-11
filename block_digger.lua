@@ -13,8 +13,11 @@ local liquid_set = {
 }
 
 local BlockDigger = {}
+---@type VeinMinerGlobal
 local vein_miner = vein_miner
+---@type VectorModule
 local vector = vector
+---@type LuantiCore
 local core = core
 local ipairs = ipairs
 local p = vector.new
@@ -28,6 +31,7 @@ local check_for_falling_neighbors = {p(-1, -1, 0), p(1, -1, 0), p(0, -1, -1), p(
 local contains = table.contains
 local get_node = core.get_node
 
+---@type VeinMinerConfig
 local CFG = vein_miner.CFG
 local sticky_nodes = CFG.sticky_nodes
 
@@ -108,11 +112,64 @@ local log_action = h.log_action
 local mod_pos = h.mod_pos
 local is_liquid = h.is_liquid
 local fill_liquid_at_pos = vein_miner.fill_liquid_at_pos
+local yneg = vector.new(0, -1, 0)
+local jt = "default:jungletree"
+local def_tree = "default:tree"
+local pine = "default:pine_tree"
+local aspen = "default:aspen_tree"
+local acacia = "default:acacia_tree"
+local cobble = "default:cobble"
+local mg_tree_trunk = {jt, aspen, def_tree, acacia, pine, cobble}
+
+---@param pos Vector
+---@param oldnode MapNode
+---@param player Player
+---@param skip_pos table<integer, boolean>
+local function place_log_over_dirt(pos, oldnode, player, skip_pos)
+	if table.contains(mg_tree_trunk, oldnode.name) then
+		return
+	end
+
+	-- The dirt is below the dug node
+	local under_pos = pos + yneg
+	local under_node = core.get_node_or_nil(under_pos)
+
+	if not under_node then
+		return
+	end
+
+	local under_name = under_node.name
+
+	-- Check if the uncovered node is dirt or dry_dirt
+	if under_name == "default:dirt" or under_name == "default:dry_dirt" then
+		local inv = player:get_inventory()
+
+		-- Try to find a block in main inventory
+		for _, log_name in ipairs(mg_tree_trunk) do
+			if oldnode.name == log_name then
+				return
+			end
+			if inv:contains_item("main", log_name) then
+				local node = core.get_node_or_nil(pos)
+				if node and node.name == "air" then
+					skip_pos[core.hash_node_position(pos)] = true
+					core.set_node(pos, {
+						name = log_name,
+					})
+					inv:remove_item("main", log_name)
+				end
+				break
+			end
+		end
+	end
+end
 
 ---@param state VeinMinerState
 ---@param node_name string
 ---@param node_list MapNode[]
 function BlockDigger.dig_node_list(state, node_name, node_list, repeat_count)
+	local player = state.player
+	local skip_pos = state.skip_pos
 	local mined_nodes_count = 0
 	if is_liquid(node_name, "water") or is_liquid(node_name, "lava") then
 		if true then
@@ -135,13 +192,18 @@ function BlockDigger.dig_node_list(state, node_name, node_list, repeat_count)
 		return 0
 	end
 	local function dig(pos, node)
-		core.node_dig(pos, node, state.player)
+		core.node_dig(pos, node, player)
 		state.wielded:add_wear(dp.wear)
 		state.cur_mined_nodes = state.cur_mined_nodes + 1
 		mined_nodes_count = mined_nodes_count + 1
+
+		place_log_over_dirt(pos, node, player, state.skip_pos)
 	end
 	local wear_limit = 65535 - dp.wear
 	for index, pos in pairs(node_list) do
+		if state.skip_pos[core.hash_node_position(pos)] then
+			goto next_node
+		end
 		if state.wielded:get_wear() < wear_limit then
 			local p = state.prev_pos
 			local area_sector = mod_pos(pos, vector.new(16, 16, 16))

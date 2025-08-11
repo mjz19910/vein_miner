@@ -4,7 +4,6 @@ local error = error
 local core = core
 local dofile = dofile
 local vector = vector
-local table = table
 local math = math
 local floor = math.floor
 local p = vector.new
@@ -25,6 +24,8 @@ function table.contains(table, element)
 	end
 	return false
 end
+
+local table = table
 
 ---@param self Vector
 ---@param b Vector

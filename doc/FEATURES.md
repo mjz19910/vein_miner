@@ -19,7 +19,7 @@ A dynamic and configurable Minetest mod for intelligent vein mining, region scan
 - Sticky node detection.
 - Liquid filtering (`water`, `lava`).
 - Graceful fallback for unexpected nodes.
-- Dynamic target node groups via `mine_only_groups`.
+- Dynamic target node groups via `mining_groups`.
 
 ### Inventory Management
 - Waits until empty main inventory slot is available before digging.
