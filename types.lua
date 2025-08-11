@@ -18,19 +18,40 @@
 local deq = {}
 
 ---@class InvRef
+---@field is_empty fun(self: InvRef, listname: string): boolean
 ---@field get_size fun(self: InvRef, listname: string): integer
----@field set_size fun(self: InvRef, listname: string, size: integer)
+---@field set_size fun(self: InvRef, listname: string, size: integer): boolean
 ---@field get_width fun(self: InvRef, listname: string): integer
----@field set_width fun(self: InvRef, listname: string, width: integer)
+---@field set_width fun(self: InvRef, listname: string, width: integer): boolean
 ---@field get_stack fun(self: InvRef, listname: string, index: integer): ItemStack
----@field set_stack fun(self: InvRef, listname: string, index: integer, stack: ItemStack)
----@field add_item fun(self: InvRef, listname: string, stack: ItemStack): ItemStack|nil
----@field remove_item fun(self: InvRef, listname: string, stack: ItemStack): ItemStack|nil
----@field room_for_item fun(self: InvRef, listname: string, stack: ItemStack): boolean
----@field contains_item fun(self: InvRef, listname: string, stack: ItemStack): boolean
----@field get_list_names fun(self: InvRef): string[]
----@field set_location fun(self: InvRef, location: string)
+---@field set_stack fun(self: InvRef, listname: string, index: integer, stack: ItemStack): boolean
+---@field get_list fun(self: InvRef, listname: string): ItemStack[]|nil
+---@field set_list fun(self: InvRef, listname: string, list: ItemStack[]): nil
+---@field get_lists fun(self: InvRef): table<string, ItemStack[]>
+---@field set_lists fun(self: InvRef, lists: table<string, ItemStack[]>): nil
+---@field add_item fun(self: InvRef, listname: string, item: ItemStack|string|table|nil): ItemStack
+---@field remove_item fun(self: InvRef, listname: string, item: ItemStack|string|table|nil, match_meta?: boolean): ItemStack
+---@field room_for_item fun(self: InvRef, listname: string, item: ItemStack|string|table|nil): boolean
+---@field contains_item fun(self: InvRef, listname: string, item: ItemStack|string|table|nil, match_meta?: boolean): boolean
+---@field get_location fun(self: InvRef): InvLocation
 local inv = {}
+
+---@alias InvLocation InvLocationPlayer|InvLocationNode|InvLocationDetached|InvLocationUndefined
+
+---@class InvLocationPlayer
+---@field type '"player"'
+---@field name string           -- player name
+
+---@class InvLocationNode
+---@field type '"node"'
+---@field pos Vector            -- node position {x=, y=, z=}
+
+---@class InvLocationDetached
+---@field type '"detached"'
+---@field name string           -- detached inventory name
+
+---@class InvLocationUndefined
+---@field type '"undefined"'
 
 ---@class MetaDataRef
 ---@field get_string fun(self: MetaDataRef, key: string): string
@@ -56,17 +77,7 @@ local meta = {}
 ---@field to_string fun(self: ItemStack): string
 local stack = {}
 
----@class Player
----@field get_player_name fun(self: Player): string
----@field get_pos fun(self: Player): Vector
----@field hud_add fun(self: Player, params: table): integer
----@field hud_remove fun(self: Player, id: integer)
----@field hud_change fun(self: Player, id: integer, params: table)
----@field hud_get fun(self: Player, id: integer): table
----@field get_wielded_item fun(self: Player): ItemStack
----@field set_wielded_item fun(self: Player, item: ItemStack|string)
----@field is_player fun(self: any): boolean
----@field get_player_control fun(self: Player): PlayerControl
+---@class Player: ObjectRef
 local player = {}
 
 ---@class PlayerControl
@@ -203,7 +214,7 @@ local utils = {}
 local l_utils = {}
 
 ---@class PlayerConfig
----@field mode "small"|"large"
+---@field mode '"small"'|'"large"'
 ---@field miny number
 ---@field maxy number
 ---@field last_maxy number|nil
@@ -252,7 +263,7 @@ local p_config = {}
 ---@field get_wield_list fun(self:ObjectRef): string
 ---@field get_wield_index fun(self:ObjectRef): number
 ---@field get_wielded_item fun(self:ObjectRef): ItemStack
----@field set_wielded_item fun(self:ObjectRef, item:ItemStack)
+---@field set_wielded_item fun(self:ObjectRef, item:ItemStack | string)
 ---
 ---## Armor
 ---@field set_armor_groups fun(self:ObjectRef, groups:table<string,integer>)
@@ -313,7 +324,7 @@ local p_config = {}
 ---@field get_inventory_formspec fun(self:ObjectRef): string
 ---@field set_formspec_prepend fun(self:ObjectRef, formspec:string)
 ---@field get_formspec_prepend fun(self:ObjectRef): string
----@field get_player_control fun(self:ObjectRef): table
+---@field get_player_control fun(self:ObjectRef): PlayerControl
 ---@field get_player_control_bits fun(self:ObjectRef): integer
 ---
 ---## HUD

@@ -1,4 +1,5 @@
 -- utils.lua
+local error = error
 local core = core
 local dofile = dofile
 local vector = vector
@@ -32,11 +33,13 @@ local utils = {}
 
 function utils.load(path) return dofile(modpath .. "/" .. path) end
 
+---@param modpath string
 function utils.require(modpath)
 	local relative_path = modpath:gsub("^mods%.vein_miner%.", ""):gsub("%.", "/") .. ".lua"
 	return utils.load(relative_path)
 end
 
+---@param time number
 function utils.async_wait(time)
 	yield({
 		wait = true,
@@ -44,6 +47,7 @@ function utils.async_wait(time)
 	})
 end
 
+---@param pos Vector
 function utils.can_player_fit(pos)
 	local pos_node = core.get_node(pos)
 	local above = vector.offset(pos, 0, 1, 0)
@@ -51,17 +55,12 @@ function utils.can_player_fit(pos)
 	return pos_node.name == "air" and above_node.name == "air"
 end
 
+---@param pos Vector
 function utils.check_pos(pos)
 	if utils.can_player_fit(pos) then
 		return pos
 	end
 	return nil
-end
-
-function utils:merge(other)
-	for k, v in pairs(other) do
-		self[k] = v
-	end
 end
 
 function utils.clamp_max(vmin, vmax, step)
@@ -129,9 +128,13 @@ function utils.find_closest_index(arr, value)
 	return closest_idx
 end
 
+---@param player Player
 function utils.has_empty_main_inv_slot(player)
 	local inventory = player:get_inventory()
 	local inv_list = inventory:get_list("main")
+	if not inv_list then
+		error("missing main list in player inventory")
+	end
 	for _, stack in ipairs(inv_list) do
 		if stack:is_empty() then
 			return true
