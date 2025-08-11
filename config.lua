@@ -220,6 +220,7 @@ local function register_wires_group()
 		end
 	end
 end
+
 register_wires_group()
 
 local mine_only_set = CFG.MINE_ONLY_CUR_SET
