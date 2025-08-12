@@ -56,6 +56,7 @@ require("mods.vein_miner.remove_walls")
 local player_hud = require("mods.vein_miner.player_hud")
 vein_miner.player_hud = player_hud
 local player_config_mgr = require("mods.vein_miner.player_config")
+---@type PlayerConfigManager
 vein_miner.player_config_mgr = player_config_mgr
 local l_utils = require("mods.vein_miner.late_utils")
 vein_miner.l_utils = l_utils
