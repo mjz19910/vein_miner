@@ -125,7 +125,7 @@ local function try_place_block_from_inventory(player, sound_info, target_pos, ma
 	return false
 end
 
-local max_recheck_count = 0
+local dbg_count = 0
 ---@type table<string, SoundInfo>
 local sound_info_per_player = {}
 
@@ -177,6 +177,15 @@ core.register_globalstep(function(dtime)
 					j = j + 1
 				end
 			end
+		end
+		if j == 0 then
+			local yaw = player:get_look_horizontal()
+			yaw = math.rad(math.deg(yaw) + (0.01) / 2)
+			player:set_look_horizontal(yaw)
+			dbg_count = dbg_count + 1
+		else
+			core.log("action", ("blocks placed after %d steps"):format(dbg_count))
+			dbg_count = 0
 		end
 		::continue::
 	end
