@@ -474,6 +474,7 @@ require("mods.vein_miner.globalstep")
 local known_groups = {
 	cobble = true,
 	surface = true,
+	sand = true,
 }
 local green_groups = {
 	cotton = true,
@@ -493,7 +494,6 @@ local wanted_groups = {
 	dirt = true,
 	gravel = true,
 	ore = true,
-	sand = true,
 	silver_sand = true,
 	stone = true,
 }
