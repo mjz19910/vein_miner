@@ -160,6 +160,11 @@ local function place_log_over_dirt(pos, oldnode, player, skip_pos)
 end
 
 ---@param state VeinMinerState
+---@param pos Vector
+---@param oldnode MapNode
+function BlockDigger.notify_dig(state, pos, oldnode) place_log_over_dirt(pos, oldnode, state.player, state.skip_pos) end
+
+---@param state VeinMinerState
 ---@param node_name string
 ---@param node_list MapNode[]
 function BlockDigger.dig_node_list(state, node_name, node_list, repeat_count)
@@ -192,7 +197,7 @@ function BlockDigger.dig_node_list(state, node_name, node_list, repeat_count)
 		state.cur_mined_nodes = state.cur_mined_nodes + 1
 		mined_nodes_count = mined_nodes_count + 1
 
-		place_log_over_dirt(pos, node, player, state.skip_pos)
+		BlockDigger.notify_dig(state, pos, node)
 	end
 	local wear_limit = 65535 - dp.wear
 	for index, pos in pairs(node_list) do

@@ -126,14 +126,28 @@ local function try_place_block_from_inventory(player, sound_info, target_pos, ma
 end
 
 local dbg_count = 0
+local time_until_block_place = 0
 ---@type table<string, SoundInfo>
 local sound_info_per_player = {}
+---@type table<string, number>
+local last_yaw_per_player = {}
+---@type table<string, boolean>
+local is_yaw_update_per_player_disabled = {}
 
 -- globalstep for vein_miner:auto_floor tool
 core.register_globalstep(function(dtime)
 	for _, player in ipairs(get_connected_players()) do
+		local yaw = player:get_look_horizontal()
+		if yaw ~= yaw then
+			player:set_look_horizontal(0)
+			yaw = 0
+		end
+		local name = player:get_player_name()
 		local wielded = player:get_wielded_item():get_name()
 		if wielded ~= "vein_miner:auto_floor" then
+			dbg_count = 0
+			last_yaw_per_player[name] = nil
+			is_yaw_update_per_player_disabled[name] = false
 			goto continue
 		end
 
@@ -147,7 +161,6 @@ core.register_globalstep(function(dtime)
 		end
 
 		local ctrl = player:get_player_control()
-		local name = player:get_player_name()
 		local config = player_config_mgr.data[name]
 		local sound_info = sound_info_per_player[name] or {}
 		sound_info.playing_sounds = {}
@@ -179,14 +192,29 @@ core.register_globalstep(function(dtime)
 			end
 		end
 		if j == 0 then
-			local yaw = player:get_look_horizontal()
-			yaw = math.rad(math.deg(yaw) + (0.01) / 2)
-			player:set_look_horizontal(yaw)
-			dbg_count = dbg_count + 1
+			time_until_block_place = time_until_block_place + 1
 		else
-			core.log("action", ("blocks placed after %d steps"):format(dbg_count))
+			core.log("action", ("blocks placed after %d steps"):format(time_until_block_place))
+			time_until_block_place = 0
+		end
+		if j == 0 and not is_yaw_update_per_player_disabled[name] then
+			local yaw_max = 0.04
+			local yaw_speed = yaw_max * dbg_count / 3
+			local new_yaw = math.rad((math.deg(yaw) + yaw_speed) % 360)
+			dbg_count = dbg_count + 1
+			if last_yaw_per_player[name] and new_yaw + 0.1 < last_yaw_per_player[name] then
+				is_yaw_update_per_player_disabled[name] = true
+				goto continue
+			end
+			if vector.length(player:get_velocity()) > 0.3 then
+				is_yaw_update_per_player_disabled[name] = true
+				goto continue
+			end
+			player:set_look_horizontal(new_yaw)
+		else
 			dbg_count = 0
 		end
+		last_yaw_per_player[name] = yaw
 		::continue::
 	end
 end)

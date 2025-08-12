@@ -502,6 +502,9 @@ for k, _ in pairs(wanted_groups) do
 	table.insert_all(wanted_list, mining_groups[k])
 end
 
+---@param state VeinMinerState
+---@param item ScanItem
+---@param player_name string
 local function dig_pos_process_queue_item(state, item, player_name)
 	local config = player_config_mgr.data[player_name]
 	local player = state.player
@@ -509,6 +512,10 @@ local function dig_pos_process_queue_item(state, item, player_name)
 	local pos = item.pos
 	local node_name = item.node_name
 	local options = item.options
+
+	if item.oldnode then
+		BlockDigger.notify_dig(state, pos, item.oldnode)
+	end
 
 	local xz_len = 8
 	local y_len = 8
@@ -664,46 +671,62 @@ local function dig_pos_process_queue_item(state, item, player_name)
 	state.pos_mod_seen[core.hash_node_position(minvec)] = true
 end
 
+---@class VeinMinerState
+---@field pos Vector
+---@field queue Deque<ScanItem>
+---@field player Player
+---@field player_name string
+---@field skip_pos table<integer, boolean>
+---@param player Player
+---@param player_name string
+---@param pos Vector
+---@param wielded ItemStack
+local VeinMinerState = {}
+VeinMinerState.__index = VeinMinerState
+
+vein_miner.mt = VeinMinerState
+
 -- Recursively mines a vein of blocks
-local function dig_pos(state)
-	state.prev_pos = nil
-	state.prev_sector = nil
-	state.seen_teleports_set = {}
-	state.logged_teleports = {}
-	state.teleport_skip_set = {}
-	state.known_lights = {}
+---@param self VeinMinerState
+function VeinMinerState:dig_pos()
+	self.prev_pos = nil
+	self.prev_sector = nil
+	self.seen_teleports_set = {}
+	self.logged_teleports = {}
+	self.teleport_skip_set = {}
+	self.known_lights = {}
 	if do_teleport_skip_warn then
-		state.teleport_skip_count = 0
+		self.teleport_skip_count = 0
 	end
-	state.mined_nodes = 0
-	state.cur_mined_nodes = 0
-	state.warn_next = 200
-	state.co_cur_max_nodes = MAX_MINED_NODES
-	state.teleport_queue = vein_miner.deque.new()
+	self.mined_nodes = 0
+	self.cur_mined_nodes = 0
+	self.warn_next = 200
+	self.co_cur_max_nodes = MAX_MINED_NODES
+	self.teleport_queue = vein_miner.deque.new()
 
-	state.work_done = false
+	self.work_done = false
 
-	state.pos_mod_seen = {}
+	self.pos_mod_seen = {}
 
-	state.pending_light_notify = vein_miner.deque.new()
-	state.pending_light_scan = vein_miner.deque.new()
+	self.pending_light_notify = vein_miner.deque.new()
+	self.pending_light_scan = vein_miner.deque.new()
 
-	local queue = state.queue
-	local player_name = state.player_name
+	local queue = self.queue
+	local player_name = self.player_name
 
 	while not queue:is_empty() do
-		local item = queue:pop_left()
+		local item = self:pop_queue()
 		if log_work_start then
 			log_warning("start work on item at " .. core.pos_to_string(item.pos) .. " " .. item.node_name)
 		end
-		dig_pos_process_queue_item(state, item, player_name)
-		state.mined_nodes = state.mined_nodes + state.cur_mined_nodes
-		state.co_cur_max_nodes = state.co_cur_max_nodes - state.cur_mined_nodes
-		if state.cur_mined_nodes > 0 then
-			coroutine.yield(state.cur_mined_nodes)
+		dig_pos_process_queue_item(self, item, player_name)
+		self.mined_nodes = self.mined_nodes + self.cur_mined_nodes
+		self.co_cur_max_nodes = self.co_cur_max_nodes - self.cur_mined_nodes
+		if self.cur_mined_nodes > 0 then
+			coroutine.yield(self.cur_mined_nodes)
 		end
-		state.cur_mined_nodes = 0
-		do_update_pos(state)
+		self.cur_mined_nodes = 0
+		do_update_pos(self)
 	end
 end
 
@@ -774,10 +797,11 @@ local function resume_coroutine(state, co, async_step_fn)
 	after_co_start(state, co, async_step_fn, status, action_count)
 end
 
+---@param state VeinMinerState
 local function vein_miner_step(state)
 	::start::
 	if state.thread == nil then
-		state.thread = coroutine.create(function() return dig_pos(state) end)
+		state.thread = coroutine.create(function() return state:dig_pos() end)
 	end
 	local co_status = coroutine.status(state.thread)
 	if co_status == "suspended" then
@@ -794,11 +818,6 @@ local function vein_miner_step(state)
 		log_error("unexpected coroutine status " .. co_status)
 	end
 end
-
-local VeinMinerState = {}
-VeinMinerState.__index = VeinMinerState
-
-vein_miner.mt = VeinMinerState
 
 function VeinMinerState.wait_for_player_near_pos(player, target_pos)
 	local out_of_range = vector.distance(player:get_pos(), target_pos) > 220
@@ -845,18 +864,19 @@ function VeinMinerState.update_wielded_item(player, wielded)
 	end
 end
 
+---@param self VeinMinerState
+---@return ScanItem
+function VeinMinerState:pop_queue() return self.queue:pop_left() end
+---@param self VeinMinerState
+function VeinMinerState:is_queue_empty() return self.queue:is_empty() end
+
 vein_miner.state = {}
----@class VeinMinerState
----@field pos Vector
----@field queue Deque
----@field player Player
----@field player_name string
----@field skip_pos table<integer, boolean>
 ---@param player Player
 ---@param player_name string
 ---@param pos Vector
 ---@param wielded ItemStack
 function vein_miner.state.new(pos, player, player_name, wielded)
+	---@type VeinMinerState
 	local state = {
 		pos = pos,
 		player = player,
@@ -915,9 +935,12 @@ core.register_on_dignode(function(pos, oldnode, player)
 		state = vein_miner.state.new(pos, player, player_name, wielded)
 		vein_miner_current_state[player_name] = state
 	end
-	l_utils.add_pos_to_queue(state, node_name, pos, {
+	local q_item = l_utils.add_pos_to_queue(state, node_name, pos, {
 		user = true,
 	})
+	if q_item then
+		q_item.oldnode = oldnode
+	end
 	if not state.running then
 		vein_miner_step(state)
 	end

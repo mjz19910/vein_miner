@@ -53,6 +53,12 @@ function l_utils.get_scan_options(node_name, options)
 	return options
 end
 
+---@class ScanItem
+---@field node_name string
+---@field pos Vector
+---@field options ScanOptions
+---@field oldnode MapNode | nil
+
 ---@param state VeinMinerState
 ---@param node_name string
 ---@param pos Vector
@@ -60,14 +66,17 @@ end
 function l_utils.add_pos_to_queue(state, node_name, pos, options)
 	local h = core.hash_node_position(pos)
 	if state.queued_set[h] then
-		return
+		return nil
 	end
 	state.queued_set[h] = true
-	state.queue:push_right({
+	---@type ScanItem
+	local item = {
 		node_name = node_name,
 		pos = pos,
 		options = l_utils.get_scan_options(node_name, options),
-	})
+	}
+	state.queue:push_right(item)
+	return item
 end
 
 ---@param pos Vector
