@@ -119,7 +119,14 @@ local pine = "default:pine_tree"
 local aspen = "default:aspen_tree"
 local acacia = "default:acacia_tree"
 local cobble = "default:cobble"
-local mg_tree_trunk = {jt, aspen, def_tree, acacia, pine, cobble}
+local mg_tree_trunk = {
+	[jt] = true,
+	[aspen] = true,
+	[def_tree] = true,
+	[acacia] = true,
+	[pine] = true,
+	[cobble] = true,
+}
 
 ---@param pos Vector
 ---@param oldnode MapNode
@@ -140,18 +147,20 @@ local function place_log_over_dirt(pos, oldnode, player, skip_pos)
 	if under_name == "default:dirt" or under_name == "default:dry_dirt" then
 		local inv = player:get_inventory()
 		-- Try to find a block in main inventory
-		for _, log_name in ipairs(mg_tree_trunk) do
-			if inv:contains_item("main", log_name) then
+		for i = 1, inv:get_size("main") do
+			local stack = inv:get_stack("main", i)
+			local name = stack:get_name()
+			if mg_tree_trunk[name] then
 				local node = core.get_node_or_nil(pos)
 				if node and node.name == "air" then
-					if oldnode.name == log_name then
+					if oldnode.name == name then
 						return
 					end
 					skip_pos[core.hash_node_position(pos)] = true
 					core.set_node(pos, {
-						name = log_name,
+						name = name,
 					})
-					inv:remove_item("main", log_name)
+					stack:take_item(1)
 				end
 				break
 			end
