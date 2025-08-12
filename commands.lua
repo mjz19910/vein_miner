@@ -2,6 +2,7 @@ local assert = assert
 local string = string
 local math = math
 local tonumber = tonumber
+---@type LuantiCore
 local core = core
 ---@type VeinMinerGlobal
 local vein_miner = vein_miner
@@ -39,7 +40,7 @@ core.register_chatcommand("pos", {
 
 core.register_chatcommand("yaw", {
 	description = "Change player yaw",
-	params = "[get | set <yaw>]",
+	params = "[get | set <yaw> | add <yaw>]",
 	privs = {},
 	func = function(name, param)
 		local player = core.get_player_by_name(name)
@@ -59,6 +60,18 @@ core.register_chatcommand("yaw", {
 			end
 			player:set_look_horizontal(yaw)
 			return true, ("Yaw set to %.1f degrees"):format(math.deg(yaw))
+		elseif cmd == "add" then
+			local yaw_change = 0
+			if args[2] ~= nil then
+				yaw_change = tonumber(args[2])
+			end
+			local yaw = player:get_look_horizontal()
+			if yaw_change ~= 0 then
+				yaw = math.rad(math.deg(yaw) + yaw_change)
+				player:set_look_horizontal(yaw)
+				return true, ("Yaw changed by %.1f degrees to %.1f degrees"):format(yaw_change, math.deg(yaw))
+			end
+			return true, ("Your current yaw, %.1f degrees, did not change"):format(math.deg(yaw))
 		end
 	end,
 })

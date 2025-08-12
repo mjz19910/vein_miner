@@ -224,6 +224,8 @@ local chunk = {}
 ---@field delete_particlespawner fun(id: integer, playername?: string)
 ---
 ---@field get_modpath fun(mod: string): string
+---
+---@field get_player_by_name fun(name: string): Player | nil
 core = {}
 minetest = core
 
