@@ -60,6 +60,7 @@ local function is_node_supporting(node)
 	end
 end
 
+---@param pos Vector
 local function is_supported(pos)
 	for _, dir in ipairs(support_dirs) do
 		for _, vert in ipairs(vertical_offsets) do
