@@ -92,7 +92,7 @@ local function is_supported(pos)
 	return false
 end
 
-local LINE_LENGTH = 128
+local LINE_LENGTH = 32
 ---@class SoundInfo
 ---@field playing_sounds table<string, boolean>
 
@@ -186,7 +186,7 @@ core.register_globalstep(function(dtime)
 				if j >= max_blocks then
 					break
 				end
-				if try_place_block_from_inventory(player, sound_info, target_pos, LINE_LENGTH + 12) then
+				if try_place_block_from_inventory(player, sound_info, target_pos, LINE_LENGTH) then
 					j = j + 1
 				end
 			end
@@ -198,9 +198,10 @@ core.register_globalstep(function(dtime)
 			time_until_block_place = 0
 		end
 		if j == 0 and not is_yaw_update_per_player_disabled[name] then
-			local yaw_max = 0.04
-			local yaw_speed = yaw_max * dbg_count / 3
+			local yaw_max = 0.1
+			local yaw_speed = yaw_max * dbg_count / 8
 			local new_yaw = math.rad((math.deg(yaw) + yaw_speed) % 360)
+			player:set_look_horizontal(new_yaw)
 			dbg_count = dbg_count + 1
 			if last_yaw_per_player[name] and new_yaw + 0.1 < last_yaw_per_player[name] then
 				is_yaw_update_per_player_disabled[name] = true
@@ -210,7 +211,6 @@ core.register_globalstep(function(dtime)
 				is_yaw_update_per_player_disabled[name] = true
 				goto continue
 			end
-			player:set_look_horizontal(new_yaw)
 		else
 			dbg_count = 0
 		end
