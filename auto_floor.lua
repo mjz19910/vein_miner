@@ -21,6 +21,7 @@ local get_connected_players = minetest.get_connected_players
 
 local registered_nodes = minetest.registered_nodes
 
+---@type VeinMinerGlobal
 local vein_miner = vein_miner
 
 local player_config_mgr = vein_miner.player_config_mgr
