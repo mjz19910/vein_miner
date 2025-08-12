@@ -162,7 +162,7 @@ local function place_log_over_dirt(pos, oldnode, player, skip_pos)
 					core.set_node(pos, {
 						name = name,
 					})
-					vein_miner.check_for_falling(pos)
+					core.check_for_falling(pos)
 					stack:take_item(1)
 					inv:set_stack("main", i, stack)
 				end
