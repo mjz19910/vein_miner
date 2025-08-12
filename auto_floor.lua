@@ -106,7 +106,7 @@ local function try_place_block_from_inventory(player, sound_info, target_pos, ma
 		local stack = inv:get_stack("main", i)
 		local name = stack:get_name()
 		local def = registered_nodes[name]
-		if def and name ~= "air" then
+		if def and name ~= "air" and not def.groups.falling_node then
 			set_node(target_pos, {
 				name = name,
 			})
