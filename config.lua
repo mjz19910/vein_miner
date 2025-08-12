@@ -120,6 +120,13 @@ local leaves = {
 }
 -- ignore_list_default = {leaves[1], leaves.acacia, leaves.aspen, leaves.jungle, leaves.pine, ...}
 
+local blueberry = {
+	bush = {
+		leaves = "default:blueberry_bush_leaves",
+		with_berries = "default:blueberry_bush_leaves_with_berries",
+	},
+}
+
 local cotton = {
 	wild = "farming:cotton_wild",
 }
@@ -158,7 +165,7 @@ local mg = {
 	dry_grass = grass.dry,
 	marram_grass = grass.marram,
 	fern = grass.fern,
-	blueberry = {"default:blueberry_bush_leaves", "default:blueberry_bush_leaves_with_berries"},
+	blueberry = {blueberry.bush.leaves, blueberry.bush.with_berries},
 	gravel = {gravel},
 	silver_sand = {sand.silver},
 	sand = {sand[1]},
