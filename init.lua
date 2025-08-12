@@ -401,6 +401,46 @@ local function iter_node_groups(state, iter_nodes)
 		::continue::
 	end
 end
+---@param player Player
+---@param target_pos Vector
+local function try_place_block_from_inventory(player, pos, node_to_place)
+	local inv = player:get_inventory()
+	if inv:contains_item("main", node_to_place) then
+		local node = core.get_node_or_nil(pos)
+		if node and node.name == "air" then
+			core.set_node(pos, {
+				name = node_to_place,
+			})
+			local def = core.registered_nodes[node_to_place]
+			if def and def.sounds and def.sounds.place then
+				core.sound_play(def.sounds.place, {
+					pos = pos,
+					max_hear_distance = 64,
+				})
+			end
+			inv:remove_item("main", node_to_place)
+		end
+		break
+	end
+	for i = 1, inv:get_size("main") do
+		local stack = inv:get_stack("main", i)
+		local name = stack:get_name()
+		local def = core.registered_nodes[name]
+		if def and name ~= "air" then
+			core.set_node(pos, {
+				name = name,
+			})
+			stack:take_item(1)
+			inv:set_stack("main", i, stack)
+			core.sound_play(def.sounds.place, {
+				pos = pos,
+				max_hear_distance = 64,
+			})
+			return true
+		end
+	end
+	return false
+end
 local function notify_missing_light(pos, attach_dir, expire_time)
 	local attach_node = core.get_node_or_nil(pos + attach_dir)
 	if attach_node == nil or attach_node.name == "air" then

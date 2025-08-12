@@ -1,4 +1,5 @@
 local assert = assert
+---@type VectorModule
 local vector = vector
 local setmetatable = setmetatable
 local ipairs = ipairs
@@ -351,10 +352,7 @@ end
 ---@param self Region
 ---@param pos Vector
 ---@return boolean
-function Region:is_point_in_region(pos)
-	local min, max = self.min, self.max
-	return pos.x >= min.x and pos.x <= max.x and pos.y >= min.y and pos.y <= max.y and pos.z >= min.z and pos.z <= max.z
-end
+function Region:is_point_in_region(pos) return vector.in_area(pos, self.min, self.max) end
 
 ---@param r Region
 ---@return Vector

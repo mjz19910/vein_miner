@@ -4,6 +4,7 @@ local core = core
 local minetest = minetest
 
 local assert = assert
+---@type VectorModule
 local vector = vector
 local ipairs = ipairs
 
@@ -11,6 +12,7 @@ local ipairs = ipairs
 local round = vector.round
 local offset = vector.offset
 local normalize = vector.normalize
+local multiply = vector.multiply
 local new_vec = vector.new
 
 local set_node = minetest.set_node
@@ -30,8 +32,6 @@ minetest.register_tool("vein_miner:auto_floor", {
 	description = "Auto-Floor Builder",
 	inventory_image = "default_wood.png",
 })
-
-local last_floor_data = {}
 
 local up = new_vec(0, 1, 0)
 local down = new_vec(0, -1, 0)
@@ -93,7 +93,7 @@ end
 
 local LINE_LENGTH = 16
 ---@class SoundInfo
----@field is_playing boolean
+---@field playing_sounds table<string, boolean>
 
 ---@param player Player
 ---@param sound_info SoundInfo
@@ -104,18 +104,19 @@ local function try_place_block_from_inventory(player, sound_info, target_pos, ma
 	for i = 1, inv:get_size("main") do
 		local stack = inv:get_stack("main", i)
 		local name = stack:get_name()
-		if registered_nodes[name] and name ~= "air" then
+		local def = registered_nodes[name]
+		if def and name ~= "air" then
 			set_node(target_pos, {
 				name = name,
 			})
 			stack:take_item(1)
 			inv:set_stack("main", i, stack)
-			if not sound_info.is_playing then
-				sound_play("default_place_node_hard", {
+			if not sound_info.playing_sounds[def.sounds.place] then
+				sound_play(def.sounds.place, {
 					pos = target_pos,
 					max_hear_distance = max_hear_distance,
 				})
-				sound_info.is_playing = true
+				sound_info.playing_sounds[def.sounds.place] = true
 			end
 			return true
 		end
@@ -124,19 +125,14 @@ local function try_place_block_from_inventory(player, sound_info, target_pos, ma
 end
 
 local max_recheck_count = 0
-local sound_info = {}
+---@type table<string, SoundInfo>
+local sound_info_per_player = {}
 
 -- globalstep for vein_miner:auto_floor tool
 core.register_globalstep(function(dtime)
 	for _, player in ipairs(get_connected_players()) do
-		local ctrl = player:get_player_control()
-		local name = player:get_player_name()
-		local config = player_config_mgr.data[name]
-		local cur_sound_info = sound_info[name] or {}
-		cur_sound_info.is_playing = false
 		local wielded = player:get_wielded_item():get_name()
 		if wielded ~= "vein_miner:auto_floor" then
-			last_floor_data[name] = nil
 			goto continue
 		end
 
@@ -149,48 +145,37 @@ core.register_globalstep(function(dtime)
 			goto continue
 		end
 
-		-- Fall recovery
-		local last = last_floor_data[name]
-		if last and pos.y < last.y - 1 then
-			player:set_pos(new_vec(pos.x, last.y, pos.z))
-			local restore_pos = offset(last, 0, -1, 0)
-			if try_place_block_from_inventory(player, restore_pos, LINE_LENGTH + 8) then
-				last_floor_data[name] = nil
-			end
-			goto continue
-		end
+		local ctrl = player:get_player_control()
+		local name = player:get_player_name()
+		local config = player_config_mgr.data[name]
+		local sound_info = sound_info_per_player[name] or {}
+		sound_info.playing_sounds = {}
 
 		-- Place multiple floor blocks in a line in front of player
 		local base_pos = nil
 		if pos.y < 0 then
-			base_pos = vector.offset(pos, 0, 1, 0)
+			base_pos = offset(pos, 0, 1, 0)
 		else
-			base_pos = vector.offset(pos, 0, 0.25, 0)
+			base_pos = offset(pos, 0, 0.25, 0)
 		end
 		local look_dir = player:get_look_dir()
-		local forward_dir = vector.normalize(vector.new(look_dir.x, 0, look_dir.z))
+		local forward_dir = normalize(p(look_dir.x, 0, look_dir.z))
 
-		local did_place_some = false
+		local line_start = base_pos + down
 		local max_blocks = config.blocks_per_tick
 		local j = 0
 		for i = 1, LINE_LENGTH do
-			local offset_vec = vector.multiply(forward_dir, i)
-			local target_pos = base_pos + offset_vec + down
+			local target_pos = line_start + forward_dir * i
 
-			local node_below = minetest.get_node(target_pos)
+			local node_below = get_node(target_pos)
 			if node_below.name == "air" and is_supported(target_pos) then
 				if j >= max_blocks then
 					break
 				end
-				if try_place_block_from_inventory(player, cur_sound_info, target_pos, LINE_LENGTH + 8) then
+				if try_place_block_from_inventory(player, sound_info, target_pos, LINE_LENGTH + 12) then
 					j = j + 1
-					did_place_some = true
 				end
 			end
-		end
-
-		if did_place_some then
-			last_floor_data[name] = vector.new(pos)
 		end
 		::continue::
 	end
