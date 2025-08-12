@@ -161,6 +161,7 @@ local function place_log_over_dirt(pos, oldnode, player, skip_pos)
 						name = name,
 					})
 					stack:take_item(1)
+					inv:set_stack("main", i, stack)
 				end
 				break
 			end
