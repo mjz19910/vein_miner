@@ -119,6 +119,7 @@ local pine = "default:pine_tree"
 local aspen = "default:aspen_tree"
 local acacia = "default:acacia_tree"
 local cobble = "default:cobble"
+local sand = "default:sand"
 local mg_tree_trunk = {
 	[jt] = true,
 	[aspen] = true,
@@ -126,6 +127,7 @@ local mg_tree_trunk = {
 	[acacia] = true,
 	[pine] = true,
 	[cobble] = true,
+	[sand] = true,
 }
 
 ---@param pos Vector
@@ -160,6 +162,7 @@ local function place_log_over_dirt(pos, oldnode, player, skip_pos)
 					core.set_node(pos, {
 						name = name,
 					})
+					vein_miner.check_for_falling(pos)
 					stack:take_item(1)
 					inv:set_stack("main", i, stack)
 				end
