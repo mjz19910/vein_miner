@@ -444,7 +444,7 @@ vein_miner.scanner = scanner
 require("mods.vein_miner.globalstep")
 
 local known_groups = {
-	cobble = true
+	cobble = true,
 }
 local wanted_groups = {
 	stone = true,
@@ -461,6 +461,7 @@ local wanted_groups = {
 	tree_trunk = true,
 	flower = true,
 	stem = true,
+	cotton = true,
 }
 
 local function dig_pos_process_queue_item(state, item, player_name)
@@ -590,6 +591,7 @@ local function dig_pos_process_queue_item(state, item, player_name)
 		table.insert_all(target_nodes, mining_groups.flower)
 		table.insert_all(target_nodes, mining_groups.tree_trunk)
 		table.insert_all(target_nodes, mining_groups.stem)
+		table.insert_all(target_nodes, mining_groups.cotton)
 		table.insert_all(target_nodes, falling_nodes)
 	end
 	if group_target and not (known_groups[group_target] or wanted_groups[group_target]) then

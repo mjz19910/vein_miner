@@ -116,6 +116,10 @@ local leaves = {
 	jungle = "default:jungleleaves",
 }
 
+local cotton = {
+	wild = "farming:cotton_wild",
+}
+
 ---@class VeinMinerConfig
 local CFG = {}
 
@@ -126,8 +130,7 @@ CFG.light_scan_dist = 1
 local LIGHT_NODES = {mese_post_light.pine, mese_post_light.acacia}
 CFG.LIGHT_NODES = LIGHT_NODES
 ---@type string[]
-local MINE_ONLY_CUR_SET = {"default:snow", "default:stone_block", "farming:cotton_wild", "fire:basic_flame", "default:obsidian",
-	"wool:green", "wool:orange"}
+local MINE_ONLY_CUR_SET = {"default:snow", "default:stone_block", "fire:basic_flame", "default:obsidian", "wool:green", "wool:orange"}
 CFG.MINE_ONLY_CUR_SET = MINE_ONLY_CUR_SET
 ---@type string[]
 local ignore_list_default = {leaves[1], leaves.jungle, "default:chest"}
@@ -168,6 +171,7 @@ local mine_groups = {
 	cobble = {cobble[1]},
 	mossy_cobble = {cobble.mossy},
 	cobble_stair = {cobble.stair},
+	cotton = {cotton.wild},
 	target_nodes = {},
 	surface = {},
 }
