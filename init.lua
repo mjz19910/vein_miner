@@ -403,45 +403,28 @@ local function iter_node_groups(state, iter_nodes)
 end
 ---@param player Player
 ---@param target_pos Vector
-local function try_place_block_from_inventory(player, pos, node_to_place)
+local function try_place_node_from_inventory(player, pos, name)
 	local inv = player:get_inventory()
-	if inv:contains_item("main", node_to_place) then
+	if inv:contains_item("main", name) then
 		local node = core.get_node_or_nil(pos)
 		if node and node.name == "air" then
 			core.set_node(pos, {
-				name = node_to_place,
+				name = name,
 			})
-			local def = core.registered_nodes[node_to_place]
+			local def = core.registered_nodes[name]
 			if def and def.sounds and def.sounds.place then
 				core.sound_play(def.sounds.place, {
 					pos = pos,
 					max_hear_distance = 64,
 				})
 			end
-			inv:remove_item("main", node_to_place)
-		end
-		break
-	end
-	for i = 1, inv:get_size("main") do
-		local stack = inv:get_stack("main", i)
-		local name = stack:get_name()
-		local def = core.registered_nodes[name]
-		if def and name ~= "air" then
-			core.set_node(pos, {
-				name = name,
-			})
-			stack:take_item(1)
-			inv:set_stack("main", i, stack)
-			core.sound_play(def.sounds.place, {
-				pos = pos,
-				max_hear_distance = 64,
-			})
+			inv:remove_item("main", name)
 			return true
 		end
 	end
 	return false
 end
-local function notify_missing_light(pos, attach_dir, expire_time)
+local function notify_missing_light(player, pos, attach_dir, expire_time)
 	local attach_node = core.get_node_or_nil(pos + attach_dir)
 	if attach_node == nil or attach_node.name == "air" then
 		return
@@ -455,7 +438,9 @@ local function notify_missing_light(pos, attach_dir, expire_time)
 	end
 	local node = core.get_node_or_nil(pos)
 	if node == nil or node.name == "air" then
-		notify_pos(pos + (attach_dir / 16 * 4), "#00ff00ff", 4, expire_time)
+		if not try_place_node_from_inventory(player, pos, "default:mese_post_light_pine_wood") then
+			notify_pos(pos + (attach_dir / 16 * 4), "#00ff00ff", 4, expire_time)
+		end
 	end
 end
 local xpos = vector.new(1, 0, 0)
@@ -519,6 +504,7 @@ end
 
 local function dig_pos_process_queue_item(state, item, player_name)
 	local config = player_config_mgr.data[player_name]
+	local player = state.player
 
 	local pos = item.pos
 	local node_name = item.node_name
@@ -570,11 +556,11 @@ local function dig_pos_process_queue_item(state, item, player_name)
 	end
 
 	local center = vector.floor(vector.divide(vector.add(minvec, maxvec), 2))
-	if vector.distance(state.player:get_pos(), center) > 150 then
+	if vector.distance(player:get_pos(), center) > 150 then
 		return
 	end
 
-	state.wait_for_player_near_pos(state.player, center)
+	state.wait_for_player_near_pos(player, center)
 
 	if options.large then
 		notify_pos(center, "#0000ffff", 6 * 4, 120 + 30)
@@ -632,10 +618,10 @@ local function dig_pos_process_queue_item(state, item, player_name)
 		state.found_light_count = state.found_light_count + 1
 	end
 
-	if not utils.has_empty_main_inv_slot(state.player) then
-		core.chat_send_player(state.player_name, "Waiting for empty inventory slot for digging")
+	if not utils.has_empty_main_inv_slot(player) then
+		core.chat_send_player(player_name, "Waiting for empty inventory slot for digging")
 	end
-	while not utils.has_empty_main_inv_slot(state.player) do
+	while not utils.has_empty_main_inv_slot(player) do
 		utils.async_wait(1)
 	end
 	if target_flags.liquid then
@@ -655,9 +641,9 @@ local function dig_pos_process_queue_item(state, item, player_name)
 	end
 
 	if not options.large then
-		local light_timeout = 20
+		local light_timeout = 120
 
-		notify_pos(minvec, "#ffff00ff", 6, 120)
+		notify_pos(minvec, "#ffff00ff", 6, light_timeout + 60)
 
 		local lp_north = vector.offset(minvec, 3, 3, 7)
 		local lp_south = vector.offset(minvec, 3, 3, 0)
@@ -665,12 +651,12 @@ local function dig_pos_process_queue_item(state, item, player_name)
 		local lp_east = vector.offset(minvec, 7, 3, 3)
 		local lp_down = vector.offset(minvec, 3, 0, 3)
 		local lp_up = vector.offset(minvec, 3, 7, 3)
-		notify_missing_light(lp_east, xpos, light_timeout)
-		notify_missing_light(lp_west, xneg, light_timeout)
-		notify_missing_light(lp_up, ypos, light_timeout)
-		notify_missing_light(lp_down, yneg, light_timeout)
-		notify_missing_light(lp_north, zpos, light_timeout)
-		notify_missing_light(lp_south, zneg, light_timeout)
+		notify_missing_light(player, lp_east, xpos, light_timeout)
+		notify_missing_light(player, lp_west, xneg, light_timeout)
+		notify_missing_light(player, lp_up, ypos, light_timeout)
+		notify_missing_light(player, lp_down, yneg, light_timeout)
+		notify_missing_light(player, lp_north, zpos, light_timeout)
+		notify_missing_light(player, lp_south, zneg, light_timeout)
 	end
 
 	state.work_done = true
