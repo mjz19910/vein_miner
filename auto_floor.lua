@@ -92,7 +92,7 @@ local function is_supported(pos)
 	return false
 end
 
-local LINE_LENGTH = 16
+local LINE_LENGTH = 128
 ---@class SoundInfo
 ---@field playing_sounds table<string, boolean>
 
