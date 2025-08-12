@@ -113,8 +113,12 @@ local mese_post_light = {
 
 local leaves = {
 	"default:leaves",
+	acacia = "default:acacia_leaves",
+	aspen = "default:aspen_leaves",
 	jungle = "default:jungleleaves",
+	pine = "default:pine_needles",
 }
+-- ignore_list_default = {leaves[1], leaves.acacia, leaves.aspen, leaves.jungle, leaves.pine, ...}
 
 local cotton = {
 	wild = "farming:cotton_wild",
@@ -133,7 +137,7 @@ CFG.LIGHT_NODES = LIGHT_NODES
 local target_list = {"default:snow", "default:stone_block", "fire:basic_flame", "default:obsidian", "wool:green", "wool:orange"}
 CFG.target_list = target_list
 ---@type string[]
-local ignore_list_default = {leaves[1], leaves.jungle, "default:chest"}
+local ignore_list_default = {leaves[1], leaves.acacia, leaves.aspen, leaves.jungle, leaves.pine, "default:chest"}
 ---@type string[]
 local digtron_parts = {"digtron:axle", "digtron:light", "digtron:pusher", "digtron:digger", "digtron:builder", "digtron:structure",
 	"digtron:inventory", "digtron:fuelstore", "digtron:empty_crate", "digtron:auto_controller", "digtron:combined_storage",
