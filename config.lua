@@ -304,7 +304,7 @@ end
 CFG.exclusive_node_set = exclusive_node_set
 
 table.insert_all(mg.surface, {dirt.dry, dirt.grass.dry})
-table.insert_all(mg.surface, {dirt[1], dirt.grass[1]})
+table.insert_all(mg.surface, {dirt.grass[1]})
 table.insert_all(mg.surface, {dirt.grass.snow, dirt.grass.rainforest, dirt.grass.coniferous})
 table.insert_all(mg.surface, {dirt.permafrost.moss, dirt.permafrost.stones})
 table.insert_all(mg.surface, {sand.with_kelp})
