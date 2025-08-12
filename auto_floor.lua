@@ -160,7 +160,12 @@ core.register_globalstep(function(dtime)
 		end
 
 		-- Place multiple floor blocks in a line in front of player
-		local base_pos = vector.round(vector.offset(pos, 0, 0.4, 0))
+		local base_pos = nil
+		if pos.y < 0 then
+			base_pos = vector.offset(pos, 0, 1, 0)
+		else
+			base_pos = vector.offset(pos, 0, 0.25, 0)
+		end
 		local look_dir = player:get_look_dir()
 		local forward_dir = vector.normalize(vector.new(look_dir.x, 0, look_dir.z))
 
@@ -172,7 +177,7 @@ core.register_globalstep(function(dtime)
 		for i = 1, LINE_LENGTH do
 			do_recheck_support = false
 			local offset_vec = vector.multiply(forward_dir, i)
-			local target_pos = vector.round(base_pos + offset_vec) + down
+			local target_pos = base_pos + offset_vec + down
 
 			local node_below = minetest.get_node(target_pos)
 			if node_below.name == "air" and is_supported(target_pos) then

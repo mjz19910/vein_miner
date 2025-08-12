@@ -12,7 +12,7 @@ local get_player_by_name = core.get_player_by_name
 local dtime_time = 0
 local dtime_acc = 0
 local dtime_next_falling_check = 0
-local falling_check_delay = 1.5
+local falling_check_delay = 1.25
 
 local light_region_debug = vein_miner.light_region_debug
 local falling_nodes = vein_miner.falling_nodes
