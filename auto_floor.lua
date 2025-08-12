@@ -171,6 +171,7 @@ core.register_globalstep(function(dtime)
 		local forward_dir = vector.normalize(vector.new(look_dir.x, 0, look_dir.z))
 
 		local did_place_some = false
+		local max_blocks = config.blocks_per_tick
 		local j = 0
 		for i = 1, LINE_LENGTH do
 			local offset_vec = vector.multiply(forward_dir, i)
@@ -178,7 +179,7 @@ core.register_globalstep(function(dtime)
 
 			local node_below = minetest.get_node(target_pos)
 			if node_below.name == "air" and is_supported(target_pos) then
-				if j >= config.blocks_per_tick then
+				if j >= max_blocks then
 					break
 				end
 				if try_place_block_from_inventory(player, cur_sound_info, target_pos, LINE_LENGTH + 8) then
