@@ -1,11 +1,11 @@
+local dofile = dofile
 ---@type LuantiCore
 local core = core
-local dofile = dofile
+---@type LuantiCore
+local minetest = minetest
 
 local require = dofile(core.get_modpath("vein_miner") .. "/require_local.lua")
 
-local minetest = minetest
-local vector = vector
 local ipairs = ipairs
 local next = next
 local table = table
@@ -16,11 +16,16 @@ local math = math
 local ItemStack = ItemStack
 local coroutine = coroutine
 local debug = debug
+
+---@type VectorModule
+local vector = vector
+
 local offset = vector.offset
 local string_match = string.match
 local floor = math.floor
 local ceil = math.ceil
 local yield = coroutine.yield
+
 local add_particle = core.add_particle
 
 vein_miner = {}
@@ -37,9 +42,12 @@ vein_miner.deque = require("mods.vein_miner.deque")
 vein_miner.voxel_util = require("mods.vein_miner.voxel_util")
 local h = require("mods.vein_miner.helpers")
 vein_miner.h = h
+local is_liquid = h.is_liquid
 ---@type VeinMinerConfig
 local CFG = require("mods.vein_miner.config")
 vein_miner.CFG = CFG
+local mining_groups = CFG.mining_groups
+local node_to_group = CFG.node_to_group
 ---@type AABB
 local aabb = require("mods.vein_miner.aabb")
 vein_miner.aabb = aabb
@@ -231,20 +239,20 @@ end
 local ignored_nodes_set = CFG.ignored_nodes_set
 local exclusive_node_set = CFG.exclusive_node_set
 local light_nodes_set = CFG.light_nodes_set
-local mine_only_cur_set = CFG.mine_only_cur_set
+local target_set = CFG.target_set
 
 local function get_scan_mode(node_name)
 	if ignored_nodes_set[node_name] then
-		return "inc_mine_skip"
+		return "ignore"
 	end
 	if light_nodes_set[node_name] then
-		return "add_current"
+		return "append"
 	end
 	if exclusive_node_set[node_name] then
 		return "exclusive"
 	end
-	if mine_only_cur_set[node_name] then
-		return "mine_only_cur"
+	if target_set[node_name] then
+		return "by_group"
 	end
 	return "error"
 end
@@ -414,17 +422,7 @@ local zneg = vector.new(0, 0, -1)
 
 local water_targets = {"default:water_flowing", "default:water_source", "default:lava_flowing", "default:lava_source"}
 
----@type MiningGroups
-local mining_groups = CFG.mining_groups
-local mine_node_to_group_map = CFG.mine_node_to_group_map
-
-local falling_nodes = table.copy(mining_groups.sand)
-table.insert_all(falling_nodes, mining_groups.silver_sand)
-table.insert_all(falling_nodes, mining_groups.gravel)
-
 local known_unhandled_nodes = {}
-
-local is_liquid = h.is_liquid
 
 local function is_valid_pos_to_iter(pos, player_name)
 	---@type PlayerConfig
@@ -445,24 +443,34 @@ require("mods.vein_miner.globalstep")
 
 local known_groups = {
 	cobble = true,
+	surface = true,
 }
+local green_groups = {
+	cotton = true,
+	dry_grass = true,
+	fern = true,
+	flower = true,
+	grass = true,
+	stem = true,
+	tree_trunk = true,
+}
+local green_list = {}
+for k, _ in pairs(green_groups) do
+	table.insert_all(green_list, mining_groups[k])
+end
 local wanted_groups = {
-	stone = true,
+	clay = true,
 	dirt = true,
-	ore = true,
 	gravel = true,
+	ore = true,
 	sand = true,
 	silver_sand = true,
-	target_nodes = true,
-	surface = true,
-	grass = true,
-	fern = true,
-	dry_grass = true,
-	tree_trunk = true,
-	flower = true,
-	stem = true,
-	cotton = true,
+	stone = true,
 }
+local wanted_list = {}
+for k, _ in pairs(wanted_groups) do
+	table.insert_all(wanted_list, mining_groups[k])
+end
 
 local function dig_pos_process_queue_item(state, item, player_name)
 	local config = player_config_mgr.data[player_name]
@@ -531,8 +539,7 @@ local function dig_pos_process_queue_item(state, item, player_name)
 
 	local target_nodes = {}
 	local target_flags = {
-		liquid = true,
-		falling = true,
+		liquid = false,
 	}
 	local scan_mode = get_scan_mode(node_name)
 	-- core.log("warning", "scan_mode " .. scan_mode)
@@ -543,59 +550,37 @@ local function dig_pos_process_queue_item(state, item, player_name)
 		end
 		return
 	end
-	if scan_mode == "inc_mine_skip" then
+	if scan_mode == "ignore" then
 		return
 	end
 	if scan_mode == "exclusive" then
 		target_nodes = {node_name}
-		target_flags.falling = false
-		target_flags.liquid = false
 	end
-	if scan_mode == "add_current" then
+	if scan_mode == "append" then
 		table.insert(target_nodes, node_name)
 	end
 	local group_target = nil
-	if scan_mode == "mine_only_cur" then
+	if scan_mode == "by_group" then
 		if node_name == "wool:green" then
-			target_flags.falling = false
+			target_flags.liquid = true
 		else
-			target_flags.falling = false
-			target_flags.liquid = false
 		end
-		if mine_node_to_group_map[node_name] ~= nil then
-			local target_key = mine_node_to_group_map[node_name]
+		if node_to_group[node_name] ~= nil then
+			local target_key = node_to_group[node_name]
 			table.insert_all(target_nodes, mining_groups[target_key])
 			group_target = target_key
 		else
 			table.insert(target_nodes, node_name)
 		end
 	end
-	if group_target == "tree_trunk" then
-		table.insert_all(target_nodes, mining_groups.grass)
-		table.insert_all(target_nodes, mining_groups.jungle_grass)
-		table.insert_all(target_nodes, mining_groups.dry_grass)
-		table.insert_all(target_nodes, mining_groups.marram_grass)
-		table.insert_all(target_nodes, mining_groups.fern)
-		table.insert_all(target_nodes, mining_groups.flower)
-		table.insert_all(target_nodes, mining_groups.mushroom)
-		table.insert_all(target_nodes, mining_groups.stem)
-	end
-	if group_target and wanted_groups[group_target] then
-		table.insert_all(target_nodes, mining_groups.target_nodes)
-		table.insert_all(target_nodes, mining_groups.surface)
-		table.insert_all(target_nodes, mining_groups.stone)
-		table.insert_all(target_nodes, mining_groups.ore)
-		table.insert_all(target_nodes, mining_groups.grass)
-		table.insert_all(target_nodes, mining_groups.fern)
-		table.insert_all(target_nodes, mining_groups.dry_grass)
-		table.insert_all(target_nodes, mining_groups.flower)
-		table.insert_all(target_nodes, mining_groups.tree_trunk)
-		table.insert_all(target_nodes, mining_groups.stem)
-		table.insert_all(target_nodes, mining_groups.cotton)
-		table.insert_all(target_nodes, falling_nodes)
-	end
-	if group_target and not (known_groups[group_target] or wanted_groups[group_target]) then
-		log_warning("new group target " .. group_target)
+	if group_target then
+		if green_groups[group_target] then
+			target_nodes = green_list
+		elseif wanted_groups[group_target] then
+			target_nodes = wanted_list
+		elseif not known_groups[group_target] then
+			log_warning("new group target " .. group_target)
+		end
 	end
 
 	if options.user and options.light then
@@ -606,13 +591,10 @@ local function dig_pos_process_queue_item(state, item, player_name)
 		core.chat_send_player(state.player_name, "Waiting for empty inventory slot for digging")
 	end
 	while not utils.has_empty_main_inv_slot(state.player) do
-		utils.async_wait(3)
+		utils.async_wait(1)
 	end
-	if false and target_flags.liquid then
+	if target_flags.liquid then
 		iter_node_groups(state, core.find_nodes_in_area(minvec, maxvec, water_targets, true))
-	end
-	if target_flags.falling then
-		iter_node_groups(state, core.find_nodes_in_area(minvec, maxvec, falling_nodes, true))
 	end
 	iter_node_groups(state, core.find_nodes_in_area(minvec, maxvec, target_nodes, true))
 

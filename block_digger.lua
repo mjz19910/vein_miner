@@ -138,8 +138,13 @@ local function place_log_over_dirt(pos, oldnode, player, skip_pos)
 
 	-- Check if the uncovered node is dirt or dry_dirt
 	if under_name == "default:dirt" or under_name == "default:dry_dirt" then
-		local inv = player:get_inventory()
+		for _, log_name in ipairs(mg_tree_trunk) do
+			if oldnode.name == log_name then
+				return
+			end
+		end
 
+		local inv = player:get_inventory()
 		-- Try to find a block in main inventory
 		for _, log_name in ipairs(mg_tree_trunk) do
 			if inv:contains_item("main", log_name) then

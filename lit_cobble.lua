@@ -9,9 +9,9 @@ local insert = table.insert
 local CFG = vein_miner.CFG
 
 ---@type table<string, boolean>
-local mine_only_cur_set = CFG.mine_only_cur_set
+local target_set = CFG.target_set
 ---@type table<string, string>
-local mine_node_to_group_map = CFG.mine_node_to_group_map
+local node_to_group = CFG.node_to_group
 ---@type MiningGroups
 local mining_groups = CFG.mining_groups
 
@@ -61,8 +61,8 @@ local function register_lit_cobble(light_level)
 	})
 
 	insert(mining_groups.lit_cobble, node_name)
-	mine_node_to_group_map[node_name] = "lit_cobble"
-	mine_only_cur_set[node_name] = true
+	node_to_group[node_name] = "lit_cobble"
+	target_set[node_name] = true
 end
 
 mining_groups.lit_cobble = {}

@@ -130,8 +130,8 @@ CFG.light_scan_dist = 1
 local LIGHT_NODES = {mese_post_light.pine, mese_post_light.acacia}
 CFG.LIGHT_NODES = LIGHT_NODES
 ---@type string[]
-local MINE_ONLY_CUR_SET = {"default:snow", "default:stone_block", "fire:basic_flame", "default:obsidian", "wool:green", "wool:orange"}
-CFG.MINE_ONLY_CUR_SET = MINE_ONLY_CUR_SET
+local target_list = {"default:snow", "default:stone_block", "fire:basic_flame", "default:obsidian", "wool:green", "wool:orange"}
+CFG.target_list = target_list
 ---@type string[]
 local ignore_list_default = {leaves[1], leaves.jungle, "default:chest"}
 ---@type string[]
@@ -139,16 +139,16 @@ local digtron_parts = {"digtron:axle", "digtron:light", "digtron:pusher", "digtr
 	"digtron:inventory", "digtron:fuelstore", "digtron:empty_crate", "digtron:auto_controller", "digtron:combined_storage",
 	"digtron:inventory_ejector", "digtron:intermittent_digger", "digtron:master_builder", "digtron:controller"}
 ---@type string[]
-local IGNORED_NODES = {}
-table.insert_all(IGNORED_NODES, ignore_list_default)
-table.insert_all(IGNORED_NODES, digtron_parts)
-table.insert_all(IGNORED_NODES, {"drawers:trim", "drawers:pine_wood1", "drawers:controller"})
-CFG.IGNORED_NODES = IGNORED_NODES
+local ignored_nodes = {}
+table.insert_all(ignored_nodes, ignore_list_default)
+table.insert_all(ignored_nodes, digtron_parts)
+table.insert_all(ignored_nodes, {"drawers:trim", "drawers:pine_wood1", "drawers:controller"})
+CFG.ignored_nodes = ignored_nodes
 ---@type string[]
 local exclusive_nodes = {}
 CFG.exclusive_nodes = exclusive_nodes
 ---@class MiningGroups
-local mine_groups = {
+local mg = {
 	grass = grass[1],
 	jungle_grass = grass.jungle,
 	dry_grass = grass.dry,
@@ -172,11 +172,11 @@ local mine_groups = {
 	mossy_cobble = {cobble.mossy},
 	cobble_stair = {cobble.stair},
 	cotton = {cotton.wild},
-	target_nodes = {},
+	clay = {clay},
 	surface = {},
 }
 ---@type MiningGroups
-CFG.mining_groups = mine_groups
+CFG.mining_groups = mg
 ---@type Vector[]
 local VEC_DIRS = {}
 CFG.VEC_DIRS = VEC_DIRS
@@ -230,9 +230,9 @@ table.insert(CFG.VEC_DIRS, p(0, 0, 0))
 -- distance limited to 3.1622776601684, ie 3.2
 table.insert_all(CFG.VEC_DIRS, gen_euclidean_offsets(64 / 20))
 
-ia(CFG.MINE_ONLY_CUR_SET, {cobble[1], cobble.mossy, cobble.stair})
+ia(CFG.target_list, {cobble[1], cobble.mossy, cobble.stair})
 
-i(CFG.IGNORED_NODES, mese_post_light[1])
+i(CFG.ignored_nodes, mese_post_light[1])
 
 -- go to the next nodeid (ex.: 01000011 --> 01000100)
 local nid_inc = function() end
@@ -269,19 +269,24 @@ end
 
 register_wires_group()
 
-local mine_only_set = CFG.MINE_ONLY_CUR_SET
+local mine_only_set = CFG.target_list
 i(mine_only_set, "mesecons_powerplant:power_plant")
 ia(mine_only_set, {"mesecons_movestones:sticky_movestone_vertical", "mesecons_stickyblocks:sticky_block_all"})
 ia(mine_only_set, {"mesecons_movestones:sticky_movestone"})
 
-mine_groups.coral = {"default:coral_skeleton", "default:coral_green", "default:coral_cyan", "default:coral_pink", "default:coral_orange",
-	"default:coral_brown"}
-table.insert_all(mine_groups.target_nodes, {clay})
-local ignored_nodes = CFG.IGNORED_NODES
+local coral = {
+	brown = "default:coral_brown",
+	cyan = "default:coral_cyan",
+	green = "default:coral_green",
+	orange = "default:coral_orange",
+	pink = "default:coral_pink",
+}
+local coral_skeleton = "default:coral_skeleton"
 
+mg.coral = {coral_skeleton, coral.brown, coral.cyan, coral.green, coral.orange, coral.pink}
 ---@type table<string, boolean>
 local ignored_nodes_set = {}
-for k, v in pairs(CFG.IGNORED_NODES) do
+for k, v in pairs(ignored_nodes) do
 	ignored_nodes_set[v] = true
 end
 CFG.ignored_nodes_set = ignored_nodes_set
@@ -298,22 +303,28 @@ for k, v in pairs(CFG.exclusive_nodes) do
 end
 CFG.exclusive_node_set = exclusive_node_set
 
-table.insert_all(mine_groups.surface, {dirt.dry, dirt.grass.dry})
-table.insert_all(mine_groups.surface, {dirt[1], dirt.grass[1]})
-table.insert_all(mine_groups.surface, {dirt.grass.snow, dirt.grass.rainforest, dirt.grass.coniferous})
-table.insert_all(mine_groups.surface, {dirt.permafrost.moss, dirt.permafrost.stones})
-table.insert_all(mine_groups.surface, {sand.with_kelp})
+table.insert_all(mg.surface, {dirt.dry, dirt.grass.dry})
+table.insert_all(mg.surface, {dirt[1], dirt.grass[1]})
+table.insert_all(mg.surface, {dirt.grass.snow, dirt.grass.rainforest, dirt.grass.coniferous})
+table.insert_all(mg.surface, {dirt.permafrost.moss, dirt.permafrost.stones})
+table.insert_all(mg.surface, {sand.with_kelp})
 
 local mining_groups = CFG.mining_groups
 ---@type table<string, boolean>
-local mine_only_cur_set = {}
-CFG.mine_only_cur_set = mine_only_cur_set
-for k, v in pairs(CFG.MINE_ONLY_CUR_SET) do
-	mine_only_cur_set[v] = true
+local target_set = {}
+CFG.target_set = target_set
+for k, v in pairs(CFG.target_list) do
+	target_set[v] = true
 end
 ---@type table<string, string>
-local mine_node_to_group_map = vein_miner.h.generate_mine_only_sets(mining_groups, mine_only_cur_set)
+local node_to_group = {}
+for key, node_name_list in pairs(mining_groups) do
+	for idx, node_name in pairs(node_name_list) do
+		node_to_group[node_name] = key
+		target_set[node_name] = true
+	end
+end
 ---@type table<string, string>
-CFG.mine_node_to_group_map = mine_node_to_group_map
+CFG.node_to_group = node_to_group
 
 return CFG

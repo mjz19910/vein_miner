@@ -2,26 +2,18 @@ local minetest = minetest
 local pairs = pairs
 ---@class VeinMinerHelpers
 local h = {}
----@param groups table<string, string[]>
----@param valid_set table<string, boolean>
-function h.generate_mine_only_sets(groups, valid_set)
-	---@type table<string, string>
-	local ret = {}
-	for key, group in pairs(groups) do
-		for idx, value in pairs(group) do
-			ret[value] = key
-			valid_set[value] = true
-		end
-	end
-	return ret
-end
 
+---@param msg string
 function h.log_warning(msg) minetest.log("warning", msg) end
 
+---@param msg string
 function h.log_error(msg) minetest.log("error", msg) end
 
+---@param msg string
 function h.log_action(msg) minetest.log("action", msg) end
 
+---@param pos Vector
+---@param mod_size Vector
 function h.mod_pos(pos, mod_size)
 	pos = vector.divide(pos, mod_size)
 	pos = vector.add(pos, 0.0001)
