@@ -90,7 +90,7 @@ local function is_supported(pos)
 	return false
 end
 
-local LINE_LENGTH = 48
+local LINE_LENGTH = 16
 ---@class SoundInfo
 ---@field is_playing boolean
 
@@ -160,13 +160,9 @@ core.register_globalstep(function(dtime)
 		end
 
 		-- Place multiple floor blocks in a line in front of player
-		local base_pos = vector.round(vector.offset(pos, 0, 0.25, 0))
+		local base_pos = vector.round(vector.offset(pos, 0, 0.4, 0))
 		local look_dir = player:get_look_dir()
-		local forward_dir = vector.normalize({
-			x = look_dir.x,
-			y = 0,
-			z = look_dir.z,
-		})
+		local forward_dir = vector.normalize(vector.new(look_dir.x, 0, look_dir.z))
 
 		local did_place_some = false
 		local do_recheck_support = false
