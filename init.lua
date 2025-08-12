@@ -409,6 +409,10 @@ local function notify_missing_light(pos, attach_dir, expire_time)
 	if light_nodes_set[attach_node.name] then
 		return
 	end
+	local nat_light = core.get_natural_light(pos, 0.5)
+	if nat_light >= 5 then
+		return
+	end
 	local node = core.get_node_or_nil(pos)
 	if node == nil or node.name == "air" then
 		notify_pos(pos + (attach_dir / 16 * 4), "#00ff00ff", 4, expire_time)
