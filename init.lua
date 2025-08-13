@@ -479,6 +479,7 @@ local known_groups = {
 	tree_trunk = true,
 	surface = true,
 	stem = true,
+	snow = true,
 }
 local green_groups = {
 	cotton = true,
@@ -497,7 +498,6 @@ local falling_groups = {
 	sand = true,
 	silver_sand = true,
 	gravel = true,
-	snow = true,
 }
 local green_list = {}
 local wanted_list = {}
