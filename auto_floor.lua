@@ -97,7 +97,7 @@ local function is_supported(pos)
 	return false
 end
 
-local LINE_LENGTH = 32
+local LINE_LENGTH = 64
 ---@class SoundInfo
 ---@field playing_sounds table<string, boolean>
 
@@ -204,7 +204,7 @@ core.register_globalstep(function(dtime)
 		end
 		if j <= 1 and not is_yaw_update_per_player_disabled[name] then
 			local yaw_max = 0.1
-			local yaw_speed = yaw_max * dbg_count / 7
+			local yaw_speed = yaw_max * dbg_count / 8
 			local new_yaw = math.rad((math.deg(yaw) + yaw_speed) % 360)
 			player:set_look_horizontal(new_yaw)
 			dbg_count = dbg_count + 1
@@ -217,7 +217,7 @@ core.register_globalstep(function(dtime)
 				goto continue
 			end
 		else
-			dbg_count = 0
+			dbg_count = math.floor(dbg_count / (math.log(dbg_count + 1, 2) + 2))
 		end
 		last_yaw_per_player[name] = yaw
 		::continue::
