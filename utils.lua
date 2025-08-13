@@ -55,12 +55,18 @@ function utils.async_wait(time)
 	})
 end
 
+-- Treat any non-walkable node (air, water, plants, etc.) as “fit space”
+local function is_passable(def) return def and def.walkable == false end
+
 ---@param pos Vector
 function utils.can_player_fit(pos)
 	local pos_node = core.get_node(pos)
+	local pos_def = core.registered_nodes[pos_node.name]
 	local above = vector.offset(pos, 0, 1, 0)
 	local above_node = core.get_node(above)
-	return pos_node.name == "air" and above_node.name == "air"
+	local above_def = core.registered_nodes[above_node.name]
+
+	return is_passable(pos_def) and is_passable(above_def)
 end
 
 ---@param pos Vector
