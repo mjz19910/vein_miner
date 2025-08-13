@@ -331,7 +331,6 @@ local function notify_pos(pos, color, size, expire_time)
 	})
 end
 
-local do_teleport_skip_warn = false
 local add_to_teleport_queue = false
 local function add_light_to_teleport_queue(state, v)
 	local pos = v.pos
@@ -349,13 +348,6 @@ local function add_light_to_teleport_queue(state, v)
 		local tp_diff = core.pos_to_string(vector.subtract(update_pos, pos))
 		local target = core.pos_to_string(below_pos)
 		log_action("teleport left " .. v.queue_left .. " diff " .. tp_diff .. " trg " .. target)
-		if do_teleport_skip_warn then
-			state.teleport_skip_count = state.teleport_skip_count + 1
-			if state.teleport_skip_count > state.warn_next then
-				log_action("teleport large skip_count " .. state.teleport_skip_count)
-				state.warn_next = state.warn_next + 200
-			end
-		end
 	end
 end
 
@@ -719,31 +711,8 @@ vein_miner.mt = VeinMinerState
 ---@param self VeinMinerState
 function VeinMinerState:dig_pos()
 	self.running = true
-	self.prev_pos = nil
-	self.prev_sector = nil
-	self.seen_teleports_set = {}
-	self.logged_teleports = {}
-	self.teleport_skip_set = {}
-	self.known_lights = {}
-	if do_teleport_skip_warn then
-		self.teleport_skip_count = 0
-	end
-	self.mined_nodes = 0
-	self.cur_mined_nodes = 0
-	self.warn_next = 200
-	self.co_cur_max_nodes = MAX_MINED_NODES
-	self.teleport_queue = vein_miner.deque.new()
-
-	self.work_done = false
-
-	self.pos_mod_seen = {}
-
-	self.pending_light_notify = vein_miner.deque.new()
-	self.pending_light_scan = vein_miner.deque.new()
-
 	local queue = self.queue
 	local player_name = self.player_name
-
 	while not queue:is_empty() do
 		local item = self:pop_queue()
 		if log_work_start then
@@ -891,28 +860,42 @@ function VeinMinerState:pop_queue() return self.queue:pop_left() end
 ---@param self VeinMinerState
 function VeinMinerState:is_queue_empty() return self.queue:is_empty() end
 
-vein_miner.state = {}
 ---@param player Player
 ---@param player_name string
 ---@param pos Vector
 ---@param wielded ItemStack
-function vein_miner.state.new(pos, player, player_name, wielded)
+function VeinMinerState.new(pos, player, player_name, wielded)
 	---@type VeinMinerState
-	local state = {
+	local self = {
 		pos = pos,
 		player = player,
 		player_name = player_name,
 		wielded = wielded,
-		falling_check_nodes = vein_miner.deque.new(),
-		queue = vein_miner.deque.new(),
-		queued_set = {},
+		prev_pos = nil,
+		prev_sector = nil,
+		running = false,
+		work_done = false,
 		total_action_count = 0,
 		found_light_count = 0,
-		running = false,
+		mined_nodes = 0,
+		cur_mined_nodes = 0,
+		warn_next = 200,
+		co_cur_max_nodes = MAX_MINED_NODES,
+		queued_set = {},
 		skip_pos = {},
+		seen_teleports_set = {},
+		logged_teleports = {},
+		teleport_skip_set = {},
+		known_lights = {},
+		pos_mod_seen = {},
+		queue = vein_miner.deque.new(),
+		teleport_queue = vein_miner.deque.new(),
+		falling_check_nodes = vein_miner.deque.new(),
+		pending_light_notify = vein_miner.deque.new(),
+		pending_light_scan = vein_miner.deque.new(),
 	}
 
-	return setmetatable(state, VeinMinerState)
+	return setmetatable(self, VeinMinerState)
 end
 
 ---@class MapNode
@@ -953,7 +936,7 @@ core.register_on_dignode(function(pos, oldnode, player)
 	end
 	local state = vein_miner_current_state[player_name]
 	if state == nil then
-		state = vein_miner.state.new(pos, player, player_name, wielded)
+		state = VeinMinerState.new(pos, player, player_name, wielded)
 		vein_miner_current_state[player_name] = state
 	end
 	local q_item = l_utils.add_pos_to_queue(state, node_name, pos, {
