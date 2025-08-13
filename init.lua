@@ -473,6 +473,7 @@ require("mods.vein_miner.globalstep")
 
 local known_groups = {
 	cobble = true,
+	tree_trunk = true,
 }
 local green_groups = {
 	cotton = true,
@@ -481,21 +482,23 @@ local green_groups = {
 	flower = true,
 	grass = true,
 	stem = true,
-	tree_trunk = true,
 	surface = true,
-	snow = true,
 }
 local wanted_groups = {
 	clay = true,
-	gravel = true,
 	ore = true,
-	silver_sand = true,
 	stone = true,
 	dirt = true,
+}
+local falling_groups = {
 	sand = true,
+	silver_sand = true,
+	gravel = true,
+	snow = true,
 }
 local green_list = {}
 local wanted_list = {}
+local falling_list = {}
 for k, _ in pairs(green_groups) do
 	table.insert_all(green_list, mining_groups[k])
 	table.insert_all(wanted_list, mining_groups[k])
@@ -503,6 +506,11 @@ end
 for k, _ in pairs(wanted_groups) do
 	table.insert_all(green_list, mining_groups[k])
 	table.insert_all(wanted_list, mining_groups[k])
+end
+for k, _ in pairs(falling_groups) do
+	table.insert_all(green_list, mining_groups[k])
+	table.insert_all(wanted_list, mining_groups[k])
+	table.insert_all(falling_list, mining_groups[k])
 end
 
 ---@param state VeinMinerState
@@ -577,6 +585,7 @@ local function dig_pos_process_queue_item(state, item, player_name)
 	local target_nodes = {}
 	local target_flags = {
 		liquid = false,
+		falling = true,
 	}
 	local scan_mode = get_scan_mode(node_name)
 	-- core.log("warning", "scan_mode " .. scan_mode)
@@ -615,7 +624,9 @@ local function dig_pos_process_queue_item(state, item, player_name)
 			target_nodes = green_list
 		elseif wanted_groups[group_target] then
 			target_nodes = wanted_list
-		elseif not known_groups[group_target] then
+		elseif known_groups[group_target] then
+			target_flags.falling = false
+		else
 			log_warning("new group target " .. group_target)
 		end
 	end
@@ -632,6 +643,9 @@ local function dig_pos_process_queue_item(state, item, player_name)
 	end
 	if target_flags.liquid then
 		iter_node_groups(state, core.find_nodes_in_area(minvec, maxvec, water_targets, true))
+	end
+	if target_flags.falling then
+		iter_node_groups(state, core.find_nodes_in_area(minvec, maxvec, falling_list, true))
 	end
 	iter_node_groups(state, core.find_nodes_in_area(minvec, maxvec, target_nodes, true))
 
