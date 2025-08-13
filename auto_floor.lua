@@ -64,7 +64,7 @@ end
 local function is_supported(pos)
 	local below_pos = pos + new_vec(0, -1, 0)
 	local below_node = get_node_or_nil(below_pos)
-	if below_node.name ~= "default:dirt" and core.get_item_group(below_node.name, "soil") > 0 then
+	if not below_node or (below_node.name ~= "default:dirt" and core.get_item_group(below_node.name, "soil") > 0) then
 		return false
 	end
 	for _, dir in ipairs(support_dirs) do
