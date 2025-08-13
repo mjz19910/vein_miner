@@ -603,38 +603,37 @@ function VeinMinerState:process_queue_item(item, player_name)
 		liquid = false,
 		falling = false,
 	}
+	local group_target = nil
 	local scan_mode = get_scan_mode(node_name)
-	if scan_mode == "error" then
-		if not known_unhandled_nodes[node_name] then
-			known_unhandled_nodes[node_name] = true
-			log_error("unhandled node name " .. node_name)
-		end
-		return
-	end
 	if scan_mode == "ignore" then
 		return
-	end
-	if scan_mode == "exclusive" then
+	elseif scan_mode == "exclusive" then
 		target_nodes = {node_name}
-	end
-	if scan_mode == "append" then
+	elseif scan_mode == "append" then
 		target_nodes = table.copy(wanted_list)
 		table.insert(target_nodes, node_name)
 		target_flags.falling = true
-	end
-	local group_target = nil
-	if scan_mode == "by_group" then
+	elseif scan_mode == "by_group" then
 		if node_name == "wool:green" then
 			target_flags.liquid = true
 		else
 		end
 		if node_to_group[node_name] ~= nil then
 			local target_key = node_to_group[node_name]
-			table.insert_all(target_nodes, mining_groups[target_key])
+			target_nodes = table.copy(mining_groups[target_key])
 			group_target = target_key
 		else
-			table.insert(target_nodes, node_name)
+			target_nodes = {node_name}
 		end
+	elseif scan_mode == "error" then
+		if not known_unhandled_nodes[node_name] then
+			known_unhandled_nodes[node_name] = true
+			log_error("unhandled node name " .. node_name)
+		end
+		return
+	else
+		log_error("unhandled scan mode " .. scan_mode)
+		return
 	end
 	if group_target then
 		if falling_groups[group_target] then
