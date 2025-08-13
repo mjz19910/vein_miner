@@ -114,7 +114,7 @@ local function try_place_block_from_inventory(player, sound_info, target_pos, ma
 		if def and name ~= "air" and not def.groups.falling_node then
 			local cur_node = core.get_node(target_pos)
 			if cur_node and cur_node.name ~= "air" then
-				core.node_dig(target_pos, cur_node, player)
+				return false
 			end
 			set_node(target_pos, {
 				name = name,
