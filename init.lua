@@ -59,6 +59,7 @@ local player_config_mgr = require("mods.vein_miner.player_config")
 ---@type PlayerConfigManager
 vein_miner.player_config_mgr = player_config_mgr
 local l_utils = require("mods.vein_miner.late_utils")
+---@type VeinMinerLateUtils
 vein_miner.l_utils = l_utils
 local BlockDigger = require("mods.vein_miner.block_digger")
 

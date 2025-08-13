@@ -112,6 +112,10 @@ local function try_place_block_from_inventory(player, sound_info, target_pos, ma
 		local name = stack:get_name()
 		local def = registered_nodes[name]
 		if def and name ~= "air" and not def.groups.falling_node then
+			local cur_node = core.get_node(target_pos)
+			if cur_node and cur_node.name ~= "air" then
+				core.node_dig(target_pos, cur_node, player)
+			end
 			set_node(target_pos, {
 				name = name,
 			})
@@ -138,6 +142,11 @@ local sound_info_per_player = {}
 local last_yaw_per_player = {}
 ---@type table<string, boolean>
 local is_yaw_update_per_player_disabled = {}
+
+local function is_passable(node)
+	local def = core.registered_nodes[node.name]
+	return def and def.walkable == false
+end
 
 -- globalstep for vein_miner:auto_floor tool
 core.register_globalstep(function(dtime)
@@ -187,7 +196,7 @@ core.register_globalstep(function(dtime)
 			local target_pos = line_start + forward_dir * i
 
 			local node_below = get_node(target_pos)
-			if node_below.name == "air" and is_supported(target_pos) then
+			if is_passable(node_below) and is_supported(target_pos) then
 				if j >= max_blocks then
 					break
 				end

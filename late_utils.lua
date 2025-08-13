@@ -91,7 +91,8 @@ function l_utils.is_floating(pos, expected_name)
 	for _, offset in ipairs(floating_dirs) do
 		local neighbor_pos = pos + offset
 		local neighbor = core.get_node_or_nil(neighbor_pos)
-		if neighbor and neighbor.name ~= "air" and neighbor.name ~= "ignore" and neighbor.name ~= expected_name then
+		if neighbor and neighbor.name ~= "air" and neighbor.name ~= "default:water_source" and neighbor.name ~= "default:water_flowing" and
+			neighbor.name ~= "ignore" and neighbor.name ~= expected_name then
 			return false
 		end
 	end
