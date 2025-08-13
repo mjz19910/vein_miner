@@ -204,9 +204,6 @@ local joined_dirs = {}
 local joined_dirs_set = {}
 local known_dir_set = {}
 
----@type table<string, VeinMinerState>
-local vein_miner_current_state = {}
-
 local check_for_falling_neighbors = {vector.new(-1, -1, 0), vector.new(1, -1, 0), vector.new(0, -1, -1), vector.new(0, -1, 1),
 	vector.new(0, -1, 0), vector.new(-1, 0, 0), vector.new(1, 0, 0), vector.new(0, 0, -1), vector.new(0, 0, 1), vector.new(0, 1, 0)}
 local possible_flow_directions = {vector.new(-1, 0, 0), vector.new(1, 0, 0), vector.new(0, 0, -1), vector.new(0, 0, 1), vector.new(0, 1, 0)}
@@ -515,19 +512,36 @@ for k, _ in pairs(falling_groups) do
 	table.insert_all(falling_list, mining_groups[k])
 end
 
+---@class VeinMinerState
+---@field pos Vector
+---@field queue Deque<ScanItem>
+---@field player Player
+---@field player_name string
+---@field skip_pos table<integer, boolean>
+---@param player Player
+---@param player_name string
+---@param pos Vector
+---@param wielded ItemStack
+local VeinMinerState = {}
+VeinMinerState.__index = VeinMinerState
+vein_miner.mt = VeinMinerState
+
+---@type table<string, VeinMinerState>
+local vein_miner_current_state = {}
+
 ---@param state VeinMinerState
 ---@param item ScanItem
 ---@param player_name string
-local function dig_pos_process_queue_item(state, item, player_name)
+function VeinMinerState:process_queue_item(item, player_name)
 	local config = player_config_mgr.data[player_name]
-	local player = state.player
+	local player = self.player
 
 	local pos = item.pos
 	local node_name = item.node_name
 	local options = item.options
 
 	if item.oldnode then
-		BlockDigger.notify_dig(state, pos, item.oldnode)
+		BlockDigger.notify_dig(self, pos, item.oldnode)
 	end
 
 	local xz_len = 8
@@ -551,7 +565,7 @@ local function dig_pos_process_queue_item(state, item, player_name)
 	local maxvec = vector.add(minvec, vector.subtract(vec_size, 1))
 	maxvec = scanner.clamp_vec_to_player_bounds(maxvec, config)
 
-	if state.pos_mod_seen[chunk_hash] then
+	if self.pos_mod_seen[chunk_hash] then
 		return
 	end
 
@@ -561,13 +575,13 @@ local function dig_pos_process_queue_item(state, item, player_name)
 	end
 
 	if is_liquid(node_name, "water") or is_liquid(node_name, "lava") then
-		fill_liquid_at_pos(state, pos, l_utils.handle_pos_notify)
+		fill_liquid_at_pos(self, pos, l_utils.handle_pos_notify)
 		return
 	end
 	if options.light then
-		state.pending_light_notify:push_left({
+		self.pending_light_notify:push_left({
 			pos = pos,
-			queue_left = state.queue:length(),
+			queue_left = self.queue:length(),
 		})
 	end
 
@@ -576,7 +590,7 @@ local function dig_pos_process_queue_item(state, item, player_name)
 		return
 	end
 
-	state.wait_for_player_near_pos(player, center)
+	self.wait_for_player_near_pos(player, center)
 
 	if options.large then
 		notify_pos(center, "#0000ffff", 6 * 4, 120 + 30)
@@ -639,7 +653,7 @@ local function dig_pos_process_queue_item(state, item, player_name)
 	end
 
 	if options.user and options.light then
-		state.found_light_count = state.found_light_count + 1
+		self.found_light_count = self.found_light_count + 1
 	end
 
 	if not utils.has_empty_main_inv_slot(player) then
@@ -649,22 +663,22 @@ local function dig_pos_process_queue_item(state, item, player_name)
 		utils.async_wait(1)
 	end
 	if target_flags.liquid then
-		iter_node_groups(state, core.find_nodes_in_area(minvec, maxvec, water_targets, true))
+		iter_node_groups(self, core.find_nodes_in_area(minvec, maxvec, water_targets, true))
 	end
 	if target_flags.falling then
-		iter_node_groups(state, core.find_nodes_in_area(minvec, maxvec, falling_list, true))
+		iter_node_groups(self, core.find_nodes_in_area(minvec, maxvec, falling_list, true))
 	end
-	iter_node_groups(state, core.find_nodes_in_area(minvec, maxvec, target_nodes, true))
+	iter_node_groups(self, core.find_nodes_in_area(minvec, maxvec, target_nodes, true))
 
 	core.fix_light(minvec, maxvec)
 
-	for v in state.pending_light_notify:iter_right() do
-		add_light_to_teleport_queue(state, v)
+	for v in self.pending_light_notify:iter_right() do
+		add_light_to_teleport_queue(self, v)
 	end
 
 	if options.light then
-		state.pending_light_scan:push_left({pos, node_name, options})
-		scanner.scan_nearby_lights(state, pos, node_name, options, false)
+		self.pending_light_scan:push_left({pos, node_name, options})
+		scanner.scan_nearby_lights(self, pos, node_name, options, false)
 	end
 
 	if not options.large then
@@ -687,25 +701,10 @@ local function dig_pos_process_queue_item(state, item, player_name)
 		end)
 	end
 
-	state.work_done = true
+	self.work_done = true
 
-	state.pos_mod_seen[core.hash_node_position(minvec)] = true
+	self.pos_mod_seen[core.hash_node_position(minvec)] = true
 end
-
----@class VeinMinerState
----@field pos Vector
----@field queue Deque<ScanItem>
----@field player Player
----@field player_name string
----@field skip_pos table<integer, boolean>
----@param player Player
----@param player_name string
----@param pos Vector
----@param wielded ItemStack
-local VeinMinerState = {}
-VeinMinerState.__index = VeinMinerState
-
-vein_miner.mt = VeinMinerState
 
 -- Recursively mines a vein of blocks
 ---@param self VeinMinerState
@@ -718,7 +717,7 @@ function VeinMinerState:dig_pos()
 		if log_work_start then
 			log_warning("start work on item at " .. core.pos_to_string(item.pos) .. " " .. item.node_name)
 		end
-		dig_pos_process_queue_item(self, item, player_name)
+		self.process_queue_item(item, player_name)
 		self.mined_nodes = self.mined_nodes + self.cur_mined_nodes
 		self.co_cur_max_nodes = self.co_cur_max_nodes - self.cur_mined_nodes
 		if self.cur_mined_nodes > 0 then
