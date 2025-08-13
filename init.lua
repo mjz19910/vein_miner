@@ -620,10 +620,12 @@ local function dig_pos_process_queue_item(state, item, player_name)
 		end
 	end
 	if group_target then
-		if green_groups[group_target] then
-			target_nodes = green_list
+		if falling_groups[group_target] then
+			target_nodes = wanted_list
 		elseif wanted_groups[group_target] then
 			target_nodes = wanted_list
+		elseif green_groups[group_target] then
+			target_nodes = green_list
 		elseif known_groups[group_target] then
 			target_flags.falling = false
 		else
