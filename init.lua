@@ -529,7 +529,7 @@ vein_miner.mt = VeinMinerState
 ---@type table<string, VeinMinerState>
 local vein_miner_current_state = {}
 
----@param state VeinMinerState
+---@param self VeinMinerState
 ---@param item ScanItem
 ---@param player_name string
 function VeinMinerState:process_queue_item(item, player_name)
