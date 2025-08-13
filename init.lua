@@ -434,7 +434,7 @@ local function is_passable(node)
 end
 local function notify_missing_light(player, pos, attach_dir, expire_time)
 	local attach_node = core.get_node_or_nil(pos + attach_dir)
-	if attach_node == nil or attach_node.name == "air" then
+	if attach_node == nil or is_passable(attach_node) then
 		return
 	end
 	if light_nodes_set[attach_node.name] then
@@ -445,7 +445,7 @@ local function notify_missing_light(player, pos, attach_dir, expire_time)
 		return
 	end
 	local node = core.get_node_or_nil(pos)
-	if node == nil or is_passable(node) then
+	if node == nil or node.name == "air" then
 		if not try_place_node_from_inventory(player, pos, "default:mese_post_light_pine_wood") then
 			notify_pos(pos + (attach_dir / 16 * 4), "#00ff00ff", 4, expire_time)
 		end
