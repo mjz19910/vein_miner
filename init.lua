@@ -681,7 +681,7 @@ local function dig_pos_process_queue_item(state, item, player_name)
 
 	if not options.large then
 		-- allow water to flow
-		core.after(0.4, function()
+		core.after(0.6, function()
 			local light_timeout = 120
 			notify_pos(minvec, "#ffff00ff", 6, light_timeout + 60)
 			local lp_north = vector.offset(minvec, 3, 3, 7)
