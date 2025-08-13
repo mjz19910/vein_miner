@@ -601,10 +601,9 @@ function VeinMinerState:process_queue_item(item, player_name)
 	local target_nodes = {}
 	local target_flags = {
 		liquid = false,
-		falling = true,
+		falling = false,
 	}
 	local scan_mode = get_scan_mode(node_name)
-	-- core.log("warning", "scan_mode " .. scan_mode)
 	if scan_mode == "error" then
 		if not known_unhandled_nodes[node_name] then
 			known_unhandled_nodes[node_name] = true
@@ -638,18 +637,16 @@ function VeinMinerState:process_queue_item(item, player_name)
 	if group_target then
 		if falling_groups[group_target] then
 			target_nodes = wanted_list
+			target_flags.falling = true
 		elseif wanted_groups[group_target] then
 			target_nodes = wanted_list
+			target_flags.falling = true
 		elseif green_groups[group_target] then
 			target_nodes = green_list
 		elseif known_groups[group_target] then
-			target_flags.falling = false
 		else
 			log_warning("new group target " .. group_target)
-			target_flags.falling = false
 		end
-	else
-		target_flags.falling = false
 	end
 
 	if options.user and options.light then
