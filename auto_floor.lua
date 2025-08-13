@@ -55,7 +55,7 @@ local function is_node_supporting(node)
 		return false
 	end
 	local def = registered_nodes[node.name]
-	if def and not def.floodable and node.name ~= "air" then
+	if def and not def.floodable and def.walkable then
 		return true
 	end
 end
