@@ -225,11 +225,13 @@ core.register_globalstep(function(dtime)
 				is_yaw_update_per_player_disabled[name] = true
 				goto continue
 			end
-		else
+		elseif not is_yaw_update_per_player_disabled[name] then
 			dbg_count = math.floor(dbg_count / (math.log(dbg_count + 1, 2) * 2 + 3))
 			local new_yaw = math.rad(math.deg(yaw) - 1)
 			player:set_look_horizontal(new_yaw)
 			yaw = new_yaw
+		else
+			dbg_count = 0
 		end
 		last_yaw_per_player[name] = yaw
 		::continue::
