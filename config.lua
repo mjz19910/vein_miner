@@ -71,7 +71,7 @@ local sandstone = {
 	},
 }
 
-local gravel = "default:gravel"
+local gravel = {"default:gravel"}
 
 local grass = {
 	{"default:grass_1", "default:grass_2", "default:grass_3", "default:grass_4", "default:grass_5"},
@@ -168,7 +168,7 @@ local mg = {
 	marram_grass = grass.marram,
 	fern = grass.fern,
 	blueberry = {blueberry.bush.leaves, blueberry.bush.with_berries},
-	gravel = {gravel},
+	gravel = {gravel[1]},
 	silver_sand = {sand.silver},
 	sand = {sand[1]},
 	flower = flower[1],
