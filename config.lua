@@ -7,8 +7,6 @@ local math = math
 local vein_miner = vein_miner
 local voxel_util = vein_miner.voxel_util
 local p = vector.new
-local i = table.insert
-local ia = table.insert_all
 
 local dirt = {
 	"default:dirt",
@@ -241,9 +239,9 @@ table.insert(CFG.VEC_DIRS, p(0, 0, 0))
 -- distance limited to 3.1622776601684, ie 3.2
 table.insert_all(CFG.VEC_DIRS, gen_euclidean_offsets(64 / 20))
 
-ia(CFG.target_list, {cobble[1], cobble.mossy, cobble.stair})
+table.insert_all(CFG.target_list, {cobble[1], cobble.mossy, cobble.stair})
 
-i(CFG.ignored_nodes, mese_post_light[1])
+table.insert(CFG.ignored_nodes, mese_post_light[1])
 
 -- go to the next nodeid (ex.: 01000011 --> 01000100)
 local nid_inc = function() end
@@ -281,9 +279,9 @@ end
 register_wires_group()
 
 local mine_only_set = CFG.target_list
-i(mine_only_set, "mesecons_powerplant:power_plant")
-ia(mine_only_set, {"mesecons_movestones:sticky_movestone_vertical", "mesecons_stickyblocks:sticky_block_all"})
-ia(mine_only_set, {"mesecons_movestones:sticky_movestone"})
+table.insert(mine_only_set, "mesecons_powerplant:power_plant")
+table.insert_all(mine_only_set, {"mesecons_movestones:sticky_movestone_vertical", "mesecons_stickyblocks:sticky_block_all"})
+table.insert_all(mine_only_set, {"mesecons_movestones:sticky_movestone"})
 
 local coral = {
 	brown = "default:coral_brown",
