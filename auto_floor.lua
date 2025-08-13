@@ -227,6 +227,9 @@ core.register_globalstep(function(dtime)
 			end
 		else
 			dbg_count = math.floor(dbg_count / (math.log(dbg_count + 1, 2) * 2 + 3))
+			local new_yaw = math.rad(math.deg(yaw) - 1)
+			player:set_look_horizontal(new_yaw)
+			yaw = new_yaw
 		end
 		last_yaw_per_player[name] = yaw
 		::continue::
