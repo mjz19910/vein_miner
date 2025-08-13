@@ -212,8 +212,8 @@ core.register_globalstep(function(dtime)
 			time_until_block_place = 0
 		end
 		if j <= 1 and not is_yaw_update_per_player_disabled[name] then
-			local yaw_max = math.pow(9 / 10, 12)
-			local yaw_speed = yaw_max * dbg_count / 2
+			local yaw_max = math.pow(9 / 10, 13)
+			local yaw_speed = yaw_max * math.log(dbg_count + 1, 2)
 			local new_yaw = math.rad((math.deg(yaw) + yaw_speed) % 360)
 			if last_yaw_per_player[name] and new_yaw + 0.1 < last_yaw_per_player[name] then
 				is_yaw_update_per_player_disabled[name] = true
