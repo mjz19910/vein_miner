@@ -33,11 +33,6 @@ minetest.register_tool("vein_miner:auto_floor", {
 	inventory_image = "default_wood.png",
 })
 
-local function is_passable(node)
-	local def = core.registered_nodes[node.name]
-	return def and def.walkable == false
-end
-
 local up = new_vec(0, 1, 0)
 local down = new_vec(0, -1, 0)
 local p = new_vec
@@ -60,7 +55,7 @@ local function is_node_supporting(node)
 		return false
 	end
 	local def = registered_nodes[node.name]
-	if def and not def.floodable and def.walkable then
+	if def and not def.floodable and node.name ~= "air" then
 		return true
 	end
 end
@@ -147,6 +142,11 @@ local sound_info_per_player = {}
 local last_yaw_per_player = {}
 ---@type table<string, boolean>
 local is_yaw_update_per_player_disabled = {}
+
+local function is_passable(node)
+	local def = core.registered_nodes[node.name]
+	return def and def.walkable == false
+end
 
 -- globalstep for vein_miner:auto_floor tool
 core.register_globalstep(function(dtime)
