@@ -212,8 +212,8 @@ core.register_globalstep(function(dtime)
 			time_until_block_place = 0
 		end
 		if j <= 1 and not is_yaw_update_per_player_disabled[name] then
-			local yaw_max = 0.1
-			local yaw_speed = yaw_max * dbg_count / 2
+			local yaw_max = 0.2
+			local yaw_speed = yaw_max * dbg_count
 			local new_yaw = math.rad((math.deg(yaw) + yaw_speed) % 360)
 			player:set_look_horizontal(new_yaw)
 			dbg_count = dbg_count + 1
