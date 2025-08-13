@@ -680,22 +680,23 @@ local function dig_pos_process_queue_item(state, item, player_name)
 	end
 
 	if not options.large then
-		local light_timeout = 120
-
-		notify_pos(minvec, "#ffff00ff", 6, light_timeout + 60)
-
-		local lp_north = vector.offset(minvec, 3, 3, 7)
-		local lp_south = vector.offset(minvec, 3, 3, 0)
-		local lp_west = vector.offset(minvec, 0, 3, 3)
-		local lp_east = vector.offset(minvec, 7, 3, 3)
-		local lp_down = vector.offset(minvec, 3, 0, 3)
-		local lp_up = vector.offset(minvec, 3, 7, 3)
-		notify_missing_light(player, lp_east, xpos, light_timeout)
-		notify_missing_light(player, lp_west, xneg, light_timeout)
-		notify_missing_light(player, lp_up, ypos, light_timeout)
-		notify_missing_light(player, lp_down, yneg, light_timeout)
-		notify_missing_light(player, lp_north, zpos, light_timeout)
-		notify_missing_light(player, lp_south, zneg, light_timeout)
+		-- allow water to flow
+		core.after(0.4, function()
+			local light_timeout = 120
+			notify_pos(minvec, "#ffff00ff", 6, light_timeout + 60)
+			local lp_north = vector.offset(minvec, 3, 3, 7)
+			local lp_south = vector.offset(minvec, 3, 3, 0)
+			local lp_west = vector.offset(minvec, 0, 3, 3)
+			local lp_east = vector.offset(minvec, 7, 3, 3)
+			local lp_down = vector.offset(minvec, 3, 0, 3)
+			local lp_up = vector.offset(minvec, 3, 7, 3)
+			notify_missing_light(player, lp_east, xpos, light_timeout)
+			notify_missing_light(player, lp_west, xneg, light_timeout)
+			notify_missing_light(player, lp_up, ypos, light_timeout)
+			notify_missing_light(player, lp_down, yneg, light_timeout)
+			notify_missing_light(player, lp_north, zpos, light_timeout)
+			notify_missing_light(player, lp_south, zneg, light_timeout)
+		end)
 	end
 
 	state.work_done = true
