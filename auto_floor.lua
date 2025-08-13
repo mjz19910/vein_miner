@@ -226,10 +226,12 @@ core.register_globalstep(function(dtime)
 				goto continue
 			end
 		elseif not is_yaw_update_per_player_disabled[name] then
+			if time_until_block_place > 24 then
+				local new_yaw = math.rad(math.deg(yaw) - 0.5)
+				player:set_look_horizontal(new_yaw)
+				yaw = new_yaw
+			end
 			dbg_count = math.floor(dbg_count / (math.log(dbg_count + 1, 2) * 2 + 3))
-			local new_yaw = math.rad(math.deg(yaw) - 1)
-			player:set_look_horizontal(new_yaw)
-			yaw = new_yaw
 		else
 			dbg_count = 0
 		end
