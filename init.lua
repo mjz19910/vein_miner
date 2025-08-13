@@ -618,7 +618,7 @@ function VeinMinerState:process_queue_item(item, player_name)
 		target_nodes = {node_name}
 	end
 	if scan_mode == "append" then
-		target_nodes = wanted_list
+		target_nodes = table.copy(wanted_list)
 		table.insert(target_nodes, node_name)
 		target_flags.falling = true
 	end
