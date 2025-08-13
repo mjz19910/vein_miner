@@ -127,6 +127,11 @@ local cotton = "farming:cotton_wild"
 
 local snow = "default:snow"
 
+local obsidian = {
+	value = "default:obsidian",
+	glass = "default:obsidian_glass",
+}
+
 ---@class VeinMinerConfig
 local CFG = {}
 
@@ -137,10 +142,12 @@ CFG.light_scan_dist = 1
 local LIGHT_NODES = {mese_post_light.pine, mese_post_light.acacia}
 CFG.LIGHT_NODES = LIGHT_NODES
 ---@type string[]
-local target_list = {"default:stone_block", "fire:basic_flame", "default:obsidian", "wool:green", "wool:orange"}
+local target_list = {"default:stone_block", "fire:basic_flame", "wool:green", "wool:orange"}
+table.insert(target_list, obsidian.value)
 CFG.target_list = target_list
 ---@type string[]
 local ignore_list_default = {leaves[1], leaves.acacia, leaves.aspen, leaves.jungle, leaves.pine, "default:chest"}
+table.insert(ignore_list_default, obsidian.glass)
 ---@type string[]
 local digtron_parts = {"digtron:axle", "digtron:light", "digtron:pusher", "digtron:digger", "digtron:builder", "digtron:structure",
 	"digtron:inventory", "digtron:fuelstore", "digtron:empty_crate", "digtron:auto_controller", "digtron:combined_storage",
