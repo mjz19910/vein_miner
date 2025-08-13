@@ -473,9 +473,6 @@ require("mods.vein_miner.globalstep")
 
 local known_groups = {
 	cobble = true,
-	surface = true,
-	sand = true,
-	dirt = true,
 }
 local green_groups = {
 	cotton = true,
@@ -496,6 +493,9 @@ local wanted_groups = {
 	ore = true,
 	silver_sand = true,
 	stone = true,
+	dirt = true,
+	surface = true,
+	sand = true,
 }
 local wanted_list = {}
 for k, _ in pairs(wanted_groups) do
