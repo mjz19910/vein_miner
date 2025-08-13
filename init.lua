@@ -593,9 +593,9 @@ function VeinMinerState:process_queue_item(item, player_name)
 	self.wait_for_player_near_pos(player, center)
 
 	if options.large then
-		notify_pos(center, "#0000ffff", 6 * 4, 120 + 30)
+		notify_pos(center, "#0000ffff", 6 * 4, 4 * 60)
 	else
-		notify_pos(center, "#0000ffff", 6, 120 + 30)
+		notify_pos(center, "#0000ffff", 6, 4 * 60)
 	end
 
 	local target_nodes = {}
@@ -717,7 +717,7 @@ function VeinMinerState:dig_pos()
 		if log_work_start then
 			log_warning("start work on item at " .. core.pos_to_string(item.pos) .. " " .. item.node_name)
 		end
-		self.process_queue_item(item, player_name)
+		self:process_queue_item(item, player_name)
 		self.mined_nodes = self.mined_nodes + self.cur_mined_nodes
 		self.co_cur_max_nodes = self.co_cur_max_nodes - self.cur_mined_nodes
 		if self.cur_mined_nodes > 0 then
