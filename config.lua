@@ -82,7 +82,7 @@ local grass = {
 }
 
 local flower = {
-	{"flowers:chrysanthemum_green", "flowers:dandelion_yellow", "flowers:dandelion_white", "flowers:tulip_black", "flowers:tulip",
+	common = {"flowers:chrysanthemum_green", "flowers:dandelion_yellow", "flowers:dandelion_white", "flowers:tulip_black", "flowers:tulip",
 		"flowers:viola", "flowers:rose"},
 	mushroom = {"flowers:mushroom_brown", "flowers:mushroom_red"},
 }
@@ -171,7 +171,7 @@ local mg = {
 	gravel = {gravel[1]},
 	silver_sand = {sand.silver},
 	sand = {sand[1]},
-	flower = flower[1],
+	flower = flower.common,
 	mushroom = flower.mushroom,
 	stem = trees.stem,
 	tree_trunk = trees.trunk,
