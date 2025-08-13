@@ -644,8 +644,7 @@ function VeinMinerState:process_queue_item(item, player_name)
 			target_flags.falling = true
 		elseif green_groups[group_target] then
 			target_nodes = table.copy(green_list)
-		elseif known_groups[group_target] then
-		else
+		elseif not known_groups[group_target] then
 			log_warning("new group target " .. group_target)
 		end
 	end
