@@ -482,11 +482,9 @@ local green_groups = {
 	grass = true,
 	stem = true,
 	tree_trunk = true,
+	surface = true,
+	snow = true,
 }
-local green_list = {}
-for k, _ in pairs(green_groups) do
-	table.insert_all(green_list, mining_groups[k])
-end
 local wanted_groups = {
 	clay = true,
 	gravel = true,
@@ -494,11 +492,13 @@ local wanted_groups = {
 	silver_sand = true,
 	stone = true,
 	dirt = true,
-	surface = true,
 	sand = true,
-	snow = true,
 }
+local green_list = {}
 local wanted_list = {}
+for k, _ in pairs(green_groups) do
+	table.insert_all(wanted_list, mining_groups[k])
+end
 for k, _ in pairs(wanted_groups) do
 	table.insert_all(wanted_list, mining_groups[k])
 end
