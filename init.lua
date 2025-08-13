@@ -718,6 +718,7 @@ vein_miner.mt = VeinMinerState
 -- Recursively mines a vein of blocks
 ---@param self VeinMinerState
 function VeinMinerState:dig_pos()
+	self.running = true
 	self.prev_pos = nil
 	self.prev_sector = nil
 	self.seen_teleports_set = {}
