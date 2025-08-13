@@ -187,7 +187,7 @@ local mg = {
 	cotton = {cotton.wild},
 	clay = {clay},
 	surface = {},
-	snow = {snow},
+	snow = {snow[1]},
 }
 ---@type MiningGroups
 CFG.mining_groups = mg
