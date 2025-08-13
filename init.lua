@@ -488,6 +488,8 @@ require("mods.vein_miner.globalstep")
 local known_groups = {
 	cobble = true,
 	tree_trunk = true,
+	surface = true,
+	stem = true,
 }
 local green_groups = {
 	cotton = true,
@@ -495,8 +497,6 @@ local green_groups = {
 	fern = true,
 	flower = true,
 	grass = true,
-	stem = true,
-	surface = true,
 }
 local wanted_groups = {
 	clay = true,
