@@ -497,9 +497,11 @@ local wanted_groups = {
 local green_list = {}
 local wanted_list = {}
 for k, _ in pairs(green_groups) do
+	table.insert_all(green_list, mining_groups[k])
 	table.insert_all(wanted_list, mining_groups[k])
 end
 for k, _ in pairs(wanted_groups) do
+	table.insert_all(green_list, mining_groups[k])
 	table.insert_all(wanted_list, mining_groups[k])
 end
 
