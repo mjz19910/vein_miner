@@ -407,7 +407,10 @@ local function try_place_node_from_inventory(player, pos, name)
 	local inv = player:get_inventory()
 	if inv:contains_item("main", name) then
 		local node = core.get_node_or_nil(pos)
-		if node and node.name == "air" then
+		if node then
+			if node.name ~= "air" then
+				core.node_dig(pos, node, player)
+			end
 			core.set_node(pos, {
 				name = name,
 			})
@@ -424,9 +427,13 @@ local function try_place_node_from_inventory(player, pos, name)
 	end
 	return false
 end
+local function is_passable(node)
+	local def = core.registered_nodes[node.name]
+	return def and def.walkable == false
+end
 local function notify_missing_light(player, pos, attach_dir, expire_time)
 	local attach_node = core.get_node_or_nil(pos + attach_dir)
-	if attach_node == nil or attach_node.name == "air" then
+	if attach_node == nil or is_passable(attach_node) then
 		return
 	end
 	if light_nodes_set[attach_node.name] then
@@ -437,7 +444,7 @@ local function notify_missing_light(player, pos, attach_dir, expire_time)
 		return
 	end
 	local node = core.get_node_or_nil(pos)
-	if node == nil or node.name == "air" then
+	if node == nil or is_passable(node) then
 		if not try_place_node_from_inventory(player, pos, "default:mese_post_light_pine_wood") then
 			notify_pos(pos + (attach_dir / 16 * 4), "#00ff00ff", 4, expire_time)
 		end
