@@ -434,7 +434,13 @@ local function is_passable(node)
 end
 local function notify_missing_light(player, pos, attach_dir, expire_time)
 	local attach_node = core.get_node_or_nil(pos + attach_dir)
-	if attach_node == nil or attach_node.name ~= "air" then
+	if attach_node == nil or attach_node.name == "air" then
+		return
+	end
+	if attach_node.name == "default:water_flowing" then
+		return
+	end
+	if attach_node.name == "default:water_source" then
 		return
 	end
 	if light_nodes_set[attach_node.name] then
