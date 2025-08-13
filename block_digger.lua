@@ -172,10 +172,11 @@ local function place_log_over_dirt(pos, oldnode, player, skip_pos)
 	end
 end
 
+--- place_log_over_dirt(pos, oldnode, state.player, state.skip_pos)
 ---@param state VeinMinerState
 ---@param pos Vector
 ---@param oldnode MapNode
-function BlockDigger.notify_dig(state, pos, oldnode) place_log_over_dirt(pos, oldnode, state.player, state.skip_pos) end
+function BlockDigger.notify_dig(state, pos, oldnode) end
 
 ---@param state VeinMinerState
 ---@param node_name string
