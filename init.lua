@@ -475,6 +475,7 @@ local known_groups = {
 	cobble = true,
 	surface = true,
 	sand = true,
+	dirt = true,
 }
 local green_groups = {
 	cotton = true,
@@ -491,7 +492,6 @@ for k, _ in pairs(green_groups) do
 end
 local wanted_groups = {
 	clay = true,
-	dirt = true,
 	gravel = true,
 	ore = true,
 	silver_sand = true,
