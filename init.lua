@@ -808,33 +808,24 @@ local function after_delay(data, fn, state)
 	core.after(action_cost, fn, state)
 end
 
-local function after_co_start(state, co, async_step_fn, status, action_count)
-	core.is_async = nil
-	if not status then
-		log_error("vein_miner coroutine error " .. action_count)
-		log_error(debug.traceback(co))
-		return
-	else
-		after_delay(action_count, async_step_fn, state)
-		return
-	end
-end
-
-local function resume_coroutine(state, co, async_step_fn)
-	core.is_async = true
-	local status, action_count = coroutine.resume(co)
-	after_co_start(state, co, async_step_fn, status, action_count)
-end
-
 ---@param state VeinMinerState
 local function vein_miner_step(state)
 	::start::
 	if state.thread == nil then
 		state.thread = coroutine.create(function() return state:dig_pos() end)
 	end
-	local co_status = coroutine.status(state.thread)
+	local co = state.thread
+	local co_status = coroutine.status(co)
 	if co_status == "suspended" then
-		resume_coroutine(state, state.thread, vein_miner_step)
+		core.is_async = true
+		local status, action_count = coroutine.resume(co)
+		core.is_async = nil
+		if not status then
+			log_error("vein_miner coroutine error " .. action_count)
+			log_error(debug.traceback(co))
+		else
+			after_delay(action_count, vein_miner_step, state)
+		end
 	elseif co_status == "dead" then
 		if not state.queue:is_empty() then
 			state.thread = nil
