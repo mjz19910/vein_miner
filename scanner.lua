@@ -1,4 +1,5 @@
 local ipairs = ipairs
+local pairs = pairs
 ---@type VeinMinerGlobal
 local vein_miner = vein_miner
 local aabb = vein_miner.aabb
@@ -17,10 +18,29 @@ local region_scan_fmt1 = "[LightScan] scanned region (%d) %s"
 
 local is_valid_pos_to_iter = vein_miner.is_valid_pos_to_iter
 
-local function count_found_nodes(state, iter, orig_pos, player_name)
+--- Clamp a vector's y to player bounds
+---@param vec Vector
+---@param config PlayerConfig
+---@return Vector
+function scanner.clamp_vec_to_player_bounds(vec, config)
+	if vec.y < config.miny then
+		vec.y = config.miny
+	elseif vec.y >= config.maxy then
+		vec.y = config.maxy - 1
+	end
+	return vec
+end
+
+--- Checks if a position is within player bounds
+---@param pos Vector
+---@param config PlayerConfig
+---@return boolean
+function scanner.is_pos_in_player_bounds(pos, config) return pos.y >= config.miny and pos.y < config.maxy end
+
+local function count_found_nodes(state, iter, orig_pos, config)
 	local count = 0
 	for idx, next_pos in pairs(iter) do
-		if not is_valid_pos_to_iter(next_pos, player_name) then
+		if not scanner.is_pos_in_player_bounds(next_pos, config) then
 			goto skip
 		end
 		if orig_pos ~= next_pos then
@@ -31,10 +51,10 @@ local function count_found_nodes(state, iter, orig_pos, player_name)
 	return count
 end
 
-local function scan_nearby_region(state, r1, offset_vec, offset_str, pos, node_name)
+local function scan_nearby_region(state, r1, offset_vec, offset_str, pos, node_name, config)
 	local r2 = aabb.new_region(r1.min + offset_vec, r1.max + offset_vec)
 	local list = core.find_nodes_in_area(r2.min, r2.max, node_name, false)
-	local count = count_found_nodes(state, list, pos, state.player_name)
+	local count = count_found_nodes(state, list, pos, config)
 	if count > 0 then
 		log_action(region_scan_fmt2:format(count, r2, offset_str))
 	end
@@ -58,7 +78,7 @@ end
 local p = vector.new
 
 ---@param state VeinMinerState
-local function scan_region_for_node(state, regions, r, pos, node_name, user_action, show_log)
+local function scan_region_for_node(state, regions, r, pos, node_name, user_action, show_log, config)
 	local center = (r.min + r.max) / 2
 	local scan_distance = vector.distance(state.player:get_pos(), center)
 	if scan_distance > 300 then
@@ -66,7 +86,7 @@ local function scan_region_for_node(state, regions, r, pos, node_name, user_acti
 			return
 		end
 		local scan_nodes = core.find_nodes_in_area(r.min, r.max, node_name, false)
-		local count = count_found_nodes(state, scan_nodes, pos, state.player_name)
+		local count = count_found_nodes(state, scan_nodes, pos, config)
 		if count > 0 or user_action then
 			local region_scan_fmt = "[LightScan] skipped region (%s) %s to %s (%s) Volume=%d Distance=%d"
 			local min_str = core.pos_to_string(r.min)
@@ -78,7 +98,7 @@ local function scan_region_for_node(state, regions, r, pos, node_name, user_acti
 	end
 	state.wait_for_player_near_pos(state.player, center)
 	local scan_nodes = core.find_nodes_in_area(r.min, r.max, node_name, false)
-	local count = count_found_nodes(state, scan_nodes, pos, state.player_name)
+	local count = count_found_nodes(state, scan_nodes, pos, config)
 	for _, p in pairs(scan_nodes) do
 		local is_new_light = mark_near_light(state, node_name, p)
 		if is_new_light then
@@ -94,38 +114,39 @@ local function scan_region_for_node(state, regions, r, pos, node_name, user_acti
 		local size = r.max - r.min
 		local size_str = core.pos_to_string(size)
 		log_warning(region_scan_fmt1:format(count, r))
-		scan_nearby_region(state, r, p(size.x, 0, 0), "X+", pos, node_name)
-		scan_nearby_region(state, r, p(-size.x, 0, 0), "X-", pos, node_name)
-		scan_nearby_region(state, r, p(0, size.y, 0), "Y+", pos, node_name)
-		scan_nearby_region(state, r, p(0, -size.y, 0), "Y-", pos, node_name)
-		scan_nearby_region(state, r, p(0, 0, size.z), "Z+", pos, node_name)
-		scan_nearby_region(state, r, p(0, 0, -size.z), "Z-", pos, node_name)
-		scan_nearby_region(state, r, p(size.x, 0, -size.z), "X+ Z-", pos, node_name)
-		scan_nearby_region(state, r, p(size.x, 0, size.z), "X+ Z+", pos, node_name)
-		scan_nearby_region(state, r, p(size.x, size.y, 0), "X+ Y+", pos, node_name)
-		scan_nearby_region(state, r, p(size.x, -size.y, 0), "X+ Y-", pos, node_name)
-		scan_nearby_region(state, r, p(size.x, size.y, -size.z), "X+ Y+ Z-", pos, node_name)
-		scan_nearby_region(state, r, p(size.x, size.y, size.z), "X+ Y+ Z+", pos, node_name)
-		scan_nearby_region(state, r, p(size.x, -size.y, -size.z), "X+ Y- Z-", pos, node_name)
-		scan_nearby_region(state, r, p(size.x, -size.y, size.z), "X+ Y- Z+", pos, node_name)
-		scan_nearby_region(state, r, p(-size.x * 2, 0, 0), "X- X-", pos, node_name)
-		scan_nearby_region(state, r, p(-size.x, 0, size.z), "X- Z+", pos, node_name)
-		scan_nearby_region(state, r, p(-size.x, 0, -size.z), "X- Z-", pos, node_name)
-		scan_nearby_region(state, r, p(-size.x, size.y, 0), "X- Y+", pos, node_name)
-		scan_nearby_region(state, r, p(-size.x, -size.y, 0), "X- Y-", pos, node_name)
-		scan_nearby_region(state, r, p(-size.x, size.y, -size.z), "X- Y+ Z-", pos, node_name)
-		scan_nearby_region(state, r, p(-size.x, -size.y, -size.z), "X- Y- Z-", pos, node_name)
-		scan_nearby_region(state, r, p(-size.x, size.y, size.z), "X- Y+ Z+", pos, node_name)
-		scan_nearby_region(state, r, p(-size.x, -size.y, size.z), "X- Y- Z+", pos, node_name)
-		scan_nearby_region(state, r, p(size.x * 2, 0, 0), "X+ X+", pos, node_name)
-		scan_nearby_region(state, r, p(0, size.y, size.z), "Y+ Z+", pos, node_name)
-		scan_nearby_region(state, r, p(0, size.y, -size.z), "Y+ Z-", pos, node_name)
-		scan_nearby_region(state, r, p(0, -size.y * 2, 0), "Y- Y-", pos, node_name)
-		scan_nearby_region(state, r, p(0, -size.y, size.z), "Y- Z+", pos, node_name)
-		scan_nearby_region(state, r, p(0, -size.y, -size.z), "Y- Z-", pos, node_name)
-		scan_nearby_region(state, r, p(0, size.y * 2, 0), "Y+ Y+", pos, node_name)
-		scan_nearby_region(state, r, p(0, 0, size.z * 2), "Z+ Z+", pos, node_name)
-		scan_nearby_region(state, r, p(0, 0, -size.z * 2), "Z- Z-", pos, node_name)
+		local function scan_near(next_pos, next_pos_name) scan_nearby_region(state, r, next_pos, next_pos_name, pos, node_name, config) end
+		scan_near(p(size.x, 0, 0), "X+")
+		scan_near(p(-size.x, 0, 0), "X-")
+		scan_near(p(0, size.y, 0), "Y+")
+		scan_near(p(0, -size.y, 0), "Y-")
+		scan_near(p(0, 0, size.z), "Z+")
+		scan_near(p(0, 0, -size.z), "Z-")
+		scan_near(p(size.x, 0, -size.z), "X+ Z-")
+		scan_near(p(size.x, 0, size.z), "X+ Z+")
+		scan_near(p(size.x, size.y, 0), "X+ Y+")
+		scan_near(p(size.x, -size.y, 0), "X+ Y-")
+		scan_near(p(size.x, size.y, -size.z), "X+ Y+ Z-")
+		scan_near(p(size.x, size.y, size.z), "X+ Y+ Z+")
+		scan_near(p(size.x, -size.y, -size.z), "X+ Y- Z-")
+		scan_near(p(size.x, -size.y, size.z), "X+ Y- Z+")
+		scan_near(p(-size.x * 2, 0, 0), "X- X-")
+		scan_near(p(-size.x, 0, size.z), "X- Z+")
+		scan_near(p(-size.x, 0, -size.z), "X- Z-")
+		scan_near(p(-size.x, size.y, 0), "X- Y+")
+		scan_near(p(-size.x, -size.y, 0), "X- Y-")
+		scan_near(p(-size.x, size.y, -size.z), "X- Y+ Z-")
+		scan_near(p(-size.x, -size.y, -size.z), "X- Y- Z-")
+		scan_near(p(-size.x, size.y, size.z), "X- Y+ Z+")
+		scan_near(p(-size.x, -size.y, size.z), "X- Y- Z+")
+		scan_near(p(size.x * 2, 0, 0), "X+ X+")
+		scan_near(p(0, size.y, size.z), "Y+ Z+")
+		scan_near(p(0, size.y, -size.z), "Y+ Z-")
+		scan_near(p(0, -size.y * 2, 0), "Y- Y-")
+		scan_near(p(0, -size.y, size.z), "Y- Z+")
+		scan_near(p(0, -size.y, -size.z), "Y- Z-")
+		scan_near(p(0, size.y * 2, 0), "Y+ Y+")
+		scan_near(p(0, 0, size.z * 2), "Z+ Z+")
+		scan_near(p(0, 0, -size.z * 2), "Z- Z-")
 	end
 end
 
@@ -144,7 +165,7 @@ function scanner.scan_nearby_lights(state, pos, node_name, options, show_log)
 	local maxy = config.maxy
 	---@param r Region
 	---@param user_action boolean
-	local function base_scan(r, user_action) scan_region_for_node(state, regions, r, pos, node_name, user_action, show_log) end
+	local function base_scan(r, user_action) scan_region_for_node(state, regions, r, pos, node_name, user_action, show_log, config) end
 	---@param r Region
 	local function full_scan(r) base_scan(r, true) end
 	---@param r Region
@@ -165,10 +186,9 @@ function scanner.scan_nearby_lights(state, pos, node_name, options, show_log)
 	local scan_dist = CFG.light_scan_dist
 	local scan_range = scan_dist / 2
 	local minvec = vector.subtract(pos, math.floor(scan_range))
+	minvec = scanner.clamp_vec_to_player_bounds(minvec, config)
 	local maxvec = vector.add(minvec, scan_dist)
-	if maxvec.y > maxy then
-		maxvec.y = maxy
-	end
+	maxvec = scanner.clamp_vec_to_player_bounds(maxvec, config)
 	local total_count = 0
 	local r = aabb.new_region(minvec, maxvec)
 	local newly_scanned = not r:is_inside_any(regions)

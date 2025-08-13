@@ -533,21 +533,17 @@ local function dig_pos_process_queue_item(state, item, player_name)
 	local vec_size = vector.new(xz_len, y_len, xz_len);
 
 	local minvec = h.mod_pos(pos, vec_size)
+	minvec = scanner.clamp_vec_to_player_bounds(minvec, config)
 	local chunk_hash = core.hash_node_position(minvec)
 	local maxvec = vector.add(minvec, vector.subtract(vec_size, 1))
-
-	if minvec.y < config.miny then
-		minvec.y = config.miny
-	end
-	if maxvec.y > config.maxy then
-		maxvec.y = config.maxy
-	end
+	maxvec = scanner.clamp_vec_to_player_bounds(maxvec, config)
 
 	if state.pos_mod_seen[chunk_hash] then
 		return
 	end
 
-	if not is_valid_pos_to_iter(pos, player_name) then
+	-- Position check
+	if not scanner.is_pos_in_player_bounds(pos, config) then
 		return
 	end
 

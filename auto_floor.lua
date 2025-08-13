@@ -62,6 +62,11 @@ end
 
 ---@param pos Vector
 local function is_supported(pos)
+	local below_pos = pos + new_vec(0, -1, 0)
+	local below_node = get_node_or_nil(below_pos)
+	if below_node.name ~= "default:dirt" and core.get_item_group(below_node.name, "soil") > 0 then
+		return false
+	end
 	for _, dir in ipairs(support_dirs) do
 		for _, vert in ipairs(vertical_offsets) do
 			local sup_pos = pos + dir + vert
@@ -191,13 +196,13 @@ core.register_globalstep(function(dtime)
 				end
 			end
 		end
-		if j == 0 then
+		if j <= 1 then
 			time_until_block_place = time_until_block_place + 1
 		else
-			core.log("action", ("blocks placed after %d steps"):format(time_until_block_place))
+			core.log("action", ("more than 1 block placed after %d steps"):format(time_until_block_place))
 			time_until_block_place = 0
 		end
-		if j == 0 and not is_yaw_update_per_player_disabled[name] then
+		if j <= 1 and not is_yaw_update_per_player_disabled[name] then
 			local yaw_max = 0.1
 			local yaw_speed = yaw_max * dbg_count / 7
 			local new_yaw = math.rad((math.deg(yaw) + yaw_speed) % 360)
