@@ -131,6 +131,8 @@ local cotton = {
 	wild = "farming:cotton_wild",
 }
 
+local snow = {"default:snow"}
+
 ---@class VeinMinerConfig
 local CFG = {}
 
@@ -141,7 +143,7 @@ CFG.light_scan_dist = 1
 local LIGHT_NODES = {mese_post_light.pine, mese_post_light.acacia}
 CFG.LIGHT_NODES = LIGHT_NODES
 ---@type string[]
-local target_list = {"default:snow", "default:stone_block", "fire:basic_flame", "default:obsidian", "wool:green", "wool:orange"}
+local target_list = {"default:stone_block", "fire:basic_flame", "default:obsidian", "wool:green", "wool:orange"}
 CFG.target_list = target_list
 ---@type string[]
 local ignore_list_default = {leaves[1], leaves.acacia, leaves.aspen, leaves.jungle, leaves.pine, "default:chest"}
@@ -185,6 +187,7 @@ local mg = {
 	cotton = {cotton.wild},
 	clay = {clay},
 	surface = {},
+	snow = {snow},
 }
 ---@type MiningGroups
 CFG.mining_groups = mg

@@ -496,6 +496,7 @@ local wanted_groups = {
 	dirt = true,
 	surface = true,
 	sand = true,
+	snow = true,
 }
 local wanted_list = {}
 for k, _ in pairs(wanted_groups) do
