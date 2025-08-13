@@ -74,7 +74,7 @@ local sandstone = {
 local gravel = {"default:gravel"}
 
 local grass = {
-	{"default:grass_1", "default:grass_2", "default:grass_3", "default:grass_4", "default:grass_5"},
+	normal = {"default:grass_1", "default:grass_2", "default:grass_3", "default:grass_4", "default:grass_5"},
 	jungle = {"default:junglegrass"},
 	dry = {"default:dry_grass_1", "default:dry_grass_2", "default:dry_grass_3", "default:dry_grass_4", "default:dry_grass_5"},
 	marram = {"default:marram_grass_1", "default:marram_grass_2", "default:marram_grass_3", "default:marram_grass_4", "default:marram_grass_5"},
@@ -162,7 +162,7 @@ local exclusive_nodes = {}
 CFG.exclusive_nodes = exclusive_nodes
 ---@class MiningGroups
 local mg = {
-	grass = grass[1],
+	grass = grass.normal,
 	jungle_grass = grass.jungle,
 	dry_grass = grass.dry,
 	marram_grass = grass.marram,
