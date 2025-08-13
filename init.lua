@@ -628,6 +628,7 @@ local function dig_pos_process_queue_item(state, item, player_name)
 			target_flags.falling = false
 		else
 			log_warning("new group target " .. group_target)
+			target_flags.falling = false
 		end
 	end
 
