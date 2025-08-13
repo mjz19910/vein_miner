@@ -11,121 +11,120 @@ local i = table.insert
 local ia = table.insert_all
 
 local dirt = {
-	d = "default:dirt",
-	r = "default:dry_dirt",
-	g = {
-		g = "default:dirt_with_grass",
-		d = "default:dry_dirt_with_dry_grass",
-		s = "default:dirt_with_snow",
-		r = "default:dirt_with_rainforest_litter",
-		c = "default:dirt_with_coniferous_litter",
+	"default:dirt",
+	dry = "default:dry_dirt",
+	grass = {
+		"default:dirt_with_grass",
+		dry = "default:dry_dirt_with_dry_grass",
+		snow = "default:dirt_with_snow",
+		rainforest = "default:dirt_with_rainforest_litter",
+		coniferous = "default:dirt_with_coniferous_litter",
 	},
-	p = {
-		f = "default:permafrost",
-		m = "default:permafrost_with_moss",
-		s = "default:permafrost_with_stones",
+	permafrost = {
+		"default:permafrost",
+		moss = "default:permafrost_with_moss",
+		stones = "default:permafrost_with_stones",
 	},
 }
 
 local clay = "default:clay"
 
 local stone = {
-	s = "default:stone",
-	o = {
-		c = "default:stone_with_coal",
-		o = "default:stone_with_copper",
-		d = "default:stone_with_diamond",
-		g = "default:stone_with_gold",
-		i = "default:stone_with_iron",
-		m = "default:stone_with_mese",
-		t = "default:stone_with_tin",
+	"default:stone",
+	ore = {
+		coal = "default:stone_with_coal",
+		copper = "default:stone_with_copper",
+		diamond = "default:stone_with_diamond",
+		gold = "default:stone_with_gold",
+		iron = "default:stone_with_iron",
+		mese = "default:stone_with_mese",
+		tin = "default:stone_with_tin",
 	},
-	d = "default:desert_stone",
-	a = "default:sandstone",
-	e = "default:desert_sandstone",
-	i = "default:silver_sandstone",
-	c = "default:cave_ice",
-	b = "default:stone_block",
+	desert = "default:desert_stone",
+	sandstone = "default:sandstone",
+	desert_sandstone = "default:desert_sandstone",
+	silver_sandstone = "default:silver_sandstone",
+	cave_ice = "default:cave_ice",
 }
 
-local obsidian = "default:obsidian"
-
 local sand = {
-	s = "default:sand",
-	i = "default:silver_sand",
-	k = "default:sand_with_kelp",
+	"default:sand",
+	silver = "default:silver_sand",
+	with_kelp = "default:sand_with_kelp",
 }
 
 local sandstone = {
-	s = {
-		s = "default:sandstone",
-		b = "default:sandstone_block",
-		r = "default:sandstonebrick",
+	{
+		"default:sandstone",
+		block = "default:sandstone_block",
+		brick = "default:sandstonebrick",
 	},
-	d = {
-		s = "default:desert_sandstone",
-		b = "default:desert_sandstone_block",
-		r = "default:desert_sandstone_brick",
+	desert = {
+		"default:desert_sandstone",
+		block = "default:desert_sandstone_block",
+		brick = "default:desert_sandstone_brick",
 	},
-	i = {
-		s = "default:silver_sandstone",
-		b = "default:silver_sandstone_block",
-		r = "default:silver_sandstone_brick",
+	silver = {
+		"default:silver_sandstone",
+		block = "default:silver_sandstone_block",
+		brick = "default:silver_sandstone_brick",
 	},
 }
 
-local gravel = "default:gravel"
+local gravel = {
+	normal = "default:gravel",
+}
 
 local grass = {
-	g = {"default:grass_1", "default:grass_2", "default:grass_3", "default:grass_4", "default:grass_5"},
-	j = {"default:junglegrass"},
-	d = {"default:dry_grass_1", "default:dry_grass_2", "default:dry_grass_3", "default:dry_grass_4", "default:dry_grass_5"},
-	m = {"default:marram_grass_1", "default:marram_grass_2", "default:marram_grass_3", "default:marram_grass_4", "default:marram_grass_5"},
-	f = {"default:fern_1", "default:fern_2", "default:fern_3"},
+	normal = {"default:grass_1", "default:grass_2", "default:grass_3", "default:grass_4", "default:grass_5"},
+	jungle = {"default:junglegrass"},
+	dry = {"default:dry_grass_1", "default:dry_grass_2", "default:dry_grass_3", "default:dry_grass_4", "default:dry_grass_5"},
+	marram = {"default:marram_grass_1", "default:marram_grass_2", "default:marram_grass_3", "default:marram_grass_4", "default:marram_grass_5"},
+	fern = {"default:fern_1", "default:fern_2", "default:fern_3"},
 }
 
 local flower = {
-	c = {"flowers:chrysanthemum_green", "flowers:dandelion_yellow", "flowers:dandelion_white", "flowers:tulip_black", "flowers:tulip",
+	common = {"flowers:chrysanthemum_green", "flowers:dandelion_yellow", "flowers:dandelion_white", "flowers:tulip_black", "flowers:tulip",
 		"flowers:viola", "flowers:rose"},
-	m = {"flowers:mushroom_brown", "flowers:mushroom_red"},
+	mushroom = {"flowers:mushroom_brown", "flowers:mushroom_red"},
 }
 
 local trees = {
-	s = {"default:acacia_bush_stem", "default:pine_bush_stem", "default:bush_stem"},
-	t = {"default:tree", "default:pine_tree", "default:jungletree", "default:aspen_tree", "default:acacia_tree"},
+	stem = {"default:acacia_bush_stem", "default:pine_bush_stem", "default:bush_stem"},
+	trunk = {"default:tree", "default:pine_tree", "default:jungletree", "default:aspen_tree", "default:acacia_tree"},
 }
 
 local cobble = {
-	c = "default:cobble",
-	m = "default:mossycobble",
-	s = "stairs:stair_cobble",
+	"default:cobble",
+	mossy = "default:mossycobble",
+	stair = "stairs:stair_cobble",
 }
 
 local mesecon = {
-	w = {}, -- wire
-	v = {"mesecons_extrawires:vertical_top_on", "mesecons_extrawires:vertical_top_off", "mesecons_extrawires:vertical_on",
+	wire = {}, -- Will be dynamically generated as in your code
+	vertical_wire = {"mesecons_extrawires:vertical_top_on", "mesecons_extrawires:vertical_top_off", "mesecons_extrawires:vertical_on",
 		"mesecons_extrawires:vertical_off", "mesecons_extrawires:vertical_bottom_on", "mesecons_extrawires:vertical_bottom_off"},
-	s = "mesecons_stickyblocks:sticky_block_all",
+	sticky_blocks = {"mesecons_stickyblocks:sticky_block_all"},
 }
 
 local mese_post_light = {
-	n = "default:mese_post_light",
-	p = "default:mese_post_light_pine_wood",
-	a = "default:mese_post_light_acacia_wood",
+	"default:mese_post_light",
+	pine = "default:mese_post_light_pine_wood",
+	acacia = "default:mese_post_light_acacia_wood",
 }
 
 local leaves = {
-	n = "default:leaves",
-	a = "default:acacia_leaves",
-	s = "default:aspen_leaves",
-	j = "default:jungleleaves",
-	p = "default:pine_needles",
+	"default:leaves",
+	acacia = "default:acacia_leaves",
+	aspen = "default:aspen_leaves",
+	jungle = "default:jungleleaves",
+	pine = "default:pine_needles",
 }
 -- ignore_list_default = {leaves[1], leaves.acacia, leaves.aspen, leaves.jungle, leaves.pine, ...}
 
 local blueberry = {
-	l = "default:blueberry_bush_leaves",
-	w_b = "default:blueberry_bush_leaves_with_berries",
+	leaves = "default:blueberry_bush_leaves",
+	with_berries = "default:blueberry_bush_leaves_with_berries",
 }
 
 local cotton = "farming:cotton_wild"
@@ -139,10 +138,10 @@ local CFG = {}
 CFG.light_scan_dist = 1
 
 ---@type string[]
-local LIGHT_NODES = {mese_post_light.p, mese_post_light.a}
+local LIGHT_NODES = {mese_post_light.pine, mese_post_light.acacia}
 CFG.LIGHT_NODES = LIGHT_NODES
 ---@type string[]
-local target_list = {stone.b, obsidian, "fire:basic_flame", "wool:green", "wool:orange"}
+local target_list = {"default:stone_block", "fire:basic_flame", "default:obsidian", "wool:green", "wool:orange"}
 CFG.target_list = target_list
 ---@type string[]
 local ignore_list_default = {leaves[1], leaves.acacia, leaves.aspen, leaves.jungle, leaves.pine, "default:chest"}
@@ -174,19 +173,17 @@ local mg = {
 	mushroom = flower.mushroom,
 	stem = trees.stem,
 	tree_trunk = trees.trunk,
-	dirt = {dirt.d, dirt.p.f},
-	ore = {stone.o.c, stone.o.o, stone.o.d, stone.o.g, stone.o.i, stone.o.m, stone.o.t},
-	stone = {stone.s, stone.d, stone.a, stone.e, stone.i, stone.c},
-	mesecon_wire = mesecon.w,
-	mesecon_vertical_wire = mesecon.v,
-	misc = {sandstone.i.r},
+	dirt = {dirt[1], dirt.permafrost[1]},
+	ore = {stone.ore.coal, stone.ore.copper, stone.ore.diamond, stone.ore.gold, stone.ore.iron, stone.ore.mese, stone.ore.tin},
+	stone = {stone[1], stone.desert, stone.sandstone, stone.desert_sandstone, stone.silver_sandstone, stone.cave_ice},
+	mesecon_wire = mesecon.wire,
+	mesecon_vertical_wire = mesecon.vertical_wire,
+	misc = {sandstone.silver.brick},
 	cobble = {cobble[1]},
 	mossy_cobble = {cobble.mossy},
 	cobble_stair = {cobble.stair},
 	cotton = {cotton},
 	clay = {clay},
-	surface = {dirt.dry, dirt.grass.dry, dirt.grass[1], dirt.grass.snow, dirt.grass.rainforest, dirt.grass.coniferous, dirt.permafrost.moss,
-		dirt.permafrost.stones, sand.with_kelp},
 	snow = {snow},
 }
 ---@type MiningGroups
@@ -212,7 +209,7 @@ CFG.COLOR_PALETTE = COLOR_PALETTE
 -- Define which nodes are considered "sticky"
 ---@class StickyNodes
 local sticky_nodes = {
-	[mesecon.s] = true,
+	["mesecons_stickyblocks:sticky_block_all"] = true,
 }
 CFG.sticky_nodes = sticky_nodes
 ---@type Vector[]
@@ -244,9 +241,9 @@ table.insert(CFG.VEC_DIRS, p(0, 0, 0))
 -- distance limited to 3.1622776601684, ie 3.2
 table.insert_all(CFG.VEC_DIRS, gen_euclidean_offsets(64 / 20))
 
-ia(CFG.target_list, {cobble.c, cobble.m, cobble.s})
+ia(CFG.target_list, {cobble[1], cobble.mossy, cobble.stair})
 
-i(CFG.ignored_nodes, mese_post_light.n)
+i(CFG.ignored_nodes, mese_post_light[1])
 
 -- go to the next nodeid (ex.: 01000011 --> 01000100)
 local nid_inc = function() end
@@ -272,8 +269,8 @@ local function register_wires_group()
 		local nodeid = (nid[0] or "0") .. (nid[1] or "0") .. (nid[2] or "0") .. (nid[3] or "0") .. (nid[4] or "0") .. (nid[5] or "0") ..
 			               (nid[6] or "0") .. (nid[7] or "0")
 
-		table.insert(mesecon.w, "mesecons:wire_" .. nodeid .. "_off")
-		table.insert(mesecon.w, "mesecons:wire_" .. nodeid .. "_on")
+		table.insert(mesecon.wire, "mesecons:wire_" .. nodeid .. "_off")
+		table.insert(mesecon.wire, "mesecons:wire_" .. nodeid .. "_on")
 
 		if (nid_inc(nid) == false) then
 			return
@@ -285,7 +282,7 @@ register_wires_group()
 
 local mine_only_set = CFG.target_list
 i(mine_only_set, "mesecons_powerplant:power_plant")
-ia(mine_only_set, {"mesecons_movestones:sticky_movestone_vertical", mesecon.s})
+ia(mine_only_set, {"mesecons_movestones:sticky_movestone_vertical", "mesecons_stickyblocks:sticky_block_all"})
 ia(mine_only_set, {"mesecons_movestones:sticky_movestone"})
 
 local coral = {
@@ -316,6 +313,13 @@ for k, v in pairs(CFG.exclusive_nodes) do
 	exclusive_node_set[v] = true
 end
 CFG.exclusive_node_set = exclusive_node_set
+
+mg.surface = {dirt.dry, dirt.grass.dry}
+table.insert_all(mg.surface, {dirt.grass[1]})
+table.insert_all(mg.surface, {dirt.grass.snow, dirt.grass.rainforest, dirt.grass.coniferous})
+table.insert_all(mg.surface, {dirt.permafrost.moss, dirt.permafrost.stones})
+table.insert_all(mg.surface, {sand.with_kelp})
+
 local mining_groups = CFG.mining_groups
 ---@type table<string, boolean>
 local target_set = {}
