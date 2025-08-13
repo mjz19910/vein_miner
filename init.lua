@@ -593,9 +593,9 @@ function VeinMinerState:process_queue_item(item, player_name)
 	self.wait_for_player_near_pos(player, center)
 
 	if options.large then
-		notify_pos(center, "#0000ffff", 6 * 4, 4 * 60)
+		notify_pos(center, "#0000ffff", 7 * 4, 4 * 60)
 	else
-		notify_pos(center, "#0000ffff", 6, 4 * 60)
+		notify_pos(center, "#0000ffff", 7, 4 * 60)
 	end
 
 	local target_nodes = {}
