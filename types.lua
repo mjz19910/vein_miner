@@ -268,6 +268,7 @@ local sound_params = {
 ---@field paramtype2 ParamType2 | nil
 ---@field drawtype DrawType | nil
 ---@field special_tiles TileDef[]
+---@field walkable boolean
 ---@type RegNode
 local reg_node = {}
 
