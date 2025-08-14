@@ -290,6 +290,8 @@ end
 
 local function lua_serialize(value) return ("(function() %s end)()"):format(core.serialize(value)) end
 
+local fmt_kv = 'registered_nodes["%s"]. %s = %s'
+
 core.register_on_mods_loaded(function()
 	local quit = false
 	for key1, node in pairs(registered_nodes) do
@@ -391,12 +393,13 @@ core.register_on_mods_loaded(function()
 				--- type bin4 = `${bin2}${bin2}`
 				--- type bin8 = `${bin4}${bin4}`
 				__mesecon_basename = [[`:mesecons:wire_${bin8}`]],
+				place_param2 = [[integer]],
 			}
 			if key2 == "paramtype" then
 				if val2 == "light" then
 					goto n
 				end
-				core.log("action", ('registered_nodes["%s"].%s=%s'):format(node.name, key2, lua_serialize(val2)))
+				core.log("action", fmt_kv:format(node.name, key2, lua_serialize(val2)))
 				goto n
 			end
 			if key2 == "drawtype" then
@@ -406,23 +409,23 @@ core.register_on_mods_loaded(function()
 				if val2 == "airlike" then
 					goto n
 				end
-				core.log("action", ('registered_nodes["%s"].%s=%s'):format(node.name, key2, lua_serialize(val2)))
+				core.log("action", fmt_kv:format(node.name, key2, lua_serialize(val2)))
 			end
 			if key2 == "paramtype2" then
-				if node.paramtype2 == "facedir" then
+				if val2 == "facedir" then
 					goto n
 				end
-				if node.paramtype2 == "4dir" then
+				if val2 == "4dir" then
 					goto n
 				end
-				core.log("action", ('registered_nodes["%s"].paramtype2=%s'):format(node.name, lua_serialize(node.paramtype2)))
+				core.log("action", fmt_kv:format(node.name, key2, lua_serialize(val2)))
 				goto n
 			end
 			if key2 == "sounds" then
 				if false then
-					local str_fmt = "registered_nodes[\"%s\"].sounds[\"%s\"]=%s"
-					for sound_key, sound in pairs(node.sounds) do
-						core.log("action", str_fmt:format(node.name, sound_key, lua_serialize(sound)))
+					local str_fmt = "registered_nodes[\"%s\"].%s[\"%s\"]=%s"
+					for sound_key, sound in pairs(val2) do
+						core.log("action", str_fmt:format(node.name, key2, sound_key, lua_serialize(sound)))
 					end
 				end
 				goto n
@@ -439,7 +442,7 @@ core.register_on_mods_loaded(function()
 				goto n
 			end
 			do
-				core.log("warning", ('registered_nodes["%s"]. %s = %s'):format(key1, key2, lua_serialize(val2)))
+				core.log("warning", fmt_kv:format(key1, key2, lua_serialize(val2)))
 				quit = true
 				break
 			end
