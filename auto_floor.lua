@@ -282,13 +282,14 @@ core.register_on_mods_loaded(function()
 			core.log("action", name_info .. " light source " .. reg_node.light_source)
 			goto n
 		end
-		if key2 == "is_ground_content" then
-			goto n
-		end
-		if key2 == "paramtype2" then
-			goto n
-		end
-		if key2 == "description" then
+		local skip_keys = {
+			is_ground_content = 1,
+			paramtype2 = 1,
+			description = 1,
+			sounds = 1,
+			can_dig = 1,
+		}
+		if skip_keys[key2] == 1 then
 			goto n
 		end
 		do
