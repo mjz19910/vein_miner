@@ -288,9 +288,35 @@ TileDef.format = function(value)
 	return ("{%s}"):format(table.concat(tbl_out, ","))
 end
 
+local FixedNodeBox = {}
+---@param value FixedNodeBox
+FixedNodeBox.format = function(value)
+	if value.type == "fixed" then
+		local box_info = value.fixed
+		if type(box_info[1]) == "table" then
+			return ("FixedNodeBox(%s)"):format(format_table(value.fixed))
+		end
+		return ("FixedNodeBox([%s])"):format(table.concat(value.fixed, ","))
+	else
+		return ("[[%s]]"):format(core.serialize(value))
+	end
+	return ""
+end
+
 local function lua_serialize(value) return ("(function() %s end)()"):format(core.serialize(value)) end
 
 local fmt_kv = 'registered_nodes["%s"]. %s = %s'
+
+local ts = {
+	---@type boolean
+	boolean = "boolean",
+	---@type integer
+	integer = "integer",
+	---@type string
+	string = "string",
+	---@type number
+	number = "number",
+}
 
 core.register_on_mods_loaded(function()
 	local quit = false
@@ -324,12 +350,12 @@ core.register_on_mods_loaded(function()
 				core.log("action", name_info .. " special_tiles " .. table_array.format(node.special_tiles, TileDef.format))
 				goto n
 			end
+			if key2 == "node_box" then
+				core.log("action", name_info .. " node box " .. FixedNodeBox.format(val2))
+				goto n
+			end
 			if key2 == "selection_box" then
-				local sel_box = node.selection_box
-				if sel_box.type ~= "fixed" then
-					core.log("warning", name_info .. " selection box (not fixed) " .. lua_serialize(sel_box))
-				end
-				core.log("action", name_info .. " selection box (FixedNodeBox.fixed)" .. format_table(sel_box.fixed))
+				core.log("action", name_info .. " selection box " .. FixedNodeBox.format(val2))
 				goto n
 			end
 			if key2 == "light_source" then
@@ -337,63 +363,45 @@ core.register_on_mods_loaded(function()
 				goto n
 			end
 			local skip_keys = {
-				-- paramtype = 1,
-				-- paramtype2 = 1,
-				-- drawtype = 1,
-				-- description = 1,
-				-- drop = 1,
-				-- groups = 1,
-				-- maxlight = 1,
-				-- sunlight_propagates = 1,
-				-- sounds = 1,
-				-- is_ground_content = 1,
-				-- on_rotate = 1,
-				-- mesecons = 1,
-				-- -- functions
-				-- can_dig = 1,
-				-- on_rightclick = 1,
-				-- on_blast = 1,
-				-- -- new
-				-- mesecon_wire = 1,
-				-- walkable = 1,
-				-- floodable = 1,
-				-- place_param2 = 1,
-				__mesecon_state = [['"off"']],
+				is_ground_content = ts.boolean,
+				description = ts.string,
+				_tnt_loss = ts.integer,
+				inventory_image = ts.string,
+				stack_max = ts.integer,
+				waving = ts.integer,
+				pointable = ts.boolean,
+				diggable = ts.boolean,
+				wield_image = ts.string,
+				gain_open = ts.number,
+				sunlight_propagates = ts.boolean,
+				legacy_facedir_simple = ts.boolean,
+				liquid_renewable = ts.boolean,
+				walkable = ts.boolean,
+				drop = ts.string,
+				place_param2 = ts.integer,
+				buildable_to = ts.boolean,
 				on_timer = [[fun()]],
-				is_ground_content = [[boolean]],
-				description = [[string]],
+				on_blast = [[fun()]],
+				on_punch = [[fun()]],
+				on_place = [[fun()]],
+				on_rotate = [[fun()]],
+				on_rightclick = [[fun()]],
+				after_place_node = [[fun()]],
+				on_metadata_inventory_put = [[fun()]],
+				paramtype = [['"light"']],
+				paramtype2 = [['"facedir"'|'"4dir"']],
+				drawtype = [['"nodebox"' | '"airlike"' | '"plantlike"']],
+				__mesecon_state = [['"off"']],
 				node_box = [[FixedNodeBox]],
 				groups = [[table<string, integer>]],
-				_tnt_loss = [[integer]],
-				paramtype2 = [['"facedir"'|'"4dir"']],
-				on_blast = [[fun()]],
-				after_place_node = [[fun()]],
-				inventory_image = [[string]],
-				stack_max = [[integer]],
-				drawtype = [['"nodebox"' | '"airlike"']],
-				waving = [[integer]],
-				pointable = [[boolean]],
-				diggable = [[boolean]],
-				wield_image = [[string]],
 				tiles = "TileDef[]",
 				special_tiles = "TileDef[]",
-				paramtype = [['"light"']],
-				gain_open = [[number]],
-				sunlight_propagates = [[boolean]],
-				legacy_facedir_simple = [[boolean]],
-				liquid_renewable = [[boolean]],
-				walkable = [[boolean]],
-				drop = [[string]],
 				mesecons = [[MeseconsData]],
-				on_punch = [[fun()]],
-				on_rotate = [[fun()]],
-				on_place = [[fun()]],
-				on_rightclick = [[fun()]],
 				--- type bin2 = `${"1"|"0"}${"1"|"0"}`
 				--- type bin4 = `${bin2}${bin2}`
 				--- type bin8 = `${bin4}${bin4}`
 				__mesecon_basename = [[`:mesecons:wire_${bin8}`]],
-				place_param2 = [[integer]],
+				post_effect_color = [[RGBAColor]],
 			}
 			if key2 == "paramtype" then
 				if val2 == "light" then
@@ -407,6 +415,9 @@ core.register_on_mods_loaded(function()
 					goto n
 				end
 				if val2 == "airlike" then
+					goto n
+				end
+				if val2 == "plantlike" then
 					goto n
 				end
 				core.log("action", fmt_kv:format(node.name, key2, lua_serialize(val2)))
@@ -428,14 +439,6 @@ core.register_on_mods_loaded(function()
 						core.log("action", str_fmt:format(node.name, key2, sound_key, lua_serialize(sound)))
 					end
 				end
-				goto n
-			end
-			if key2 == "node_box" then
-				local sel_box = node.node_box
-				if sel_box.type ~= "fixed" then
-					core.log("warning", name_info .. " node box (not fixed) " .. lua_serialize(sel_box))
-				end
-				core.log("action", name_info .. " node box (FixedNodeBox.fixed)" .. format_table(sel_box.fixed))
 				goto n
 			end
 			if skip_keys[key2] ~= nil then

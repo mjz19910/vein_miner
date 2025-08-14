@@ -614,6 +614,12 @@ local tool_caps = {}
 ---@field g number
 ---@field b number
 
+---@class RGBAColor
+---@field a number
+---@field r number
+---@field g number
+---@field b number
+
 ---@class ParticleTextureAnimation
 ---@field length integer
 ---@field frame_length integer
