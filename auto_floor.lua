@@ -275,7 +275,7 @@ TileDef.format = function(value)
 		if k == "backface_culling" then
 			goto n
 		end
-		core.log("error", "TileDef format " .. core.serialize(value))
+		core.log("error", "TileDef " .. core.serialize(value):sub(8))
 		::n::
 	end
 	local tbl_out = {}
@@ -283,7 +283,7 @@ TileDef.format = function(value)
 		table.insert(tbl_out, ('name="%s"'):format(value.name))
 	end
 	if value.backface_culling ~= nil then
-		table.insert(tbl_out, ('backface_culling="%s"'):format(tostring(value.backface_culling)))
+		table.insert(tbl_out, ('backface_culling=%s'):format(tostring(value.backface_culling)))
 	end
 	return ("{%s}"):format(table.concat(tbl_out, ","))
 end
@@ -416,7 +416,35 @@ core.register_on_mods_loaded(function()
 				sound_open = ts.string,
 				on_receive_fields = [[fun()]],
 				minlight = ts.integer,
+				after_dig_node = [[fun()]],
+				visual_scale = ts.integer,
+				use_texture_alpha = [['"clip"']],
+				gain_close = ts.number,
+				floodable = ts.boolean,
+				drowning = ts.integer,
+				on_destruct = [[fun()]],
+				digiline = [[DigilineData]],
+				on_use = [[fun()]],
+				sound_close = ts.string,
+				delayer_onstate = ts.string,
+				after_destruct = [[fun()]],
+				legacy_wallmounted = ts.boolean,
+				on_drop = [[fun()]],
+				node_placement_prediction = ts.string,
+				node_dig_prediction = ts.string,
+				mesh = ts.string,
+				material = ts.string,
+				_digtron_formspec = [[fun()]],
+				on_metadata_inventory_move = [[fun()]],
+				on_dig = [[fun()]],
 			}
+			if key2 == "use_texture_alpha" then
+				if val2 == "clip" then
+					goto n
+				end
+				core.log("action", fmt_kv:format(node.name, key2, lua_serialize(val2)))
+				goto n
+			end
 			if key2 == "liquidtype" then
 				if val2 == "source" then
 					goto n
@@ -448,6 +476,9 @@ core.register_on_mods_loaded(function()
 					goto n
 				end
 				if val2 == "allfaces_optional" then
+					goto n
+				end
+				if val2 == "mesh" then
 					goto n
 				end
 				core.log("action", fmt_kv:format(node.name, key2, lua_serialize(val2)))
