@@ -1,3 +1,5 @@
+local tostring = tostring
+local type = type
 ---@type LuantiCore
 local core = core
 
@@ -5,6 +7,11 @@ local assert = assert
 ---@type VectorModule
 local vector = vector
 local ipairs = ipairs
+local pairs = pairs
+local table = table
+local math = math
+---@type VeinMinerGlobal
+local vein_miner = vein_miner
 
 -- localize math
 local round = vector.round
@@ -20,9 +27,6 @@ local sound_play = core.sound_play
 local get_connected_players = core.get_connected_players
 
 local registered_nodes = core.registered_nodes
-
----@type VeinMinerGlobal
-local vein_miner = vein_miner
 
 local player_config_mgr = vein_miner.player_config_mgr
 assert(player_config_mgr, "need vein_miner.player_config_mgr")
@@ -240,66 +244,206 @@ core.register_craft({
 	recipe = auto_floor_recipe,
 })
 
-local function format_table(tbl) return ("[%s]"):format(table.concat(tbl, ",")) end
+local function format_table(tbl)
+	if type(tbl[1]) == "table" then
+		local ntbl = {}
+		for i, v in ipairs(tbl) do
+			ntbl[i] = format_table(v)
+		end
+		return format_table(ntbl)
+	end
+	return ("[%s]"):format(table.concat(tbl, ","))
+end
+
+local table_array = {}
+table_array.format = function(value, next_format, ...)
+	local ntbl = {}
+	for i, v in ipairs(value) do
+		ntbl[i] = next_format(v, ...)
+	end
+	return ("[%s]"):format(table.concat(ntbl, ","))
+end
+local TileDef = {}
+TileDef.format = function(value)
+	for k, v in pairs(value) do
+		if k == "name" then
+			goto n
+		end
+		if k == "backface_culling" then
+			goto n
+		end
+		core.log("error", "TileDef format " .. core.serialize(value))
+		::n::
+	end
+	local tbl_out = {}
+	if value.name then
+		table.insert(tbl_out, ('name="%s"'):format(value.name))
+	end
+	if value.backface_culling ~= nil then
+		table.insert(tbl_out, ('backface_culling="%s"'):format(tostring(value.backface_culling)))
+	end
+	return ("{%s}"):format(table.concat(tbl_out, ","))
+end
+
+local function lua_serialize(value) return ("(function() %s end)()"):format(core.serialize(value)) end
 
 core.register_on_mods_loaded(function()
-	local key1 = next(registered_nodes)
-	local node = registered_nodes[key1]
-	for key2, val2 in pairs(node) do
-		local name_info = "node name " .. node.name
-		if key2 == "type" then
-			if node.type ~= "node" then
-				core.log("error", "invalid registered node type is not node " .. key1 .. " has type of " .. node.type)
+	local quit = false
+	for key1, node in pairs(registered_nodes) do
+		for key2, val2 in pairs(node) do
+			local name_info = "node name " .. node.name
+			if key2 == "type" then
+				if node.type ~= "node" then
+					core.log("error", "invalid registered node type is not node " .. key1 .. " has type of " .. node.type)
+				end
+				goto n
 			end
-			goto n
-		end
-		if key2 == "mod_origin" then
-			core.log("action", "mod origin for " .. name_info .. " is " .. node.mod_origin)
-			goto n
-		end
-		if key2 == "name" then
-			if node.name ~= key1 then
-				core.log("error", ("invalid registered node name mismatch %s and %s"):format(node.name, key1))
+			if key2 == "mod_origin" then
+				core.log("action", "mod origin for " .. name_info .. " is " .. node.mod_origin)
+				goto n
 			end
-			goto n
-		end
-		if key2 == "allow_metadata_inventory_put" then
-			goto n
-		end
-		if key2 == "tiles" then
-			core.log("action", name_info .. " tiles " .. format_table(node.tiles))
-			goto n
-		end
-		if key2 == "selection_box" then
-			local sel_box = node.selection_box
-			if sel_box.type ~= "fixed" then
-				core.log("warning", name_info .. " selection box (not fixed) " .. core.serialize(sel_box))
+			if key2 == "name" then
+				if node.name ~= key1 then
+					core.log("error", ("invalid registered node name mismatch %s and %s"):format(node.name, key1))
+				end
+				goto n
 			end
-			core.log("action", name_info .. " selection box " .. format_table(sel_box.fixed))
-			goto n
+			if key2 == "allow_metadata_inventory_put" then
+				goto n
+			end
+			if key2 == "tiles" then
+				core.log("action", name_info .. " tiles " .. table_array.format(node.tiles, TileDef.format))
+				goto n
+			end
+			if key2 == "special_tiles" then
+				core.log("action", name_info .. " special_tiles " .. table_array.format(node.special_tiles, TileDef.format))
+				goto n
+			end
+			if key2 == "selection_box" then
+				local sel_box = node.selection_box
+				if sel_box.type ~= "fixed" then
+					core.log("warning", name_info .. " selection box (not fixed) " .. lua_serialize(sel_box))
+				end
+				core.log("action", name_info .. " selection box (FixedNodeBox.fixed)" .. format_table(sel_box.fixed))
+				goto n
+			end
+			if key2 == "light_source" then
+				core.log("action", name_info .. " light source " .. node.light_source)
+				goto n
+			end
+			local skip_keys = {
+				-- paramtype = 1,
+				-- paramtype2 = 1,
+				-- drawtype = 1,
+				-- description = 1,
+				-- drop = 1,
+				-- groups = 1,
+				-- maxlight = 1,
+				-- sunlight_propagates = 1,
+				-- sounds = 1,
+				-- is_ground_content = 1,
+				-- on_rotate = 1,
+				-- mesecons = 1,
+				-- -- functions
+				-- can_dig = 1,
+				-- on_rightclick = 1,
+				-- on_blast = 1,
+				-- -- new
+				-- mesecon_wire = 1,
+				-- walkable = 1,
+				-- floodable = 1,
+				-- place_param2 = 1,
+				__mesecon_state = [['"off"']],
+				on_timer = [[fun()]],
+				is_ground_content = [[boolean]],
+				description = [[string]],
+				node_box = [[FixedNodeBox]],
+				groups = [[table<string, integer>]],
+				_tnt_loss = [[integer]],
+				paramtype2 = [['"facedir"'|'"4dir"']],
+				on_blast = [[fun()]],
+				after_place_node = [[fun()]],
+				inventory_image = [[string]],
+				stack_max = [[integer]],
+				drawtype = [['"nodebox"' | '"airlike"']],
+				waving = [[integer]],
+				pointable = [[boolean]],
+				diggable = [[boolean]],
+				wield_image = [[string]],
+				tiles = "TileDef[]",
+				special_tiles = "TileDef[]",
+				paramtype = [['"light"']],
+				gain_open = [[number]],
+				sunlight_propagates = [[boolean]],
+				legacy_facedir_simple = [[boolean]],
+				liquid_renewable = [[boolean]],
+				walkable = [[boolean]],
+				drop = [[string]],
+				mesecons = [[MeseconsData]],
+				on_punch = [[fun()]],
+				on_rotate = [[fun()]],
+				on_place = [[fun()]],
+				on_rightclick = [[fun()]],
+				--- type bin2 = `${"1"|"0"}${"1"|"0"}`
+				--- type bin4 = `${bin2}${bin2}`
+				--- type bin8 = `${bin4}${bin4}`
+				__mesecon_basename = [[`:mesecons:wire_${bin8}`]],
+			}
+			if key2 == "paramtype" then
+				if val2 == "light" then
+					goto n
+				end
+				core.log("action", ('registered_nodes["%s"].%s=%s'):format(node.name, key2, lua_serialize(val2)))
+				goto n
+			end
+			if key2 == "drawtype" then
+				if val2 == "nodebox" then
+					goto n
+				end
+				if val2 == "airlike" then
+					goto n
+				end
+				core.log("action", ('registered_nodes["%s"].%s=%s'):format(node.name, key2, lua_serialize(val2)))
+			end
+			if key2 == "paramtype2" then
+				if node.paramtype2 == "facedir" then
+					goto n
+				end
+				if node.paramtype2 == "4dir" then
+					goto n
+				end
+				core.log("action", ('registered_nodes["%s"].paramtype2=%s'):format(node.name, lua_serialize(node.paramtype2)))
+				goto n
+			end
+			if key2 == "sounds" then
+				if false then
+					local str_fmt = "registered_nodes[\"%s\"].sounds[\"%s\"]=%s"
+					for sound_key, sound in pairs(node.sounds) do
+						core.log("action", str_fmt:format(node.name, sound_key, lua_serialize(sound)))
+					end
+				end
+				goto n
+			end
+			if key2 == "node_box" then
+				local sel_box = node.node_box
+				if sel_box.type ~= "fixed" then
+					core.log("warning", name_info .. " node box (not fixed) " .. lua_serialize(sel_box))
+				end
+				core.log("action", name_info .. " node box (FixedNodeBox.fixed)" .. format_table(sel_box.fixed))
+				goto n
+			end
+			if skip_keys[key2] ~= nil then
+				goto n
+			end
+			do
+				core.log("warning", ('registered_nodes["%s"]. %s = %s'):format(key1, key2, lua_serialize(val2)))
+				quit = true
+				break
+			end
+			::n::
 		end
-		if key2 == "light_source" then
-			core.log("action", name_info .. " light source " .. node.light_source)
-			goto n
-		end
-		local skip_keys = {
-			is_ground_content = 1,
-			paramtype2 = 1,
-			description = 1,
-			sounds = 1,
-			can_dig = 1,
-			on_rightclick = 1,
-			groups = 1,
-			drawtype = 1,
-		}
-		if skip_keys[key2] == 1 then
-			goto n
-		end
-		do
-			core.log("warning", ('registered_nodes["%s"].%s'):format(key1, key2))
-			core.log("warning", "value of " .. core.serialize(val2))
+		if quit then
 			break
 		end
-		::n::
 	end
 end)

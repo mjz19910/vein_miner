@@ -237,15 +237,44 @@ minetest = {}
 ---@class FixedNodeBox
 ---@field type '"fixed"'
 ---@field fixed number[]
+local fixed_node_box = {}
+
+---@alias SoundDef table<string, SoundParams>
+local sound_def = {}
+
+---@class SoundParams
+---@field name string
+---@field gain number
+local sound_params = {
+	name = "default_place_node_hard",
+	gain = 1,
+}
+
+---@alias ParamType2Str '"facedir"' | '"4dir"'
+
 ---@class RegNode
 ---@field type '"node"'
 ---@field name string
 ---@field mod_origin string
----@field tiles string[] | nil
+---@field tiles TileDef[] | nil
 ---@field selection_box FixedNodeBox | nil
 ---@field light_source number | nil
 ---@field is_ground_content boolean | nil
+---@field sounds SoundDef | nil
 ---@field allow_metadata_inventory_put fun(pos: Vector, listname: string, index: number, stack: ItemStack, player: Player | nil): nil
+---@field groups table<string, integer>
+---@field node_box FixedNodeBox | nil
+---@field paramtype2 ParamType2Str | nil
+---@field drawtype '"nodebox"' | '"airlike"' | nil
+---@field special_tiles TileDef[]
+---@type RegNode
+local reg_node = {}
+
+---@alias TileDef string | TileDefTable
+
+---@class TileDefTable
+---@field name string
+---@field tileable_vertical boolean
 
 ---@type VoxelManip
 local vm = core.get_voxel_manip()
