@@ -252,7 +252,7 @@ local function format_table(tbl)
 		end
 		return format_table(ntbl)
 	end
-	return ("[%s]"):format(table.concat(tbl, ","))
+	return ("{%s}"):format(table.concat(tbl, ","))
 end
 
 local table_array = {}
@@ -346,19 +346,106 @@ TileDef.format = function(value)
 	return ("{%s}"):format(table.concat(tbl_out, ","))
 end
 
-local FixedNodeBox = {}
+local FixedNodeBox = {
+	known = {
+		type = true,
+		fixed = true,
+	},
+}
+FixedNodeBox.format_fixed = function(box_info)
+	if type(box_info[1]) == "table" then
+		return format_table(box_info)
+	end
+	return ("{%s}"):format(table.concat(box_info, ","))
+end
 ---@param value FixedNodeBox
 FixedNodeBox.format = function(value)
-	if value.type == "fixed" then
-		local box_info = value.fixed
-		if type(box_info[1]) == "table" then
-			return ("FixedNodeBox(%s)"):format(format_table(value.fixed))
+	local tclone = {}
+	local show_clone = false
+	for k, v in pairs(value) do
+		if FixedNodeBox.known[k] then
+			goto n
 		end
-		return ("FixedNodeBox([%s])"):format(table.concat(value.fixed, ","))
-	else
-		return ("[[%s]]"):format(core.serialize(value))
+		tclone[k] = v
+		show_clone = true
+		::n::
 	end
-	return ""
+	if show_clone then
+		core.log("error", "FixedNodeBox " .. core.serialize(tclone):sub(8))
+	end
+	return ("{fixed=%s}"):format(FixedNodeBox.format_fixed(value.fixed))
+end
+
+local NodeBox = {
+	known = {},
+}
+
+local ConnectedNodeBox = {
+	known = {
+		type = true,
+		fixed = true,
+		connect_left = true,
+		connect_right = true,
+		connect_front = true,
+		connect_back = true,
+	},
+}
+
+NodeBox.format = function(value)
+	if value.type == "fixed" then
+		return FixedNodeBox.format(value)
+	elseif value.type == "regular" then
+		local tclone = {}
+		local show_clone = false
+		for k, v in pairs(value) do
+			if k == "type" then
+				goto n
+			end
+			tclone[k] = v
+			show_clone = true
+			::n::
+		end
+		if show_clone then
+			core.log("error", "RegularNodeBox " .. core.serialize(tclone):sub(8))
+		end
+		return format_table(value)
+	elseif value.type == "connected" then
+		local tclone = {}
+		local show_clone = false
+		for k, v in pairs(value) do
+			if ConnectedNodeBox.known[k] then
+				goto n
+			end
+			tclone[k] = v
+			show_clone = true
+			::n::
+		end
+		if show_clone then
+			core.log("error", "ConnectedNodeBox " .. core.serialize(tclone):sub(8))
+		end
+		local tbl_out = {}
+		if value.type ~= nil then
+			table.insert(tbl_out, ('type="%s"'):format(value.type))
+		end
+		if value.fixed ~= nil then
+			table.insert(tbl_out, ("fixed=%s"):format(FixedNodeBox.format_fixed(value.fixed)))
+		end
+		if value.connect_left ~= nil then
+			table.insert(tbl_out, "connect_left=" .. FixedNodeBox.format_fixed(value.connect_left))
+		end
+		if value.connect_right ~= nil then
+			table.insert(tbl_out, "connect_right=" .. FixedNodeBox.format_fixed(value.connect_right))
+		end
+		if value.connect_front ~= nil then
+			table.insert(tbl_out, "connect_front=" .. FixedNodeBox.format_fixed(value.connect_front))
+		end
+		if value.connect_back ~= nil then
+			table.insert(tbl_out, "connect_back=" .. FixedNodeBox.format_fixed(value.connect_back))
+		end
+		return ("{%s}"):format(table.concat(tbl_out, ","))
+	else
+		core.log("error", "NodeBox.type = " .. core.serialize(value.type):sub(8))
+	end
 end
 
 local function lua_serialize(value)
@@ -503,9 +590,9 @@ local skip_keys = {
 	on_metadata_inventory_move = [[fun()]],
 	allow_metadata_inventory_take = [[fun()]],
 	allow_metadata_inventory_move = [[fun()]],
-	node_box = [[FixedNodeBox]],
-	selection_box = [[FixedNodeBox]],
-	collision_box = [[FixedNodeBox]],
+	node_box = [[NodeBox]],
+	selection_box = [[NodeBox]],
+	collision_box = [[NodeBox]],
 	groups = [[table<string, integer>]],
 	mesecons = [[MeseconsData]],
 	post_effect_color = [[RGBAColor]],
@@ -549,7 +636,6 @@ core.register_on_mods_loaded(function()
 				goto n
 			end
 			if key2 == "tiles" then
-				table_array.format(node.tiles, TileDef.format)
 				-- core.log("action", name_info .. " tiles " .. table_array.format(node.tiles, TileDef.format))
 				goto n
 			end
@@ -558,15 +644,16 @@ core.register_on_mods_loaded(function()
 				goto n
 			end
 			if key2 == "node_box" then
-				-- core.log("action", name_info .. " node box " .. FixedNodeBox.format(val2))
+				-- core.log("action", name_info .. " node box " .. NodeBox.format(val2))
 				goto n
 			end
 			if key2 == "selection_box" then
-				-- core.log("action", name_info .. " selection box " .. FixedNodeBox.format(val2))
+				-- core.log("action", name_info .. " selection box " .. NodeBox.format(val2))
 				goto n
 			end
 			if key2 == "collision_box" then
-				-- core.log("action", name_info .. " collision box " .. FixedNodeBox.format(val2))
+				NodeBox.format(val2)
+				-- core.log("action", name_info .. " collision box " .. NodeBox.format(val2))
 				goto n
 			end
 			if key2 == "light_source" then
