@@ -1,4 +1,6 @@
 local dofile = dofile
+---@type LuantiCore
+local core = core
 
 local modpath = core.get_modpath("vein_miner")
 
@@ -16,7 +18,7 @@ print = function(...)
 		parts[#parts + 1] = tostring(v)
 	end
 	local msg = table.concat(parts, " ")
-	core.log("warning", "[vein_miner:print] " .. msg)
+	core.log("warning", ("[%s:print] %s"):format(core.get_last_run_mod(), msg))
 end
 
 return require

@@ -226,9 +226,28 @@ local chunk = {}
 ---@field get_modpath fun(mod: string): string
 ---
 ---@field get_player_by_name fun(name: string): Player | nil
+---
+---@field get_current_modname fun(): string
+---
+---@field registered_nodes table<string, RegNode>
+---@type LuantiCore
 core = {}
-minetest = core
+---@type LuantiCore
+minetest = {}
+---@class FixedNodeBox
+---@field type '"fixed"'
+---@field fixed number[]
+---@class RegNode
+---@field type '"node"'
+---@field name string
+---@field mod_origin string
+---@field tiles string[] | nil
+---@field selection_box FixedNodeBox | nil
+---@field light_source number | nil
+---@field is_ground_content boolean | nil
+---@field allow_metadata_inventory_put fun(pos: Vector, listname: string, index: number, stack: ItemStack, player: Player | nil): nil
 
+---@type VoxelManip
 local vm = core.get_voxel_manip()
 
 ---@class VoxelManip

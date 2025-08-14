@@ -1,7 +1,5 @@
 ---@type LuantiCore
 local core = core
----@type LuantiCore
-local minetest = minetest
 
 local assert = assert
 ---@type VectorModule
@@ -15,20 +13,20 @@ local normalize = vector.normalize
 local multiply = vector.multiply
 local new_vec = vector.new
 
-local set_node = minetest.set_node
-local get_node = minetest.get_node
-local get_node_or_nil = minetest.get_node_or_nil
-local sound_play = minetest.sound_play
-local get_connected_players = minetest.get_connected_players
+local set_node = core.set_node
+local get_node = core.get_node
+local get_node_or_nil = core.get_node_or_nil
+local sound_play = core.sound_play
+local get_connected_players = core.get_connected_players
 
-local registered_nodes = minetest.registered_nodes
+local registered_nodes = core.registered_nodes
 
 ---@type VeinMinerGlobal
 local vein_miner = vein_miner
 
 local player_config_mgr = vein_miner.player_config_mgr
 assert(player_config_mgr, "need vein_miner.player_config_mgr")
-minetest.register_tool("vein_miner:auto_floor", {
+core.register_tool("vein_miner:auto_floor", {
 	description = "Auto-Floor Builder",
 	inventory_image = "default_wood.png",
 })
@@ -97,7 +95,7 @@ local function is_supported(pos)
 	return false
 end
 
-local LINE_LENGTH = 64
+local LINE_LENGTH = 256
 ---@class SoundInfo
 ---@field playing_sounds table<string, boolean>
 
@@ -144,7 +142,7 @@ local last_yaw_per_player = {}
 local is_yaw_update_per_player_disabled = {}
 
 local function is_passable(node)
-	local def = core.registered_nodes[node.name]
+	local def = registered_nodes[node.name]
 	return def and def.walkable == false
 end
 
@@ -165,10 +163,10 @@ core.register_globalstep(function(dtime)
 			goto continue
 		end
 
-		local pos = round(player:get_pos())
+		local pos = player:get_pos()
 		local dir = normalize(player:get_look_dir())
 		local front_dir = normalize(new_vec(dir.x, 0, dir.z)) * 3
-		local floor_pos = round(pos + up / 2) + front_dir + down
+		local floor_pos = pos + front_dir + down
 		local node_below = get_node_or_nil(floor_pos)
 		if not node_below then
 			goto continue
@@ -180,12 +178,7 @@ core.register_globalstep(function(dtime)
 		sound_info.playing_sounds = {}
 
 		-- Place multiple floor blocks in a line in front of player
-		local base_pos = nil
-		if pos.y < 0 then
-			base_pos = offset(pos, 0, 1, 0)
-		else
-			base_pos = offset(pos, 0, 0.25, 0)
-		end
+		local base_pos = pos
 		local look_dir = player:get_look_dir()
 		local forward_dir = normalize(p(look_dir.x, 0, look_dir.z))
 
@@ -196,7 +189,7 @@ core.register_globalstep(function(dtime)
 			local target_pos = line_start + forward_dir * i
 
 			local node_below = get_node(target_pos)
-			if is_passable(node_below) and is_supported(target_pos) then
+			if true or is_passable(node_below) and is_supported(target_pos) then
 				if j >= max_blocks then
 					break
 				end
@@ -212,8 +205,8 @@ core.register_globalstep(function(dtime)
 			time_until_block_place = 0
 		end
 		if j <= 1 and not is_yaw_update_per_player_disabled[name] then
-			local yaw_max = math.pow(9 / 10, 13)
-			local yaw_speed = yaw_max * math.log(dbg_count + 1, 2)
+			local yaw_max = math.pow(9 / 10, 1) * 2
+			local yaw_speed = yaw_max * math.log(dbg_count + 1, 2) / LINE_LENGTH
 			local new_yaw = math.rad((math.deg(yaw) + yaw_speed) % 360)
 			if last_yaw_per_player[name] and new_yaw + 0.1 < last_yaw_per_player[name] then
 				is_yaw_update_per_player_disabled[name] = true
@@ -242,7 +235,67 @@ core.register_globalstep(function(dtime)
 end)
 
 local auto_floor_recipe = {{"default:stick", "", "default:stick"}, {"", "default:cobble", ""}, {"", "default:mese_crystal_fragment", ""}};
-minetest.register_craft({
+core.register_craft({
 	output = "vein_miner:auto_floor",
 	recipe = auto_floor_recipe,
 })
+
+local function format_table(tbl) return ("[%s]"):format(table.concat(tbl, ",")) end
+
+core.register_on_mods_loaded(function()
+	local key1 = next(registered_nodes)
+	local reg_node = registered_nodes[key1]
+	for key2, val2 in pairs(reg_node) do
+		local name_info = "node name " .. reg_node.name
+		if key2 == "type" then
+			if reg_node.type ~= "node" then
+				core.log("error", "invalid registered node type is not node " .. key1 .. " has type of " .. reg_node.type)
+			end
+			goto n
+		end
+		if key2 == "mod_origin" then
+			core.log("action", "mod origin for " .. name_info .. " is " .. reg_node.mod_origin)
+			goto n
+		end
+		if key2 == "name" then
+			if reg_node.name ~= key1 then
+				core.log("error", ("invalid registered node name mismatch %s and %s"):format(reg_node.name, key1))
+			end
+			goto n
+		end
+		if key2 == "allow_metadata_inventory_put" then
+			goto n
+		end
+		if key2 == "tiles" then
+			core.log("action", name_info .. " tiles contains " .. core.serialize(reg_node.tiles))
+			goto n
+		end
+		if key2 == "selection_box" then
+			local sel_box = reg_node.selection_box
+			if sel_box.type ~= "fixed" then
+				core.log("warning", name_info .. " selection box (not fixed) " .. core.serialize(sel_box))
+			end
+			core.log("action", name_info .. " selection box " .. format_table(sel_box.fixed))
+			goto n
+		end
+		if key2 == "light_source" then
+			core.log("action", name_info .. " light source " .. reg_node.light_source)
+			goto n
+		end
+		if key2 == "is_ground_content" then
+			goto n
+		end
+		if key2 == "paramtype2" then
+			goto n
+		end
+		if key2 == "description" then
+			goto n
+		end
+		do
+			core.log("warning", ('registered_nodes["%s"].%s'):format(key1, key2))
+			core.log("warning", "value of " .. core.serialize(val2))
+			break
+		end
+		::n::
+	end
+end)
