@@ -321,6 +321,104 @@ local ts = {
 	number = "number",
 }
 
+local valid_drawtype_set = {
+	nodebox = true,
+	liquid = true,
+	airlike = true,
+	plantlike = true,
+	allfaces_optional = true,
+	mesh = true,
+	glasslike_framed_optional = true,
+	plantlike_rooted = true,
+}
+
+local skip_keys = {
+	is_ground_content = ts.boolean,
+	description = ts.string,
+	_tnt_loss = ts.integer,
+	inventory_image = ts.string,
+	stack_max = ts.integer,
+	waving = ts.integer,
+	pointable = ts.boolean,
+	diggable = ts.boolean,
+	wield_image = ts.string,
+	gain_open = ts.number,
+	sunlight_propagates = ts.boolean,
+	legacy_facedir_simple = ts.boolean,
+	liquid_renewable = ts.boolean,
+	walkable = ts.boolean,
+	drop = ts.string,
+	place_param2 = ts.integer,
+	buildable_to = ts.boolean,
+	on_timer = [[fun()]],
+	on_blast = [[fun()]],
+	on_punch = [[fun()]],
+	on_place = [[fun()]],
+	on_rotate = [[fun()]],
+	on_rightclick = [[fun()]],
+	after_place_node = [[fun()]],
+	on_metadata_inventory_put = [[fun()]],
+	paramtype = [['"light"']],
+	paramtype2 = [['"facedir"'|'"4dir"']],
+	drawtype = [['"nodebox"' | '"liquid"' | '"airlike"' | '"plantlike"' | '"allfaces_optional"']],
+	__mesecon_state = [['"off"']],
+	node_box = [[FixedNodeBox]],
+	selection_box = [[FixedNodeBox]],
+	collision_box = [[FixedNodeBox]],
+	groups = [[table<string, integer>]],
+	tiles = "TileDef[]",
+	special_tiles = "TileDef[]",
+	mesecons = [[MeseconsData]],
+	--- type bin2 = `${"1"|"0"}${"1"|"0"}`
+	--- type bin4 = `${bin2}${bin2}`
+	--- type bin8 = `${bin4}${bin4}`
+	__mesecon_basename = [[`:mesecons:wire_${bin8}`]],
+	post_effect_color = [[RGBAColor]],
+	can_dig = [[fun()]],
+	on_construct = [[fun()]],
+	mesecon_wire = ts.boolean,
+	legacy_mineral = ts.boolean,
+	liquidtype = [['"source"' | '"flowing"']],
+	sound_open = ts.string,
+	on_receive_fields = [[fun()]],
+	minlight = ts.integer,
+	after_dig_node = [[fun()]],
+	visual_scale = ts.integer,
+	use_texture_alpha = [['"clip"' | '"blend"']],
+	gain_close = ts.number,
+	floodable = ts.boolean,
+	drowning = ts.integer,
+	on_destruct = [[fun()]],
+	digiline = [[DigilineData]],
+	on_use = [[fun()]],
+	sound_close = ts.string,
+	delayer_onstate = ts.string,
+	after_destruct = [[fun()]],
+	legacy_wallmounted = ts.boolean,
+	on_drop = [[fun()]],
+	node_placement_prediction = ts.string,
+	node_dig_prediction = ts.string,
+	mesh = ts.string,
+	material = ts.string,
+	_digtron_formspec = [[fun()]],
+	on_metadata_inventory_move = [[fun()]],
+	on_dig = [[fun()]],
+	drawer_stack_max_factor = ts.integer,
+	door = [[table]],
+	air_equivalent = ts.boolean,
+	on_metadata_inventory_take = [[fun()]],
+	connect_sides = [[table]],
+	liquid_alternative_flowing = ts.string,
+	liquid_alternative_source = ts.string,
+	liquid_viscosity = ts.integer,
+	connects_to = "string[]",
+	pressureplate_basename = ts.string,
+	delayer_time = ts.number,
+	soil = [[SoilData]],
+	liquid_range = ts.number,
+	execute_dig = [[fun()]],
+}
+
 core.register_on_mods_loaded(function()
 	local quit = false
 	for key1, node in pairs(registered_nodes) do
@@ -350,7 +448,7 @@ core.register_on_mods_loaded(function()
 				goto n
 			end
 			if key2 == "special_tiles" then
-				core.log("action", name_info .. " special_tiles " .. table_array.format(node.special_tiles, TileDef.format))
+				-- core.log("action", name_info .. " special tiles " .. table_array.format(node.special_tiles, TileDef.format))
 				goto n
 			end
 			if key2 == "node_box" then
@@ -369,80 +467,8 @@ core.register_on_mods_loaded(function()
 				-- core.log("action", name_info .. " light source " .. node.light_source)
 				goto n
 			end
-			local skip_keys = {
-				is_ground_content = ts.boolean,
-				description = ts.string,
-				_tnt_loss = ts.integer,
-				inventory_image = ts.string,
-				stack_max = ts.integer,
-				waving = ts.integer,
-				pointable = ts.boolean,
-				diggable = ts.boolean,
-				wield_image = ts.string,
-				gain_open = ts.number,
-				sunlight_propagates = ts.boolean,
-				legacy_facedir_simple = ts.boolean,
-				liquid_renewable = ts.boolean,
-				walkable = ts.boolean,
-				drop = ts.string,
-				place_param2 = ts.integer,
-				buildable_to = ts.boolean,
-				on_timer = [[fun()]],
-				on_blast = [[fun()]],
-				on_punch = [[fun()]],
-				on_place = [[fun()]],
-				on_rotate = [[fun()]],
-				on_rightclick = [[fun()]],
-				after_place_node = [[fun()]],
-				on_metadata_inventory_put = [[fun()]],
-				paramtype = [['"light"']],
-				paramtype2 = [['"facedir"'|'"4dir"']],
-				drawtype = [['"nodebox"' | '"liquid"' | '"airlike"' | '"plantlike"' | '"allfaces_optional"']],
-				__mesecon_state = [['"off"']],
-				node_box = [[FixedNodeBox]],
-				selection_box = [[FixedNodeBox]],
-				collision_box = [[FixedNodeBox]],
-				groups = [[table<string, integer>]],
-				tiles = "TileDef[]",
-				special_tiles = "TileDef[]",
-				mesecons = [[MeseconsData]],
-				--- type bin2 = `${"1"|"0"}${"1"|"0"}`
-				--- type bin4 = `${bin2}${bin2}`
-				--- type bin8 = `${bin4}${bin4}`
-				__mesecon_basename = [[`:mesecons:wire_${bin8}`]],
-				post_effect_color = [[RGBAColor]],
-				can_dig = [[fun()]],
-				on_construct = [[fun()]],
-				mesecon_wire = ts.boolean,
-				legacy_mineral = ts.boolean,
-				liquidtype = [['"source"' | '"flowing"']],
-				sound_open = ts.string,
-				on_receive_fields = [[fun()]],
-				minlight = ts.integer,
-				after_dig_node = [[fun()]],
-				visual_scale = ts.integer,
-				use_texture_alpha = [['"clip"']],
-				gain_close = ts.number,
-				floodable = ts.boolean,
-				drowning = ts.integer,
-				on_destruct = [[fun()]],
-				digiline = [[DigilineData]],
-				on_use = [[fun()]],
-				sound_close = ts.string,
-				delayer_onstate = ts.string,
-				after_destruct = [[fun()]],
-				legacy_wallmounted = ts.boolean,
-				on_drop = [[fun()]],
-				node_placement_prediction = ts.string,
-				node_dig_prediction = ts.string,
-				mesh = ts.string,
-				material = ts.string,
-				_digtron_formspec = [[fun()]],
-				on_metadata_inventory_move = [[fun()]],
-				on_dig = [[fun()]],
-			}
 			if key2 == "use_texture_alpha" then
-				if val2 == "clip" then
+				if val2 == "clip" or val2 == "blend" or val2 == "opaque" then
 					goto n
 				end
 				core.log("action", fmt_kv:format(node.name, key2, lua_serialize(val2)))
@@ -466,31 +492,19 @@ core.register_on_mods_loaded(function()
 				goto n
 			end
 			if key2 == "drawtype" then
-				if val2 == "nodebox" then
-					goto n
+				if not valid_drawtype_set[val2] then
+					core.log("action", fmt_kv:format(node.name, key2, lua_serialize(val2)))
 				end
-				if val2 == "liquid" then
-					goto n
-				end
-				if val2 == "airlike" then
-					goto n
-				end
-				if val2 == "plantlike" then
-					goto n
-				end
-				if val2 == "allfaces_optional" then
-					goto n
-				end
-				if val2 == "mesh" then
-					goto n
-				end
-				core.log("action", fmt_kv:format(node.name, key2, lua_serialize(val2)))
+				goto n
 			end
 			if key2 == "paramtype2" then
 				if val2 == "facedir" then
 					goto n
 				end
 				if val2 == "4dir" then
+					goto n
+				end
+				if val2 == "wallmounted" then
 					goto n
 				end
 				core.log("action", fmt_kv:format(node.name, key2, lua_serialize(val2)))
