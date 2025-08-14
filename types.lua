@@ -250,7 +250,8 @@ local sound_params = {
 	gain = 1,
 }
 
----@alias ParamType2Str '"facedir"' | '"4dir"'
+---@alias ParamType2 '"facedir"' | '"4dir"'
+---@alias DrawType '"nodebox"' | '"liquid"' | '"airlike"' | '"plantlike"' | '"allfaces_optional"'
 
 ---@class RegNode
 ---@field type '"node"'
@@ -264,8 +265,8 @@ local sound_params = {
 ---@field allow_metadata_inventory_put fun(pos: Vector, listname: string, index: number, stack: ItemStack, player: Player | nil): nil
 ---@field groups table<string, integer>
 ---@field node_box FixedNodeBox | nil
----@field paramtype2 ParamType2Str | nil
----@field drawtype '"nodebox"' | '"airlike"' | nil
+---@field paramtype2 ParamType2 | nil
+---@field drawtype DrawType | nil
 ---@field special_tiles TileDef[]
 ---@type RegNode
 local reg_node = {}

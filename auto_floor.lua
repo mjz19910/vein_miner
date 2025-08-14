@@ -394,7 +394,7 @@ core.register_on_mods_loaded(function()
 				on_metadata_inventory_put = [[fun()]],
 				paramtype = [['"light"']],
 				paramtype2 = [['"facedir"'|'"4dir"']],
-				drawtype = [['"nodebox"' | '"airlike"' | '"plantlike"']],
+				drawtype = [['"nodebox"' | '"liquid"' | '"airlike"' | '"plantlike"' | '"allfaces_optional"']],
 				__mesecon_state = [['"off"']],
 				node_box = [[FixedNodeBox]],
 				selection_box = [[FixedNodeBox]],
@@ -414,6 +414,8 @@ core.register_on_mods_loaded(function()
 				legacy_mineral = ts.boolean,
 				liquidtype = [['"source"' | '"flowing"']],
 				sound_open = ts.string,
+				on_receive_fields = [[fun()]],
+				minlight = ts.integer,
 			}
 			if key2 == "liquidtype" then
 				if val2 == "source" then
@@ -443,6 +445,9 @@ core.register_on_mods_loaded(function()
 					goto n
 				end
 				if val2 == "plantlike" then
+					goto n
+				end
+				if val2 == "allfaces_optional" then
 					goto n
 				end
 				core.log("action", fmt_kv:format(node.name, key2, lua_serialize(val2)))
