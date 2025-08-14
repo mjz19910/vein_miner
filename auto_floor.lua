@@ -265,6 +265,9 @@ table_array.format = function(value, next_format, ...)
 end
 local TileDef = {}
 TileDef.format = function(value)
+	if type(value) == "string" then
+		return ('"%s"'):format(value)
+	end
 	for k, v in pairs(value) do
 		if k == "name" then
 			goto n
