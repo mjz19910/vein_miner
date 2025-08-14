@@ -275,6 +275,9 @@ TileDef.format = function(value)
 		if k == "backface_culling" then
 			goto n
 		end
+		if k == "backface_culling" then
+			goto n
+		end
 		core.log("error", "TileDef " .. core.serialize(value):sub(8))
 		::n::
 	end
@@ -330,7 +333,7 @@ core.register_on_mods_loaded(function()
 				goto n
 			end
 			if key2 == "mod_origin" then
-				core.log("action", "mod origin for " .. name_info .. " is " .. node.mod_origin)
+				-- core.log("action", "mod origin for " .. name_info .. " is " .. node.mod_origin)
 				goto n
 			end
 			if key2 == "name" then
@@ -343,7 +346,7 @@ core.register_on_mods_loaded(function()
 				goto n
 			end
 			if key2 == "tiles" then
-				core.log("action", name_info .. " tiles " .. table_array.format(node.tiles, TileDef.format))
+				-- core.log("action", name_info .. " tiles " .. table_array.format(node.tiles, TileDef.format))
 				goto n
 			end
 			if key2 == "special_tiles" then
@@ -351,19 +354,19 @@ core.register_on_mods_loaded(function()
 				goto n
 			end
 			if key2 == "node_box" then
-				core.log("action", name_info .. " node box " .. FixedNodeBox.format(val2))
+				-- core.log("action", name_info .. " node box " .. FixedNodeBox.format(val2))
 				goto n
 			end
 			if key2 == "selection_box" then
-				core.log("action", name_info .. " selection box " .. FixedNodeBox.format(val2))
+				-- core.log("action", name_info .. " selection box " .. FixedNodeBox.format(val2))
 				goto n
 			end
 			if key2 == "collision_box" then
-				core.log("action", name_info .. " collision box " .. FixedNodeBox.format(val2))
+				-- core.log("action", name_info .. " collision box " .. FixedNodeBox.format(val2))
 				goto n
 			end
 			if key2 == "light_source" then
-				core.log("action", name_info .. " light source " .. node.light_source)
+				-- core.log("action", name_info .. " light source " .. node.light_source)
 				goto n
 			end
 			local skip_keys = {
