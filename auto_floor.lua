@@ -244,22 +244,22 @@ local function format_table(tbl) return ("[%s]"):format(table.concat(tbl, ",")) 
 
 core.register_on_mods_loaded(function()
 	local key1 = next(registered_nodes)
-	local reg_node = registered_nodes[key1]
-	for key2, val2 in pairs(reg_node) do
-		local name_info = "node name " .. reg_node.name
+	local node = registered_nodes[key1]
+	for key2, val2 in pairs(node) do
+		local name_info = "node name " .. node.name
 		if key2 == "type" then
-			if reg_node.type ~= "node" then
-				core.log("error", "invalid registered node type is not node " .. key1 .. " has type of " .. reg_node.type)
+			if node.type ~= "node" then
+				core.log("error", "invalid registered node type is not node " .. key1 .. " has type of " .. node.type)
 			end
 			goto n
 		end
 		if key2 == "mod_origin" then
-			core.log("action", "mod origin for " .. name_info .. " is " .. reg_node.mod_origin)
+			core.log("action", "mod origin for " .. name_info .. " is " .. node.mod_origin)
 			goto n
 		end
 		if key2 == "name" then
-			if reg_node.name ~= key1 then
-				core.log("error", ("invalid registered node name mismatch %s and %s"):format(reg_node.name, key1))
+			if node.name ~= key1 then
+				core.log("error", ("invalid registered node name mismatch %s and %s"):format(node.name, key1))
 			end
 			goto n
 		end
@@ -267,11 +267,11 @@ core.register_on_mods_loaded(function()
 			goto n
 		end
 		if key2 == "tiles" then
-			core.log("action", name_info .. " tiles contains " .. core.serialize(reg_node.tiles))
+			core.log("action", name_info .. " tiles " .. format_table(node.tiles))
 			goto n
 		end
 		if key2 == "selection_box" then
-			local sel_box = reg_node.selection_box
+			local sel_box = node.selection_box
 			if sel_box.type ~= "fixed" then
 				core.log("warning", name_info .. " selection box (not fixed) " .. core.serialize(sel_box))
 			end
@@ -279,7 +279,7 @@ core.register_on_mods_loaded(function()
 			goto n
 		end
 		if key2 == "light_source" then
-			core.log("action", name_info .. " light source " .. reg_node.light_source)
+			core.log("action", name_info .. " light source " .. node.light_source)
 			goto n
 		end
 		local skip_keys = {
@@ -288,6 +288,9 @@ core.register_on_mods_loaded(function()
 			description = 1,
 			sounds = 1,
 			can_dig = 1,
+			on_rightclick = 1,
+			groups = 1,
+			drawtype = 1,
 		}
 		if skip_keys[key2] == 1 then
 			goto n
