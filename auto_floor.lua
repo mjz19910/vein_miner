@@ -327,6 +327,7 @@ local valid_drawtype_set = {
 	liquid = true,
 	nodebox = true,
 	airlike = true,
+	raillike = true,
 	glasslike = true,
 	plantlike = true,
 	flowingliquid = true,
@@ -439,6 +440,10 @@ local skip_keys = {
 	maxlight = ts.integer,
 	virtual_portstates = [[MeseconPortStates]],
 	damage_per_second = ts.integer,
+	is_burnt = ts.boolean,
+	fertility = [[table]],
+	climbable = ts.boolean,
+	on_flood = [[fun()]],
 }
 
 core.register_on_mods_loaded(function()
