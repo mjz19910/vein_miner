@@ -99,7 +99,7 @@ local function is_supported(pos)
 	return false
 end
 
-local LINE_LENGTH = 256
+local LINE_LENGTH = 128
 ---@class SoundInfo
 ---@field playing_sounds table<string, boolean>
 
@@ -116,7 +116,14 @@ local function try_place_block_from_inventory(player, sound_info, target_pos, ma
 		if def and name ~= "air" and not def.groups.falling_node then
 			local cur_node = core.get_node(target_pos)
 			if cur_node and cur_node.name ~= "air" then
-				return false
+				if cur_node.name == "ignore" then
+					return false
+				end
+				local def2 = registered_nodes[cur_node.name]
+				if def2.walkable then
+					return false
+				end
+				core.node_dig(target_pos, cur_node, player)
 			end
 			set_node(target_pos, {
 				name = name,
@@ -186,7 +193,7 @@ core.register_globalstep(function(dtime)
 		local look_dir = player:get_look_dir()
 		local forward_dir = normalize(p(look_dir.x, 0, look_dir.z))
 
-		local line_start = base_pos + down
+		local line_start = base_pos + down - up / 2
 		local max_blocks = config.blocks_per_tick
 		local j = 0
 		for i = 1, LINE_LENGTH do
@@ -202,15 +209,9 @@ core.register_globalstep(function(dtime)
 				end
 			end
 		end
-		if j <= 1 then
-			time_until_block_place = time_until_block_place + 1
-		else
-			core.log("action", ("more than 1 block placed after %d steps"):format(time_until_block_place))
-			time_until_block_place = 0
-		end
 		if j <= 1 and not is_yaw_update_per_player_disabled[name] then
-			local yaw_max = math.pow(9 / 10, 1) * 2
-			local yaw_speed = yaw_max * math.log(dbg_count + 1, 2) / LINE_LENGTH
+			local yaw_max = math.pow(9 / 10, 1) * 6
+			local yaw_speed = yaw_max * math.log(dbg_count + 1, 1.7) / LINE_LENGTH
 			local new_yaw = math.rad((math.deg(yaw) + yaw_speed) % 360)
 			if last_yaw_per_player[name] and new_yaw + 0.1 < last_yaw_per_player[name] then
 				is_yaw_update_per_player_disabled[name] = true
@@ -224,8 +225,8 @@ core.register_globalstep(function(dtime)
 				goto continue
 			end
 		elseif not is_yaw_update_per_player_disabled[name] then
-			if time_until_block_place > 12 then
-				local new_yaw = math.rad(math.deg(yaw) - 0.8)
+			if time_until_block_place >= 25 then
+				local new_yaw = math.rad(math.deg(yaw) - 2)
 				player:set_look_horizontal(new_yaw)
 				yaw = new_yaw
 			end
@@ -234,6 +235,12 @@ core.register_globalstep(function(dtime)
 			dbg_count = 0
 		end
 		last_yaw_per_player[name] = yaw
+		if j <= 1 then
+			time_until_block_place = time_until_block_place + 1
+		else
+			core.log("action", ("more than 1 block placed after %d steps"):format(time_until_block_place))
+			time_until_block_place = 0
+		end
 		::continue::
 	end
 end)
