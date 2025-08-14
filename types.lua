@@ -679,3 +679,9 @@ local tool_caps = {}
 ---@field blendmode integer|nil
 ---@field alpha any|nil
 ---@field scale any|nil
+
+---@class MeseconPortStates
+---@field a boolean
+---@field b boolean
+---@field c boolean
+---@field d boolean

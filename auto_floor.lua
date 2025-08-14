@@ -319,17 +319,20 @@ local ts = {
 	string = "string",
 	---@type number
 	number = "number",
+	Vector = vector.zero(),
 }
 
 local valid_drawtype_set = {
-	nodebox = true,
-	liquid = true,
-	airlike = true,
-	plantlike = true,
-	allfaces_optional = true,
 	mesh = true,
-	glasslike_framed_optional = true,
+	liquid = true,
+	nodebox = true,
+	airlike = true,
+	glasslike = true,
+	plantlike = true,
+	flowingliquid = true,
 	plantlike_rooted = true,
+	allfaces_optional = true,
+	glasslike_framed_optional = true,
 }
 
 local skip_keys = {
@@ -358,8 +361,8 @@ local skip_keys = {
 	on_rightclick = [[fun()]],
 	after_place_node = [[fun()]],
 	on_metadata_inventory_put = [[fun()]],
-	paramtype = [['"light"']],
-	paramtype2 = [['"facedir"'|'"4dir"']],
+	paramtype = [['"none"' | '"light"']],
+	paramtype2 = [['"facedir"'|'"4dir"'|'"flowingliquid"']],
 	drawtype = [['"nodebox"' | '"liquid"' | '"airlike"' | '"plantlike"' | '"allfaces_optional"']],
 	__mesecon_state = [['"off"']],
 	node_box = [[FixedNodeBox]],
@@ -417,12 +420,38 @@ local skip_keys = {
 	soil = [[SoilData]],
 	liquid_range = ts.number,
 	execute_dig = [[fun()]],
+	protected = ts.boolean,
+	delayer_offstate = ts.string,
+	visual = [['"mesh"']],
+	allow_metadata_inventory_take = [[fun()]],
+	next_plant = ts.string,
+	allow_metadata_inventory_move = [[fun()]],
+	on_skeleton_key_use = [[fun()]],
+	on_key_use = [[fun()]],
+	on_ignite = [[fun()]],
+	liquids_pointable = ts.boolean,
+	is_luacontroller = ts.boolean,
+	wield_scale = ts.Vector,
+	tile_front = ts.string,
+	tile_side = ts.string,
+	on_burn = [[fun()]],
+	_gate = ts.string,
+	maxlight = ts.integer,
+	virtual_portstates = [[MeseconPortStates]],
+	damage_per_second = ts.integer,
 }
 
 core.register_on_mods_loaded(function()
 	local quit = false
 	for key1, node in pairs(registered_nodes) do
 		for key2, val2 in pairs(node) do
+			if key2 == "visual" then
+				if val2 == "mesh" then
+					goto n
+				end
+				core.log("action", fmt_kv:format(node.name, key2, lua_serialize(val2)))
+				goto n
+			end
 			local name_info = "node name " .. node.name
 			if key2 == "type" then
 				if node.type ~= "node" then
@@ -485,6 +514,9 @@ core.register_on_mods_loaded(function()
 				goto n
 			end
 			if key2 == "paramtype" then
+				if val2 == "none" then
+					goto n
+				end
 				if val2 == "light" then
 					goto n
 				end
@@ -504,7 +536,10 @@ core.register_on_mods_loaded(function()
 				if val2 == "4dir" then
 					goto n
 				end
-				if val2 == "wallmounted" then
+				if val2 == "wallmounted" or val2 == "leveled" then
+					goto n
+				end
+				if val2 == "flowingliquid" then
 					goto n
 				end
 				core.log("action", fmt_kv:format(node.name, key2, lua_serialize(val2)))
