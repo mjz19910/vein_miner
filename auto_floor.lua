@@ -358,6 +358,10 @@ core.register_on_mods_loaded(function()
 				core.log("action", name_info .. " selection box " .. FixedNodeBox.format(val2))
 				goto n
 			end
+			if key2 == "collision_box" then
+				core.log("action", name_info .. " collision box " .. FixedNodeBox.format(val2))
+				goto n
+			end
 			if key2 == "light_source" then
 				core.log("action", name_info .. " light source " .. node.light_source)
 				goto n
@@ -393,6 +397,8 @@ core.register_on_mods_loaded(function()
 				drawtype = [['"nodebox"' | '"airlike"' | '"plantlike"']],
 				__mesecon_state = [['"off"']],
 				node_box = [[FixedNodeBox]],
+				selection_box = [[FixedNodeBox]],
+				collision_box = [[FixedNodeBox]],
 				groups = [[table<string, integer>]],
 				tiles = "TileDef[]",
 				special_tiles = "TileDef[]",
@@ -402,7 +408,23 @@ core.register_on_mods_loaded(function()
 				--- type bin8 = `${bin4}${bin4}`
 				__mesecon_basename = [[`:mesecons:wire_${bin8}`]],
 				post_effect_color = [[RGBAColor]],
+				can_dig = [[fun()]],
+				on_construct = [[fun()]],
+				mesecon_wire = ts.boolean,
+				legacy_mineral = ts.boolean,
+				liquidtype = [['"source"' | '"flowing"']],
+				sound_open = ts.string,
 			}
+			if key2 == "liquidtype" then
+				if val2 == "source" then
+					goto n
+				end
+				if val2 == "flowing" then
+					goto n
+				end
+				core.log("action", fmt_kv:format(node.name, key2, lua_serialize(val2)))
+				goto n
+			end
 			if key2 == "paramtype" then
 				if val2 == "light" then
 					goto n
@@ -412,6 +434,9 @@ core.register_on_mods_loaded(function()
 			end
 			if key2 == "drawtype" then
 				if val2 == "nodebox" then
+					goto n
+				end
+				if val2 == "liquid" then
 					goto n
 				end
 				if val2 == "airlike" then
