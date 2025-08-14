@@ -263,30 +263,85 @@ table_array.format = function(value, next_format, ...)
 	end
 	return ("[%s]"):format(table.concat(ntbl, ","))
 end
-local TileDef = {}
+local TileAnimationParams = {
+	known = {
+		type = true,
+		aspect_w = true,
+		aspect_h = true,
+		length = true,
+	},
+}
+---@param value TileAnimationParams
+TileAnimationParams.format = function(value)
+	local tclone = {}
+	local show_clone = false
+	for k, v in pairs(value) do
+		if TileAnimationParams.known[k] then
+			goto n
+		end
+		tclone[k] = v
+		show_clone = true
+		::n::
+	end
+	if show_clone then
+		core.log("error", "TileAnimationParams " .. core.serialize(tclone):sub(8))
+	end
+	local tbl_out = {}
+	if value.type then
+		table.insert(tbl_out, ('type="%s"'):format(value.type))
+	end
+	if value.aspect_w then
+		table.insert(tbl_out, ('aspect_w=%d'):format(value.aspect_w))
+	end
+	if value.aspect_h then
+		table.insert(tbl_out, ('aspect_h=%d'):format(value.aspect_h))
+	end
+	if value.length ~= nil then
+		table.insert(tbl_out, ('backface_culling=%d'):format(value.length))
+	end
+	return ("{%s}"):format(table.concat(tbl_out, ","))
+end
+local TileDef = {
+	known = {
+		name = true,
+		align_style = true,
+		backface_culling = true,
+		animation = true,
+		tileable_vertical = true,
+	},
+}
 TileDef.format = function(value)
 	if type(value) == "string" then
 		return ('"%s"'):format(value)
 	end
+	local tclone = {}
+	local show_clone = false
 	for k, v in pairs(value) do
-		if k == "name" then
+		if TileDef.known[k] then
 			goto n
 		end
-		if k == "backface_culling" then
-			goto n
-		end
-		if k == "backface_culling" then
-			goto n
-		end
-		core.log("error", "TileDef " .. core.serialize(value):sub(8))
+		tclone[k] = v
+		show_clone = true
 		::n::
 	end
+	if show_clone then
+		core.log("error", "TileDef " .. core.serialize(tclone):sub(8))
+	end
 	local tbl_out = {}
-	if value.name then
+	if value.name ~= nil then
 		table.insert(tbl_out, ('name="%s"'):format(value.name))
+	end
+	if value.align_style ~= nil then
+		table.insert(tbl_out, ('align_style="%s"'):format(value.align_style))
 	end
 	if value.backface_culling ~= nil then
 		table.insert(tbl_out, ('backface_culling=%s'):format(tostring(value.backface_culling)))
+	end
+	if value.tileable_vertical ~= nil then
+		table.insert(tbl_out, ('tileable_vertical=%s'):format(tostring(value.tileable_vertical)))
+	end
+	if value.animation ~= nil then
+		table.insert(tbl_out, ('animation=%s'):format(TileAnimationParams.format(value.animation)))
 	end
 	return ("{%s}"):format(table.concat(tbl_out, ","))
 end
@@ -494,6 +549,7 @@ core.register_on_mods_loaded(function()
 				goto n
 			end
 			if key2 == "tiles" then
+				table_array.format(node.tiles, TileDef.format)
 				-- core.log("action", name_info .. " tiles " .. table_array.format(node.tiles, TileDef.format))
 				goto n
 			end

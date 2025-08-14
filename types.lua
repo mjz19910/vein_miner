@@ -271,12 +271,6 @@ local sound_params = {
 ---@type RegNode
 local reg_node = {}
 
----@alias TileDef string | TileDefTable
-
----@class TileDefTable
----@field name string
----@field tileable_vertical boolean
-
 ---@type VoxelManip
 local vm = core.get_voxel_manip()
 
@@ -666,12 +660,6 @@ local tool_caps = {}
 ---@field time number
 ---@field texpool ServerParticleTexture[]  -- array of textures
 
----@class TileAnimationParams
----@field type integer -- e.g. TAT_NONE or other animation types
----@field length integer
----@field frame_length integer
----@field frames integer[]
-
 ---@class ServerParticleTexture
 ---@field string string           -- texture name or path
 ---@field animated boolean
@@ -685,3 +673,15 @@ local tool_caps = {}
 ---@field b boolean
 ---@field c boolean
 ---@field d boolean
+
+---@alias TileDef string | TileDefTable
+
+---@class TileDefTable
+---@field name string
+---@field tileable_vertical boolean
+
+---@class TileAnimationParams
+---@field type '"vertical_frames"'
+---@field aspect_w integer
+---@field aspect_h integer
+---@field length number
