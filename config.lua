@@ -358,4 +358,5 @@ end
 add_light_node("default:cobble")
 add_light_node("default:jungletree")
 add_light_node("default:junglegrass")
+add_light_node("default:dirt_with_rainforest_litter")
 return CFG
