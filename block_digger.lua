@@ -86,6 +86,9 @@ function BlockDigger.should_dig(node, pos)
 	if is_falling(above_node.name) then
 		return false
 	end
+	do
+		return true
+	end
 	if false then
 		for _, off in ipairs(possible_flow_directions) do
 			local npos = pos + off
