@@ -660,7 +660,10 @@ function VeinMinerState:process_queue_item(item, player_name)
 		return
 	end
 	if group_target then
-		if falling_groups[group_target] then
+		if group_target == "cobble" then
+			target_nodes = table.copy(cobble_target_list)
+			target_flags.falling = true
+		elseif falling_groups[group_target] then
 			target_nodes = table.copy(wanted_list)
 			target_flags.falling = true
 		elseif wanted_groups[group_target] then
