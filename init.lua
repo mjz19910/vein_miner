@@ -418,7 +418,7 @@ local function notify_missing_light(player, pos, attach_dir, expire_time)
 		return
 	end
 	local nat_light = core.get_natural_light(pos, 0.5)
-	if nat_light >= 5 then
+	if nat_light ~= nil and nat_light >= 5 then
 		return
 	end
 	local node = core.get_node_or_nil(pos)

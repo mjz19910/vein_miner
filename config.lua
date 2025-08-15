@@ -350,8 +350,12 @@ end
 ---@type table<string, string>
 CFG.node_to_group = node_to_group
 
-table.insert(LIGHT_NODES, "default:cobble")
-table.insert(LIGHT_NODES, "default:jungletree")
-light_nodes_set["default:cobble"] = true
-light_nodes_set["default:jungletree"] = true
+local function add_light_node(node_name)
+	table.insert(LIGHT_NODES, node_name)
+	light_nodes_set[node_name] = true
+end
+
+add_light_node("default:cobble")
+add_light_node("default:jungletree")
+add_light_node("default:junglegrass")
 return CFG
