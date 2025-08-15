@@ -250,15 +250,15 @@ function BlockDigger.dig_node_list(state, node_name, node_list, repeat_count)
 			end
 			if options.light then
 				local nat_light = core.get_natural_light(vector.offset(pos, 0, -1, 0), 0.5)
-				if nat_light > 5 then
+				if nat_light ~= nil and nat_light > 5 then
 					dig(pos, node)
 				end
 				nat_light = core.get_natural_light(vector.offset(pos, 0, 1, 0), 0.5)
-				if nat_light > 5 then
+				if nat_light ~= nil and nat_light > 5 then
 					dig(pos, node)
 				end
 				nat_light = core.get_natural_light(pos, 0.5)
-				if nat_light > 5 then
+				if nat_light ~= nil and nat_light > 5 then
 					dig(pos, node)
 				end
 			end
