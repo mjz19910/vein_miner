@@ -350,4 +350,6 @@ end
 ---@type table<string, string>
 CFG.node_to_group = node_to_group
 
+table.insert(LIGHT_NODES, "default:cobble")
+table.insert(LIGHT_NODES, "default:jungletree")
 return CFG

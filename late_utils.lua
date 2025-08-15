@@ -1,5 +1,6 @@
 ---@class VeinMinerLateUtils
 local l_utils = {}
+---@type VeinMinerGlobal
 local vein_miner = vein_miner
 local table = table
 local vector = vector

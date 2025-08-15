@@ -45,6 +45,7 @@ vein_miner.h = h
 local is_liquid = h.is_liquid
 ---@type VeinMinerConfig
 local CFG = require("mods.vein_miner.config")
+---@type VeinMinerConfig
 vein_miner.CFG = CFG
 local mining_groups = CFG.mining_groups
 local node_to_group = CFG.node_to_group
