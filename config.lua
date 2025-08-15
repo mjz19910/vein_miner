@@ -196,6 +196,7 @@ local mg = {
 	snow = {snow},
 	jungle_sapling = {sapling.jungle},
 	apple = {apple},
+	butterfly = {"butterflies:butterfly_white", "butterflies:butterfly_red", "butterflies:butterfly_violet"},
 }
 ---@type MiningGroups
 CFG.mining_groups = mg
