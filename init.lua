@@ -481,6 +481,7 @@ local known_groups = {
 	stem = true,
 	snow = true,
 	desert_sand = true,
+	apple = true,
 }
 local green_groups = {
 	cotton = true,

@@ -121,7 +121,8 @@ local leaves = {
 local sapling = {
 	jungle = "default:junglesapling",
 }
--- ignore_list_default = {leaves[1], leaves.acacia, leaves.aspen, leaves.jungle, leaves.pine, ...}
+
+local apple = "default:apple"
 
 local blueberry = {
 	leaves = "default:blueberry_bush_leaves",
@@ -194,6 +195,7 @@ local mg = {
 	clay = {clay},
 	snow = {snow},
 	jungle_sapling = {sapling.jungle},
+	apple = {apple},
 }
 ---@type MiningGroups
 CFG.mining_groups = mg
