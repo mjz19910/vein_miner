@@ -270,6 +270,8 @@ local sound_params = {
 ---@field special_tiles TileDef[]
 ---@field walkable boolean
 ---@field buildable_to boolean
+---@field floodable boolean
+---@field liquidtype '"source"' | '"flowing"'
 ---@type RegNode
 local reg_node = {}
 

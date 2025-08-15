@@ -48,6 +48,7 @@ local stone = {
 local sand = {
 	"default:sand",
 	silver = "default:silver_sand",
+	desert = "default:desert_sand",
 	with_kelp = "default:sand_with_kelp",
 }
 
@@ -176,6 +177,7 @@ local mg = {
 	gravel = {gravel},
 	sand = {sand[1]},
 	silver_sand = {sand.silver},
+	desert_sand = {sand.desert},
 	flower = flower.common,
 	mushroom = flower.mushroom,
 	stem = trees.stem,

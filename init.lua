@@ -480,6 +480,7 @@ local known_groups = {
 	surface = true,
 	stem = true,
 	snow = true,
+	desert_sand = true,
 }
 local green_groups = {
 	cotton = true,
@@ -510,6 +511,29 @@ for k, _ in pairs(wanted_groups) do
 end
 for k, _ in pairs(falling_groups) do
 	table.insert_all(falling_list, mining_groups[k])
+end
+
+local cobble_target_list = {}
+local cobble_target_groups = {
+	cobble = true,
+	stem = true,
+	tree_trunk = true,
+	surface = true,
+	snow = true,
+	desert_sand = true,
+	cotton = true,
+	dry_grass = true,
+	fern = true,
+	flower = true,
+	grass = true,
+	clay = true,
+	ore = true,
+	stone = true,
+	dirt = true,
+}
+
+for k, _ in pairs(cobble_target_groups) do
+	table.insert_all(cobble_target_list, mining_groups[k])
 end
 
 ---@class VeinMinerState

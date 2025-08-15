@@ -53,10 +53,19 @@ local function is_node_supporting(node)
 	if node == nil then
 		return false
 	end
-	if node.name == "ignore" then
+	local def = registered_nodes[node.name]
+	if def.air_equivalent then
 		return false
 	end
-	local def = registered_nodes[node.name]
+	if def.liquidtype == "source" then
+		return true
+	end
+	if def.liquidtype == "flowing" then
+		return true
+	end
+	do
+		return true
+	end
 	if def and not def.floodable and def.walkable then
 		return true
 	end
@@ -66,7 +75,7 @@ end
 local function is_supported(pos)
 	local below_pos = pos + new_vec(0, -1, 0)
 	local below_node = get_node_or_nil(below_pos)
-	if not below_node or (below_node.name ~= "default:dirt" and core.get_item_group(below_node.name, "soil") > 0) then
+	if not below_node then
 		return false
 	end
 	for _, dir in ipairs(support_dirs) do
@@ -99,7 +108,7 @@ local function is_supported(pos)
 	return false
 end
 
-local LINE_LENGTH = 128
+local LINE_LENGTH = 256
 ---@class SoundInfo
 ---@field playing_sounds table<string, boolean>
 
@@ -193,14 +202,14 @@ core.register_globalstep(function(dtime)
 		local look_dir = player:get_look_dir()
 		local forward_dir = normalize(p(look_dir.x, 0, look_dir.z))
 
-		local line_start = base_pos + down - up / 2
+		local line_start = round(base_pos + down + up / 2)
 		local max_blocks = config.blocks_per_tick
 		local j = 0
 		for i = 1, LINE_LENGTH do
-			local target_pos = line_start + forward_dir * i
+			local target_pos = round(line_start + forward_dir * i)
 
 			local node_below = get_node(target_pos)
-			if true or is_passable(node_below) and is_supported(target_pos) then
+			if is_passable(node_below) and is_supported(target_pos) then
 				if j >= max_blocks then
 					break
 				end
@@ -210,7 +219,7 @@ core.register_globalstep(function(dtime)
 			end
 		end
 		if j <= 1 and not is_yaw_update_per_player_disabled[name] then
-			local yaw_max = math.pow(9 / 10, 1) * 6
+			local yaw_max = math.pow(9 / 10, 1) * 7
 			local yaw_speed = yaw_max * math.log(dbg_count + 1, 1.7) / LINE_LENGTH
 			local new_yaw = math.rad((math.deg(yaw) + yaw_speed) % 360)
 			if last_yaw_per_player[name] and new_yaw + 0.1 < last_yaw_per_player[name] then
@@ -218,19 +227,18 @@ core.register_globalstep(function(dtime)
 				player:set_look_horizontal(0)
 				goto continue
 			end
-			player:set_look_horizontal(new_yaw)
+			if new_yaw == new_yaw then
+				player:set_look_horizontal(new_yaw)
+			else
+				core.log("error", "yaw is " .. math.deg(yaw) .. ", next yaw is invalid " .. dbg_count + 1 .. " " .. math.log(dbg_count + 1, 1.7))
+			end
 			dbg_count = dbg_count + 1
 			if vector.length(player:get_velocity()) > 0.3 then
 				is_yaw_update_per_player_disabled[name] = true
 				goto continue
 			end
 		elseif not is_yaw_update_per_player_disabled[name] then
-			if time_until_block_place >= 25 then
-				local new_yaw = math.rad(math.deg(yaw) - 2)
-				player:set_look_horizontal(new_yaw)
-				yaw = new_yaw
-			end
-			dbg_count = math.floor(dbg_count / (math.log(dbg_count + 1, 2) * 2 + 3))
+			dbg_count = math.floor(dbg_count / math.log(dbg_count + 1, 1.6))
 		else
 			dbg_count = 0
 		end
