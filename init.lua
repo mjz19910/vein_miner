@@ -521,6 +521,7 @@ local cobble_target_groups = {
 	fern = true,
 	flower = true,
 	grass = true,
+	jungle_grass = true,
 	clay = true,
 	ore = true,
 	stone = true,
