@@ -632,12 +632,12 @@ function VeinMinerState:process_queue_item(item, player_name)
 		fill_liquid_at_pos(self, pos, l_utils.handle_pos_notify)
 		return
 	end
-	if options.light then
-		self.pending_light_notify:push_left({
-			pos = pos,
-			queue_left = self.queue:length(),
-		})
-	end
+	-- if options.light then
+	-- 	self.pending_light_notify:push_left({
+	-- 		pos = pos,
+	-- 		queue_left = self.queue:length(),
+	-- 	})
+	-- end
 
 	local center = vector.floor(vector.divide(vector.add(minvec, maxvec), 2))
 	if vector.distance(player:get_pos(), center) > 150 then
@@ -735,9 +735,9 @@ function VeinMinerState:process_queue_item(item, player_name)
 
 	core.fix_light(minvec, maxvec)
 
-	for v in self.pending_light_notify:iter_right() do
-		add_light_to_teleport_queue(self, v)
-	end
+	-- for v in self.pending_light_notify:iter_right() do
+	-- 	add_light_to_teleport_queue(self, v)
+	-- end
 
 	if options.light then
 		self.pending_light_scan:push_left({pos, node_name, options})
@@ -953,7 +953,7 @@ function VeinMinerState.new(pos, player, player_name, wielded)
 		queue = vein_miner.deque.new(),
 		teleport_queue = vein_miner.deque.new(),
 		falling_check_nodes = vein_miner.deque.new(),
-		pending_light_notify = vein_miner.deque.new(),
+		-- pending_light_notify = vein_miner.deque.new(),
 		pending_light_scan = vein_miner.deque.new(),
 	}
 

@@ -239,10 +239,10 @@ function BlockDigger.dig_node_list(state, node_name, node_list, repeat_count)
 			end
 			local options = l_utils.get_scan_options(node_name, {})
 			if options.light then
-				state.pending_light_notify:push_left({
-					pos = pos,
-					queue_left = state.queue:length(),
-				})
+				-- state.pending_light_notify:push_left({
+				-- 	pos = pos,
+				-- 	queue_left = state.queue:length(),
+				-- })
 				state.found_light_count = state.found_light_count - 1
 			end
 			if not options.light or l_utils.is_floating(pos, node.name) then
