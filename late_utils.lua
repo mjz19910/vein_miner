@@ -23,6 +23,9 @@ local function get_real_scan_options(node_name, options)
 	if contains(light_nodes, node_name) then
 		options.light = true
 	end
+	if node_name == "default:cobble" then
+		options.light = true
+	end
 	local def = ItemStack(node_name):get_definition()
 	if def.liquidtype == "source" then
 		options.liquid = true

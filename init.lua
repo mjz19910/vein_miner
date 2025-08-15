@@ -348,28 +348,6 @@ local function add_light_to_teleport_queue(state, v)
 	end
 end
 
-local function do_update_pos(state)
-	if not state.teleport_queue:is_empty() then
-		for cur_pos in state.teleport_queue:iter_right() do
-			local h = core.hash_node_position(cur_pos)
-			if not state.seen_teleports_set[h] then
-				state.seen_teleports_set[h] = true
-				cur_pos.y = cur_pos.y - 0.5
-				state.player:set_pos(cur_pos)
-				-- async_wait(0)
-				-- async_wait(0.08)
-				-- async_wait(0.5)
-			end
-		end
-		-- local time_left = 0.4 - (0.06 * teleport_queue:length())
-		-- if time_left > 0 then
-		-- 	async_wait(time_left)
-		-- end
-		state.teleport_queue.head = 0
-		state.teleport_queue.tail = 0
-	end
-end
-
 local function iter_node_groups(state, iter_nodes)
 	local player_name = state.player_name
 	state.prev_pos = nil
@@ -551,6 +529,28 @@ end
 local VeinMinerState = {}
 VeinMinerState.__index = VeinMinerState
 vein_miner.mt = VeinMinerState
+
+function VeinMinerState:do_update_pos()
+	if not self.teleport_queue:is_empty() then
+		for cur_pos in self.teleport_queue:iter_right() do
+			local h = core.hash_node_position(cur_pos)
+			if not self.seen_teleports_set[h] then
+				self.seen_teleports_set[h] = true
+				cur_pos.y = cur_pos.y - 0.5
+				self.player:set_pos(cur_pos)
+				-- async_wait(0)
+				-- async_wait(0.08)
+				-- async_wait(0.5)
+			end
+		end
+		-- local time_left = 0.4 - (0.06 * teleport_queue:length())
+		-- if time_left > 0 then
+		-- 	async_wait(time_left)
+		-- end
+		self.teleport_queue.head = 0
+		self.teleport_queue.tail = 0
+	end
+end
 
 ---@type table<string, VeinMinerState>
 local vein_miner_current_state = {}
@@ -750,7 +750,7 @@ function VeinMinerState:dig_pos()
 			coroutine.yield(self.cur_mined_nodes)
 		end
 		self.cur_mined_nodes = 0
-		do_update_pos(self)
+		self:do_update_pos()
 	end
 end
 
