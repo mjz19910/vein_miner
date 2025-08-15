@@ -352,4 +352,6 @@ CFG.node_to_group = node_to_group
 
 table.insert(LIGHT_NODES, "default:cobble")
 table.insert(LIGHT_NODES, "default:jungletree")
+light_nodes_set["default:cobble"] = true
+light_nodes_set["default:jungletree"] = true
 return CFG
