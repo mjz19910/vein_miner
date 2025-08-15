@@ -86,7 +86,7 @@ function BlockDigger.should_dig(node, pos)
 	if is_falling(above_node.name) then
 		return false
 	end
-	do
+	if above_node.name == "air" then
 		return true
 	end
 	if false then

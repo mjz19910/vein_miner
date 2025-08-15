@@ -478,6 +478,7 @@ local green_groups = {
 	fern = true,
 	flower = true,
 	grass = true,
+	jungle_grass = true,
 }
 local wanted_groups = {
 	clay = true,
