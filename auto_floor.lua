@@ -238,7 +238,7 @@ core.register_globalstep(function(dtime)
 				goto continue
 			end
 		elseif not is_yaw_update_per_player_disabled[name] then
-			dbg_count = math.floor(dbg_count / math.log(dbg_count + 1, 1.6))
+			dbg_count = math.floor(dbg_count / (math.log(dbg_count + 1, 1.6) + 1))
 		else
 			dbg_count = 0
 		end
