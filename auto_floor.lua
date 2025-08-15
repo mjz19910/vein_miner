@@ -166,8 +166,11 @@ local function is_passable(node)
 	return def and def.walkable == false
 end
 
+local debug_log = false
+
 -- globalstep for vein_miner:auto_floor tool
 core.register_globalstep(function(dtime)
+	core.is_async = true
 	for _, player in ipairs(get_connected_players()) do
 		local yaw = player:get_look_horizontal()
 		if yaw ~= yaw then
@@ -246,11 +249,14 @@ core.register_globalstep(function(dtime)
 		if j <= 1 then
 			time_until_block_place = time_until_block_place + 1
 		else
-			core.log("action", ("more than 1 block placed after %d steps"):format(time_until_block_place))
+			if debug_log then
+				core.log("action", ("more than 1 block placed after %d steps"):format(time_until_block_place))
+			end
 			time_until_block_place = 0
 		end
 		::continue::
 	end
+	core.is_async = nil
 end)
 
 local auto_floor_recipe = {{"default:stick", "", "default:stick"}, {"", "default:cobble", ""}, {"", "default:mese_crystal_fragment", ""}};
