@@ -15,23 +15,24 @@ local dtime_next_falling_check = 0
 local falling_check_delay = 1.25
 
 local light_region_debug = vein_miner.light_region_debug
-local falling_nodes = vein_miner.falling_nodes
-local falling_nodes_set = vein_miner.falling_nodes_set
-local check_for_falling = vein_miner.check_for_falling
+local falling_delay_state = vein_miner.falling_delay_state
+local falling_delay_list = falling_delay_state.delayed_list
+local falling_delay_nodes_set = falling_delay_state.falling_nodes_set
+local check_for_falling = falling_delay_state.check_for_falling
 local light_scan_data = vein_miner.scanner.light_scan_data
 assert(light_region_debug, "need light region debug")
-assert(falling_nodes and falling_nodes_set, "need falling_nodes info")
+assert(falling_delay_list and falling_delay_nodes_set, "need falling_delay_list info")
 assert(check_for_falling, "need original core.check_for_falling")
 assert(light_scan_data, "need light_scan_data")
 
 core.register_globalstep(function(dtime)
 	dtime_acc = dtime_acc + dtime
-	if dtime_acc > vein_miner.last_falling_node + falling_check_delay and #falling_nodes > 0 then
-		for i = 1, #falling_nodes do
-			local pos = falling_nodes[i]
+	if dtime_acc > falling_delay_state.last_falling_node + falling_check_delay and #falling_delay_list > 0 then
+		for i = 1, #falling_delay_list do
+			local pos = falling_delay_list[i]
 			local h = hash_pos(pos)
-			falling_nodes[i] = nil
-			falling_nodes_set[h] = nil
+			falling_delay_list[i] = nil
+			falling_delay_nodes_set[h] = nil
 			check_for_falling(pos)
 		end
 	end
@@ -48,5 +49,5 @@ core.register_globalstep(function(dtime)
 		end
 	end
 	dtime_time = dtime_time + dtime
-	vein_miner.current_tick_time = dtime_acc
+	falling_delay_state.current_tick_time = dtime_acc
 end)

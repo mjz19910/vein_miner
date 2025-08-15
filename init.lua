@@ -71,24 +71,27 @@ end
 
 require("mods.vein_miner.commands")
 
----@type Vector[]
-vein_miner.falling_nodes = {}
----@type table<integer, boolean>
-vein_miner.falling_nodes_set = {}
-vein_miner.last_falling_node = 0
-vein_miner.check_for_falling = core.check_for_falling
-vein_miner.current_tick_time = 0
+vein_miner.falling_delay_state = {}
+local falling_delay_state = vein_miner.falling_delay_state
 
-local falling_nodes = vein_miner.falling_nodes
-local falling_nodes_set = vein_miner.falling_nodes_set
+---@type Vector[]
+falling_delay_state.delayed_list = {}
+---@type table<integer, boolean>
+falling_delay_state.delayed_set = {}
+falling_delay_state.last_falling_node = 0
+falling_delay_state.check_for_falling = core.check_for_falling
+falling_delay_state.current_tick_time = 0
+
+local falling_delayed_list = falling_delay_state.delayed_list
+local falling_delayed_set = falling_delay_state.delayed_set
 ---@param pos Vector
 core.check_for_falling = function(pos)
 	local h = core.hash_node_position(pos)
-	if not falling_nodes_set[h] then
-		falling_nodes_set[h] = true
-		table.insert(falling_nodes, pos)
+	if not falling_delayed_set[h] then
+		falling_delayed_set[h] = true
+		table.insert(falling_delayed_list, pos)
 	end
-	vein_miner.last_falling_node = vein_miner.current_tick_time
+	falling_delay_state.last_falling_node = falling_delay_state.current_tick_time
 end
 
 local CFG = vein_miner.CFG
@@ -452,6 +455,13 @@ vein_miner.scanner = scanner
 
 require("mods.vein_miner.globalstep")
 
+local falling_groups_all = {
+	gravel = true,
+	sand = true,
+	silver_sand = true,
+	desert_sand = true,
+	snow = true,
+}
 local known_groups = {
 	cobble = true,
 	tree_trunk = true,
@@ -483,14 +493,18 @@ local falling_groups = {
 local green_list = {}
 local wanted_list = {}
 local falling_list = {}
+local falling_list_all = {}
+for k, _ in pairs(falling_groups) do
+	table.insert_all(falling_list, mining_groups[k])
+end
+for k, _ in pairs(falling_groups_all) do
+	table.insert_all(falling_list_all, mining_groups[k])
+end
 for k, _ in pairs(green_groups) do
 	table.insert_all(green_list, mining_groups[k])
 end
 for k, _ in pairs(wanted_groups) do
 	table.insert_all(wanted_list, mining_groups[k])
-end
-for k, _ in pairs(falling_groups) do
-	table.insert_all(falling_list, mining_groups[k])
 end
 
 local cobble_target_list = {}
@@ -625,6 +639,7 @@ function VeinMinerState:process_queue_item(item, player_name)
 	end
 
 	local target_nodes
+	local target_falling_nodes = table.copy(falling_list)
 	local target_flags = {
 		liquid = false,
 		falling = false,
@@ -663,6 +678,16 @@ function VeinMinerState:process_queue_item(item, player_name)
 	end
 	if group_target then
 		if group_target == "cobble" then
+			target_nodes = {}
+			for i, v in ipairs(cobble_target_list) do
+				if table.contains(falling_list_all, v) then
+					if not table.contains(target_falling_nodes, v) then
+						table.insert(target_falling_nodes, v)
+					end
+				else
+					table.insert(target_nodes, v)
+				end
+			end
 			target_nodes = table.copy(cobble_target_list)
 			target_flags.falling = true
 		elseif falling_groups[group_target] then
@@ -692,7 +717,7 @@ function VeinMinerState:process_queue_item(item, player_name)
 		iter_node_groups(self, core.find_nodes_in_area(minvec, maxvec, water_targets, true))
 	end
 	if target_flags.falling then
-		iter_node_groups(self, core.find_nodes_in_area(minvec, maxvec, falling_list, true))
+		iter_node_groups(self, core.find_nodes_in_area(minvec, maxvec, target_falling_nodes, true))
 	end
 	iter_node_groups(self, core.find_nodes_in_area(minvec, maxvec, target_nodes, true))
 
