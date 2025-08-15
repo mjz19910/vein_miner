@@ -577,7 +577,7 @@ local function load_cobble_list(target_nodes, target_falling_nodes)
 			if not table.contains(target_falling_nodes, v) then
 				table.insert(target_falling_nodes, v)
 			end
-		else
+		elseif not table.contains(target_nodes, v) then
 			table.insert(target_nodes, v)
 		end
 	end
@@ -671,7 +671,7 @@ function VeinMinerState:process_queue_item(item, player_name)
 			if not table.contains(target_falling_nodes, node_name) then
 				table.insert(target_falling_nodes, node_name)
 			end
-		else
+		elseif not table.contains(target_nodes, node_name) then
 			table.insert(target_nodes, node_name)
 		end
 		target_flags.falling = true
