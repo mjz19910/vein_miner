@@ -12,6 +12,7 @@ local deque = {}
 ---@generic T
 local Deque = {}
 
+---@param self Deque
 ---@generic T
 ---@param value T
 function Deque:push_right(value)
@@ -20,6 +21,7 @@ function Deque:push_right(value)
 	self[self.tail] = value
 end
 
+---@param self Deque
 ---@generic T
 ---@param value T
 function Deque:push_left(value)
@@ -28,14 +30,17 @@ function Deque:push_left(value)
 	self.head = self.head - 1
 end
 
+---@param self Deque
 ---@generic T
 ---@return T | nil
 function Deque:peek_right() return self[self.tail] end
 
+---@param self Deque
 ---@generic T
 ---@return T | nil
 function Deque:peek_left() return self[self.head + 1] end
 
+---@param self Deque
 ---@generic T
 ---@return T | nil
 function Deque:pop_right()
@@ -48,6 +53,7 @@ function Deque:pop_right()
 	return r
 end
 
+---@param self Deque
 ---@generic T
 ---@return T | nil
 function Deque:pop_left()
@@ -61,6 +67,7 @@ function Deque:pop_left()
 	return r
 end
 
+---@param self Deque
 ---@generic T
 ---@param n integer | nil
 ---@return nil
@@ -74,6 +81,7 @@ function Deque:rotate_right(n)
 	end
 end
 
+---@param self Deque
 ---@generic T
 ---@param n integer | nil
 ---@return nil
@@ -96,6 +104,7 @@ local _remove_at_internal = function(self, idx)
 	self.tail = self.tail - 1
 end
 
+---@param self Deque
 ---@param value T
 ---@generic T
 function Deque:remove_right(value)
@@ -108,6 +117,7 @@ function Deque:remove_right(value)
 	return false
 end
 
+---@param self Deque
 ---@param x T
 ---@generic T
 function Deque:remove_left(x)
@@ -120,11 +130,14 @@ function Deque:remove_left(x)
 	return false
 end
 
+---@param self Deque
 ---@return integer
 function Deque:length() return self.tail - self.head end
 
+---@param self Deque
 function Deque:is_empty() return self:length() == 0 end
 
+---@param self Deque
 ---@return T[]
 ---@generic T
 function Deque:contents()
@@ -135,6 +148,7 @@ function Deque:contents()
 	return r
 end
 
+---@param self Deque
 ---@return fun(): T | nil
 ---@generic T
 function Deque:iter_right()
@@ -147,6 +161,7 @@ function Deque:iter_right()
 	end
 end
 
+---@param self Deque
 ---@return fun(): T | nil
 ---@generic T
 function Deque:iter_left()
