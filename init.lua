@@ -472,15 +472,19 @@ local known_groups = {
 	desert_sand = true,
 	apple = true,
 	butterfly = true,
-	papyrus = true,
+	coral = true,
 }
 local green_groups = {
-	cotton = true,
-	dry_grass = true,
 	fern = true,
-	flower = true,
 	grass = true,
+	cotton = true,
+	flower = true,
+	papyrus = true,
+	mushroom = true,
+	blueberry = true,
+	dry_grass = true,
 	jungle_grass = true,
+	marram_grass = true,
 }
 local wanted_groups = {
 	clay = true,
@@ -530,6 +534,10 @@ local cobble_target_groups = {
 	dirt = true,
 	butterfly = true,
 	papyrus = true,
+	blueberry = true,
+	mushroom = true,
+	marram_grass = true,
+	coral = true,
 }
 
 for k, _ in pairs(cobble_target_groups) do
