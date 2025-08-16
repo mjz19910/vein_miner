@@ -472,6 +472,7 @@ local known_groups = {
 	desert_sand = true,
 	apple = true,
 	butterfly = true,
+	papyrus = true,
 }
 local green_groups = {
 	cotton = true,
@@ -527,6 +528,8 @@ local cobble_target_groups = {
 	ore = true,
 	stone = true,
 	dirt = true,
+	butterfly = true,
+	papyrus = true,
 }
 
 for k, _ in pairs(cobble_target_groups) do

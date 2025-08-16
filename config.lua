@@ -138,6 +138,14 @@ local obsidian = {
 	glass = "default:obsidian_glass",
 }
 
+local papyrus = "default:papyrus"
+
+local butterfly = {
+	white = "butterflies:butterfly_white",
+	red = "butterflies:butterfly_red",
+	violet = "butterflies:butterfly_violet",
+}
+
 ---@class VeinMinerConfig
 local CFG = {}
 
@@ -196,7 +204,8 @@ local mg = {
 	snow = {snow},
 	jungle_sapling = {sapling.jungle},
 	apple = {apple},
-	butterfly = {"butterflies:butterfly_white", "butterflies:butterfly_red", "butterflies:butterfly_violet"},
+	butterfly = {butterfly.white, butterfly.red, butterfly.violet},
+	papyrus = {papyrus},
 }
 ---@type MiningGroups
 CFG.mining_groups = mg
