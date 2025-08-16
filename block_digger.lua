@@ -209,7 +209,7 @@ function BlockDigger.dig_node_list(state, node_name, node_list, repeat_count)
 		return 0
 	end
 	local function dig(pos, node)
-		if l_utils.is_holding_liquid_back(pos) then
+		if l_utils.is_holding_liquid_back(pos, node) then
 			return
 		end
 		core.node_dig(pos, node, player)

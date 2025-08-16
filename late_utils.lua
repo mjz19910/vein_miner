@@ -104,7 +104,10 @@ function l_utils.is_floating(pos, expected_name)
 	return true
 end
 
-function l_utils.is_holding_liquid_back(pos)
+function l_utils.is_holding_liquid_back(pos, node)
+	if node.name ~= "default:cobble" and node.name ~= "default:mossycobble" then
+		return false
+	end
 	for _, offset in ipairs(floating_dirs) do
 		local neighbor_pos = pos + offset
 		local neighbor = core.get_node_or_nil(neighbor_pos)
