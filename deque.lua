@@ -13,7 +13,7 @@ local deque = {}
 ---@type Deque
 local Deque = {}
 
----@param self Deque<T>
+---@param self Deque
 ---@generic T
 ---@param value T
 function Deque:push_right(value)
@@ -22,7 +22,7 @@ function Deque:push_right(value)
 	self[self.tail] = value
 end
 
----@param self Deque<T>
+---@param self Deque
 ---@generic T
 ---@param value T
 function Deque:push_left(value)
@@ -31,18 +31,18 @@ function Deque:push_left(value)
 	self.head = self.head - 1
 end
 
----@param self Deque<T>
+---@param self Deque
 ---@generic T
 ---@return T | nil
 function Deque:peek_right() return self[self.tail] end
 
----@param self Deque<T>
+---@param self Deque
 ---@generic T
 ---@return T | nil
 function Deque:peek_left() return self[self.head + 1] end
 
 ---@field pop_right fun(self: Deque): T|nil
----@param self Deque<T>
+---@param self Deque
 ---@generic T
 ---@return T | nil
 function Deque:pop_right()
@@ -56,7 +56,7 @@ function Deque:pop_right()
 end
 
 ---@field pop_left fun(self: Deque): T|nil
----@param self Deque<T>
+---@param self Deque
 ---@generic T
 ---@return T | nil
 function Deque:pop_left()
@@ -70,9 +70,10 @@ function Deque:pop_left()
 	return r
 end
 
----@param self Deque<T>
+---@param self Deque
 ---@generic T
 ---@param n integer | nil
+---@return nil
 function Deque:rotate_right(n)
 	n = n or 1
 	if self:is_empty() then
@@ -83,9 +84,10 @@ function Deque:rotate_right(n)
 	end
 end
 
----@param self Deque<T>
+---@param self Deque
 ---@generic T
 ---@param n integer | nil
+---@return nil
 function Deque:rotate_left(n)
 	n = n or 1
 	if self:is_empty() then
@@ -104,7 +106,7 @@ local _remove_at_internal = function(self, idx)
 end
 
 ---@field remove_right fun(self: Deque, value: T): boolean
----@param self Deque<T>
+---@param self Deque
 ---@param value T
 ---@generic T
 function Deque:remove_right(value)
@@ -118,7 +120,7 @@ function Deque:remove_right(value)
 end
 
 ---@field remove_left fun(self: Deque, value: T): boolean
----@param self Deque<T>
+---@param self Deque
 ---@param x T
 ---@generic T
 function Deque:remove_left(x)
@@ -131,18 +133,14 @@ function Deque:remove_left(x)
 	return false
 end
 
----@field length fun(self: Deque): integer
----@param self Deque<T>
+---@param self Deque
 ---@return integer
 function Deque:length() return self.tail - self.head end
 
----@field is_empty fun(self: Deque): boolean
----@param self Deque<T>
----@return boolean
+---@param self Deque
 function Deque:is_empty() return self:length() == 0 end
 
----@field contents fun(self: Deque): T[]
----@param self Deque<T>
+---@param self Deque
 ---@return T[]
 ---@generic T
 function Deque:contents()
@@ -153,7 +151,7 @@ function Deque:contents()
 	return r
 end
 
----@param self Deque<T>
+---@param self Deque
 ---@return fun(): T | nil
 ---@generic T
 function Deque:iter_right()
@@ -166,8 +164,6 @@ function Deque:iter_right()
 	end
 end
 
----@field iter_left fun(self: Deque): fun(): T|nil
----@param self Deque<T>
 ---@return fun(): T | nil
 ---@generic T
 function Deque:iter_left()
@@ -180,7 +176,7 @@ function Deque:iter_left()
 	end
 end
 
----@return Deque<T>
+---@return Deque
 ---@generic T
 function deque.new()
 	---@type Deque
