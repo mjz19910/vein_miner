@@ -843,6 +843,32 @@ local function after_delay(data, fn, state)
 	core.after(action_cost, fn, state)
 end
 
+local function run_to_completion(co, on_complete)
+	local status = coroutine.status(co)
+	if status == "suspended" then
+		core.is_async = true
+		local ok, value = coroutine.resume(co)
+		core.is_async = nil
+		if not ok then
+			log_error("run_to_completion error " .. value)
+			log_error(debug.traceback(co))
+		else
+			if value.time ~= nil then
+				core.after(value.time, run_to_completion, co, on_complete)
+			else
+				core.after(0, run_to_completion, co, on_complete)
+			end
+
+		end
+	elseif status == "dead" then
+		if on_complete ~= nil then
+			on_complete()
+		end
+	else
+		log_error("unexpected coroutine status in run_to_completion " .. status)
+	end
+end
+
 ---@param state VeinMinerState
 local function vein_miner_step(state)
 	::start::
@@ -866,8 +892,8 @@ local function vein_miner_step(state)
 			state.thread = nil
 			goto start
 		else
-			dig_finish(state)
-			vein_miner_current_state[state.player_name] = nil
+			local function on_complete() vein_miner_current_state[state.player_name] = nil end
+			run_to_completion(coroutine.create(function() return dig_finish(state) end), on_complete)
 		end
 	else
 		log_error("unexpected coroutine status " .. co_status)
