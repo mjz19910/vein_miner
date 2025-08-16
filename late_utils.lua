@@ -6,6 +6,7 @@ local table = table
 local vector = vector
 local contains = table.contains
 local ItemStack = ItemStack
+---@type LuantiCore
 local core = core
 local ipairs = ipairs
 local offset = vector.offset
@@ -101,6 +102,22 @@ function l_utils.is_floating(pos, expected_name)
 		end
 	end
 	return true
+end
+
+function l_utils.is_holding_liquid_back(pos)
+	for _, offset in ipairs(floating_dirs) do
+		local neighbor_pos = pos + offset
+		local neighbor = core.get_node_or_nil(neighbor_pos)
+		if not neighbor then
+			goto continue
+		end
+		local ndef = core.registered_nodes[neighbor.name]
+		if ndef.liquidtype == "source" or ndef.liquidtype == "flowing" then
+			return true
+		end
+		::continue::
+	end
+	return false
 end
 
 return l_utils
