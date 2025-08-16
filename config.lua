@@ -361,10 +361,11 @@ CFG.node_to_group = node_to_group
 
 local function add_light_node(node_name)
 	table.insert(LIGHT_NODES, node_name)
-	light_nodes_set[node_name] = true
+	-- light_nodes_set[node_name] = true
 end
 
 add_light_node("default:cobble")
+light_nodes_set["default:cobble"] = true
 add_light_node("default:jungletree")
 add_light_node("default:junglegrass")
 add_light_node("default:dirt_with_rainforest_litter")
