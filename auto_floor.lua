@@ -129,6 +129,9 @@ local function try_place_block_from_inventory(player, sound_info, target_pos, ma
 					return false
 				end
 				local def2 = registered_nodes[cur_node.name]
+				if def2.liquidtype == "source" then
+					return false
+				end
 				if def2.walkable then
 					return false
 				end
