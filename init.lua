@@ -853,7 +853,7 @@ local function run_to_completion(co, on_complete)
 			log_error("run_to_completion error " .. value)
 			log_error(debug.traceback(co))
 		else
-			if value.time ~= nil then
+			if value and value.time ~= nil then
 				core.after(value.time, run_to_completion, co, on_complete)
 			else
 				core.after(0, run_to_completion, co, on_complete)
