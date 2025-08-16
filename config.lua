@@ -82,7 +82,7 @@ local grass = {
 
 local flower = {
 	common = {"flowers:chrysanthemum_green", "flowers:dandelion_yellow", "flowers:dandelion_white", "flowers:tulip_black", "flowers:tulip",
-		"flowers:viola", "flowers:rose"},
+		"flowers:viola", "flowers:rose", "flowers:geranium"},
 	mushroom = {"flowers:mushroom_brown", "flowers:mushroom_red"},
 }
 
