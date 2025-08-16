@@ -215,6 +215,7 @@ core.register_globalstep(function(dtime)
 		local max_blocks = config.blocks_per_tick
 		local j = 0
 		local placeable_node_name = nil
+		local inv = player:get_inventory()
 		for i = 1, inv:get_size("main") do
 			local stack = inv:get_stack("main", i)
 			local name = stack:get_name()
