@@ -2,27 +2,50 @@
 --- MIT licensed (see LICENSE.txt)
 local assert = assert
 local setmetatable = setmetatable
+---@class Deque
+---@field head number
+---@field tail number
+---@generic T
 
 ---@class DequeModule
 local deque = {}
 
-local function push_right(self, x)
-	assert(x ~= nil)
+---@type Deque
+local Deque = {}
+
+---@param self Deque<T>
+---@generic T
+---@param value T
+function Deque:push_right(value)
+	assert(value ~= nil)
 	self.tail = self.tail + 1
-	self[self.tail] = x
+	self[self.tail] = value
 end
 
-local push_left = function(self, x)
-	assert(x ~= nil)
-	self[self.head] = x
+---@param self Deque<T>
+---@generic T
+---@param value T
+function Deque:push_left(value)
+	assert(value ~= nil)
+	self[self.head] = value
 	self.head = self.head - 1
 end
 
-local peek_right = function(self) return self[self.tail] end
+---@param self Deque<T>
+---@generic T
+---@return T | nil
+function Deque:peek_right() return self[self.tail] end
 
-local peek_left = function(self) return self[self.head + 1] end
+---@param self Deque<T>
+---@generic T
+---@return T | nil
+function Deque:peek_left() return self[self.head + 1] end
 
-local pop_right = function(self)
+---@field pop_right fun(self: Deque): T|nil
+---@param self Deque<T>
+---@generic T
+---@return T | nil
+function Deque:pop_right()
 	if self:is_empty() then
 		return nil
 	end
@@ -32,7 +55,11 @@ local pop_right = function(self)
 	return r
 end
 
-local function pop_left(self)
+---@field pop_left fun(self: Deque): T|nil
+---@param self Deque<T>
+---@generic T
+---@return T | nil
+function Deque:pop_left()
 	if self:is_empty() then
 		return nil
 	end
@@ -43,7 +70,10 @@ local function pop_left(self)
 	return r
 end
 
-local rotate_right = function(self, n)
+---@param self Deque<T>
+---@generic T
+---@param n integer | nil
+function Deque:rotate_right(n)
 	n = n or 1
 	if self:is_empty() then
 		return nil
@@ -53,7 +83,10 @@ local rotate_right = function(self, n)
 	end
 end
 
-local rotate_left = function(self, n)
+---@param self Deque<T>
+---@generic T
+---@param n integer | nil
+function Deque:rotate_left(n)
 	n = n or 1
 	if self:is_empty() then
 		return nil
@@ -70,9 +103,13 @@ local _remove_at_internal = function(self, idx)
 	self.tail = self.tail - 1
 end
 
-local remove_right = function(self, x)
+---@field remove_right fun(self: Deque, value: T): boolean
+---@param self Deque<T>
+---@param value T
+---@generic T
+function Deque:remove_right(value)
 	for i = self.tail, self.head + 1, -1 do
-		if self[i] == x then
+		if self[i] == value then
 			_remove_at_internal(self, i)
 			return true
 		end
@@ -80,7 +117,11 @@ local remove_right = function(self, x)
 	return false
 end
 
-local remove_left = function(self, x)
+---@field remove_left fun(self: Deque, value: T): boolean
+---@param self Deque<T>
+---@param x T
+---@generic T
+function Deque:remove_left(x)
 	for i = self.head + 1, self.tail do
 		if self[i] == x then
 			_remove_at_internal(self, i)
@@ -90,11 +131,21 @@ local remove_left = function(self, x)
 	return false
 end
 
-local length = function(self) return self.tail - self.head end
+---@field length fun(self: Deque): integer
+---@param self Deque<T>
+---@return integer
+function Deque:length() return self.tail - self.head end
 
-local is_empty = function(self) return self:length() == 0 end
+---@field is_empty fun(self: Deque): boolean
+---@param self Deque<T>
+---@return boolean
+function Deque:is_empty() return self:length() == 0 end
 
-local contents = function(self)
+---@field contents fun(self: Deque): T[]
+---@param self Deque<T>
+---@return T[]
+---@generic T
+function Deque:contents()
 	local r = {}
 	for i = self.head + 1, self.tail do
 		r[i - self.head] = self[i]
@@ -102,7 +153,10 @@ local contents = function(self)
 	return r
 end
 
-local iter_right = function(self)
+---@param self Deque<T>
+---@return fun(): T | nil
+---@generic T
+function Deque:iter_right()
 	local i = self.tail + 1
 	return function()
 		if i > self.head + 1 then
@@ -112,7 +166,11 @@ local iter_right = function(self)
 	end
 end
 
-local iter_left = function(self)
+---@field iter_left fun(self: Deque): fun(): T|nil
+---@param self Deque<T>
+---@return fun(): T | nil
+---@generic T
+function Deque:iter_left()
 	local i = self.head
 	return function()
 		if i < self.tail then
@@ -122,32 +180,16 @@ local iter_left = function(self)
 	end
 end
 
-local methods = {
-	push_right = push_right,
-	push_left = push_left,
-	peek_right = peek_right,
-	peek_left = peek_left,
-	pop_right = pop_right,
-	pop_left = pop_left,
-	rotate_right = rotate_right,
-	rotate_left = rotate_left,
-	remove_right = remove_right,
-	remove_left = remove_left,
-	iter_right = iter_right,
-	iter_left = iter_left,
-	length = length,
-	is_empty = is_empty,
-	contents = contents,
-}
-
 ---@return Deque<T>
+---@generic T
 function deque.new()
+	---@type Deque
 	local r = {
 		head = 0,
 		tail = 0,
 	}
 	return setmetatable(r, {
-		__index = methods,
+		__index = Deque,
 	})
 end
 
