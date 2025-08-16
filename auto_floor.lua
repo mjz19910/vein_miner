@@ -173,6 +173,11 @@ local function is_passable(node)
 end
 
 local debug_log = false
+local max_place_distance_map = {}
+
+core.register_on_joinplayer(function(player)
+	max_place_distance_map[player:get_player_name()] = 1
+end)
 
 -- globalstep for vein_miner:auto_floor tool
 core.register_globalstep(function(dtime)
@@ -183,12 +188,13 @@ core.register_globalstep(function(dtime)
 			player:set_look_horizontal(0)
 			yaw = 0
 		end
-		local name = player:get_player_name()
+		local plr_name = player:get_player_name()
 		local wielded = player:get_wielded_item():get_name()
 		if wielded ~= "vein_miner:auto_floor" then
+			max_place_distance_map[plr_name] = 1
 			dbg_count = 0
-			last_yaw_per_player[name] = nil
-			is_yaw_update_per_player_disabled[name] = false
+			last_yaw_per_player[plr_name] = nil
+			is_yaw_update_per_player_disabled[plr_name] = false
 			goto continue
 		end
 
@@ -202,8 +208,8 @@ core.register_globalstep(function(dtime)
 		end
 
 		local ctrl = player:get_player_control()
-		local config = player_config_mgr.data[name]
-		local sound_info = sound_info_per_player[name] or {}
+		local config = player_config_mgr.data[plr_name]
+		local sound_info = sound_info_per_player[plr_name] or {}
 		sound_info.playing_sounds = {}
 
 		-- Place multiple floor blocks in a line in front of player
@@ -222,9 +228,12 @@ core.register_globalstep(function(dtime)
 			local def = registered_nodes[name]
 			if def and name ~= "air" and not def.groups.falling_node then
 				placeable_node_name = def.name
+				break
 			end
 		end
+		local max_place_distance = max_place_distance_map[plr_name]
 		for i = 1, LINE_LENGTH do
+			local target_offset = forward_dir * i
 			local target_pos = round(line_start + forward_dir * i)
 
 			local node_below = get_node(target_pos)
@@ -233,16 +242,20 @@ core.register_globalstep(function(dtime)
 					break
 				end
 				if try_place_block_from_inventory(player, sound_info, target_pos, LINE_LENGTH) then
+					if max_place_distance > target_offset:length() then
+						max_place_distance = target_offset:length()
+					end
 					j = j + 1
 				end
 			end
 		end
-		if j <= 1 and not is_yaw_update_per_player_disabled[name] then
+		max_place_distance_map[plr_name] = max_place_distance
+		if j <= 1 and not is_yaw_update_per_player_disabled[plr_name] then
 			local yaw_max = math.pow(9 / 10, 1) * 7
-			local yaw_speed = yaw_max * math.log(dbg_count + 1, 1.7) / LINE_LENGTH
+			local yaw_speed = yaw_max * math.log(dbg_count + 1, 1.7) / max_place_distance
 			local new_yaw = math.rad((math.deg(yaw) + yaw_speed) % 360)
-			if last_yaw_per_player[name] and new_yaw + 0.1 < last_yaw_per_player[name] then
-				is_yaw_update_per_player_disabled[name] = true
+			if last_yaw_per_player[plr_name] and new_yaw + 0.1 < last_yaw_per_player[plr_name] then
+				is_yaw_update_per_player_disabled[plr_name] = true
 				player:set_look_horizontal(0)
 				goto continue
 			end
@@ -253,15 +266,15 @@ core.register_globalstep(function(dtime)
 			end
 			dbg_count = dbg_count + 1
 			if vector.length(player:get_velocity()) > 0.3 then
-				is_yaw_update_per_player_disabled[name] = true
+				is_yaw_update_per_player_disabled[plr_name] = true
 				goto continue
 			end
-		elseif not is_yaw_update_per_player_disabled[name] then
+		elseif not is_yaw_update_per_player_disabled[plr_name] then
 			dbg_count = math.floor(dbg_count / (math.log(dbg_count + 1, 1.6) + 1))
 		else
 			dbg_count = 0
 		end
-		last_yaw_per_player[name] = yaw
+		last_yaw_per_player[plr_name] = yaw
 		if j <= 1 then
 			time_until_block_place = time_until_block_place + 1
 		else
