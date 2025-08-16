@@ -2,18 +2,16 @@
 --- MIT licensed (see LICENSE.txt)
 local assert = assert
 local setmetatable = setmetatable
----@class Deque
----@field head number
----@field tail number
----@generic T
 
 ---@class DequeModule
 local deque = {}
 
----@type Deque
+---@class Deque
+---@field head number
+---@field tail number
+---@generic T
 local Deque = {}
 
----@param self Deque
 ---@generic T
 ---@param value T
 function Deque:push_right(value)
@@ -22,7 +20,6 @@ function Deque:push_right(value)
 	self[self.tail] = value
 end
 
----@param self Deque
 ---@generic T
 ---@param value T
 function Deque:push_left(value)
@@ -31,18 +28,14 @@ function Deque:push_left(value)
 	self.head = self.head - 1
 end
 
----@param self Deque
 ---@generic T
 ---@return T | nil
 function Deque:peek_right() return self[self.tail] end
 
----@param self Deque
 ---@generic T
 ---@return T | nil
 function Deque:peek_left() return self[self.head + 1] end
 
----@field pop_right fun(self: Deque): T|nil
----@param self Deque
 ---@generic T
 ---@return T | nil
 function Deque:pop_right()
@@ -55,8 +48,6 @@ function Deque:pop_right()
 	return r
 end
 
----@field pop_left fun(self: Deque): T|nil
----@param self Deque
 ---@generic T
 ---@return T | nil
 function Deque:pop_left()
@@ -70,7 +61,6 @@ function Deque:pop_left()
 	return r
 end
 
----@param self Deque
 ---@generic T
 ---@param n integer | nil
 ---@return nil
@@ -84,7 +74,6 @@ function Deque:rotate_right(n)
 	end
 end
 
----@param self Deque
 ---@generic T
 ---@param n integer | nil
 ---@return nil
@@ -98,6 +87,8 @@ function Deque:rotate_left(n)
 	end
 end
 
+---@param self Deque
+---@param idx number
 local _remove_at_internal = function(self, idx)
 	for i = idx, self.tail do
 		self[i] = self[i + 1]
@@ -105,8 +96,6 @@ local _remove_at_internal = function(self, idx)
 	self.tail = self.tail - 1
 end
 
----@field remove_right fun(self: Deque, value: T): boolean
----@param self Deque
 ---@param value T
 ---@generic T
 function Deque:remove_right(value)
@@ -119,8 +108,6 @@ function Deque:remove_right(value)
 	return false
 end
 
----@field remove_left fun(self: Deque, value: T): boolean
----@param self Deque
 ---@param x T
 ---@generic T
 function Deque:remove_left(x)
@@ -133,14 +120,11 @@ function Deque:remove_left(x)
 	return false
 end
 
----@param self Deque
 ---@return integer
 function Deque:length() return self.tail - self.head end
 
----@param self Deque
 function Deque:is_empty() return self:length() == 0 end
 
----@param self Deque
 ---@return T[]
 ---@generic T
 function Deque:contents()
@@ -151,7 +135,6 @@ function Deque:contents()
 	return r
 end
 
----@param self Deque
 ---@return fun(): T | nil
 ---@generic T
 function Deque:iter_right()
