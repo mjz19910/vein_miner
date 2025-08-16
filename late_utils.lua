@@ -108,6 +108,21 @@ function l_utils.is_holding_liquid_back(pos, node)
 	if node.name ~= "default:cobble" and node.name ~= "default:mossycobble" then
 		return false
 	end
+	local pos1 = vector.offset(pos, 0, 1, 0)
+	local node1 = core.get_node_or_nil(pos1)
+	local def1 = core.registered_nodes[node1.name]
+	local pos2 = vector.offset(pos, -1, 0, 0)
+	local node2 = core.get_node_or_nil(pos2)
+	local def2 = core.registered_nodes[node2.name]
+	if def1.liquidtype == "source" and def2.liquidtype == "source" then
+		return false
+	end
+	local pos2 = vector.offset(pos, 0, 0, 1)
+	local node2 = core.get_node_or_nil(pos2)
+	local def2 = core.registered_nodes[node2.name]
+	if def1.liquidtype == "source" and def2.liquidtype == "source" then
+		return false
+	end
 	for _, offset in ipairs(floating_dirs) do
 		local neighbor_pos = pos + offset
 		local neighbor = core.get_node_or_nil(neighbor_pos)

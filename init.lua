@@ -550,6 +550,7 @@ end
 ---@field player Player
 ---@field player_name string
 ---@field skip_pos table<integer, boolean>
+---@field pending_light_scan Deque
 ---@param player Player
 ---@param player_name string
 ---@param pos Vector
@@ -751,7 +752,11 @@ function VeinMinerState:process_queue_item(item, player_name)
 	-- end
 
 	if options.light then
-		self.pending_light_scan:push_left({pos, node_name, options})
+		self.pending_light_scan:push_left({
+			pos = pos,
+			name = node_name,
+			options = options,
+		})
 		scanner.scan_nearby_lights(self, pos, node_name, options, false)
 	end
 
@@ -805,9 +810,6 @@ end
 local clear_mined_nodes_job = nil
 
 local function dig_finish(state)
-	for v in state.pending_light_scan:iter_right() do
-		scanner.scan_nearby_lights(state, v[1], v[2], v[3], true)
-	end
 	if state.total_action_count > 0 then
 		log_warning("vein miner complete in " .. state.total_action_count .. " steps\n" .. '***')
 	elseif state.work_done then
@@ -877,6 +879,11 @@ local function run_to_completion(co, on_complete)
 	end
 end
 
+---@class LightScanParams
+---@field pos Vector
+---@field name string
+---@field options ScanOptions
+
 ---@param state VeinMinerState
 local function vein_miner_step(state)
 	::start::
@@ -900,8 +907,24 @@ local function vein_miner_step(state)
 			state.thread = nil
 			goto start
 		else
-			local function on_complete() vein_miner_current_state[state.player_name] = nil end
-			run_to_completion(coroutine.create(function() return dig_finish(state) end), on_complete)
+			local function on_complete()
+				if not state.queue:is_empty() then
+					vein_miner_step(state)
+					return
+				end
+			end
+			run_to_completion(coroutine.create(function()
+				---@type LightScanParams
+				for v in state.pending_light_scan:iter_right() do
+					scanner.scan_nearby_lights(state, v.pos, v.name, v.options, true)
+				end
+				if not state.queue:is_empty() then
+					vein_miner_step(state)
+					return
+				end
+				dig_finish(state)
+				vein_miner_current_state[state.player_name] = nil
+			end), on_complete)
 		end
 	else
 		log_error("unexpected coroutine status " .. co_status)
