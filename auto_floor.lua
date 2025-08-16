@@ -49,8 +49,11 @@ end
 table.insert_all(support_dirs, diagonal_dirs)
 local vertical_offsets = {down, up, up * 2}
 
-local function is_node_supporting(node)
+local function is_node_supporting(node, skip_name)
 	if node == nil then
+		return false
+	end
+	if node.name == skip_name then
 		return false
 	end
 	local def = registered_nodes[node.name]
@@ -72,7 +75,7 @@ local function is_node_supporting(node)
 end
 
 ---@param pos Vector
-local function is_supported(pos)
+local function is_supported(pos, invalid_support_name)
 	local below_pos = pos + new_vec(0, -1, 0)
 	local below_node = get_node_or_nil(below_pos)
 	if not below_node then
@@ -82,7 +85,7 @@ local function is_supported(pos)
 		for _, vert in ipairs(vertical_offsets) do
 			local sup_pos = pos + dir + vert
 			local node = get_node_or_nil(sup_pos)
-			if is_node_supporting(node) then
+			if is_node_supporting(node, invalid_support_name) then
 				return true
 			end
 		end
@@ -91,8 +94,8 @@ local function is_supported(pos)
 	local node1 = get_node_or_nil(npos)
 	local npos = pos + new_vec(-1, 0, 0)
 	local node2 = get_node_or_nil(npos)
-	local east_support = is_node_supporting(node1)
-	local west_support = is_node_supporting(node2)
+	local east_support = is_node_supporting(node1, invalid_support_name)
+	local west_support = is_node_supporting(node2, invalid_support_name)
 	if east_support and west_support then
 		return true
 	end
@@ -100,8 +103,8 @@ local function is_supported(pos)
 	local node1 = get_node_or_nil(npos)
 	local npos = pos + new_vec(0, 0, -1)
 	local node2 = get_node_or_nil(npos)
-	local north_support = is_node_supporting(node1)
-	local south_support = is_node_supporting(node2)
+	local north_support = is_node_supporting(node1, invalid_support_name)
+	local south_support = is_node_supporting(node2, invalid_support_name)
 	if north_support and south_support then
 		return true
 	end
@@ -211,11 +214,20 @@ core.register_globalstep(function(dtime)
 		local line_start = round(base_pos + down + up / 2)
 		local max_blocks = config.blocks_per_tick
 		local j = 0
+		local placeable_node_name = nil
+		for i = 1, inv:get_size("main") do
+			local stack = inv:get_stack("main", i)
+			local name = stack:get_name()
+			local def = registered_nodes[name]
+			if def and name ~= "air" and not def.groups.falling_node then
+				placeable_node_name = def.name
+			end
+		end
 		for i = 1, LINE_LENGTH do
 			local target_pos = round(line_start + forward_dir * i)
 
 			local node_below = get_node(target_pos)
-			if is_passable(node_below) and is_supported(target_pos) then
+			if is_passable(node_below) and is_supported(target_pos, placeable_node_name) then
 				if j >= max_blocks then
 					break
 				end
