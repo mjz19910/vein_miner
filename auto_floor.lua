@@ -47,7 +47,7 @@ for _, dir in ipairs(cardinal_dirs) do
 	end
 end
 table.insert_all(support_dirs, diagonal_dirs)
-local vertical_offsets = {down, up, up * 2}
+local vertical_offsets = {down * 2, down, new_vec(0, 0, 0), up, up * 2}
 
 local function is_node_supporting(node, skip_name)
 	if node == nil then
@@ -219,7 +219,7 @@ core.register_globalstep(function(dtime)
 		local wielded = player:get_wielded_item():get_name()
 		if wielded ~= "vein_miner:auto_floor" then
 			if not scan_state.fresh then
-				scan_state.max_place_distance = LINE_LENGTH / 2
+				scan_state.max_place_distance = nil
 				last_yaw_per_player[plr_name] = nil
 				is_yaw_update_per_player_disabled[plr_name] = false
 				scan_state.fresh = true
@@ -271,6 +271,11 @@ core.register_globalstep(function(dtime)
 		local max_place_distance = scan_state.max_place_distance
 		for i = 1, LINE_LENGTH do
 			local target_offset = forward_dir * i
+			local target_len = target_offset:length()
+			local round_len = target_len - target_len % 8
+			if max_place_distance ~= nil and round_len > max_place_distance + 16 then
+				break
+			end
 			local target_pos = round(line_start + forward_dir * i)
 
 			local node_below = get_node(target_pos)
@@ -279,9 +284,13 @@ core.register_globalstep(function(dtime)
 					break
 				end
 				if try_place_block_from_inventory(player, sound_info, target_pos, LINE_LENGTH) then
-					if math.abs(max_place_distance - target_offset:length()) > 32 then
-						max_place_distance = target_offset:length()
-						core.log("action", "set place distance to " .. (max_place_distance - max_place_distance % 8) / 16 .. " chunks")
+					if max_place_distance == nil or round_len + 8 < max_place_distance then
+						local next_place_nearest = round_len + 8
+						next_place_nearest = next_place_nearest + (8 - next_place_nearest % 8)
+						if max_place_distance ~= next_place_nearest then
+							max_place_distance = next_place_nearest
+							core.log("action", "set place distance to " .. (max_place_distance - max_place_distance % 8) / 8 .. " 8x8 chunks")
+						end
 					end
 					j = j + 1
 				end
@@ -289,7 +298,15 @@ core.register_globalstep(function(dtime)
 		end
 		scan_state.max_place_distance = max_place_distance
 		if j <= 1 and not is_yaw_update_per_player_disabled[plr_name] then
-			local yaw_speed = yaw_max / max_place_distance
+			local yaw_mul
+			if max_place_distance == nil then
+				yaw_mul = LINE_LENGTH / 4
+			elseif max_place_distance - 8 > 1 then
+				yaw_mul = max_place_distance - 8
+			else
+				yaw_mul = 1
+			end
+			local yaw_speed = yaw_max / (max_place_distance or LINE_LENGTH / 3)
 			local s_yaw = scan_state.scan_radians
 			local new_yaw = s_yaw + yaw_speed
 			scan_state.scan_radians = new_yaw
