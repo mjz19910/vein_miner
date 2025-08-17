@@ -220,13 +220,14 @@ core.register_globalstep(function(dtime)
 		local wielded = player:get_wielded_item():get_name()
 		if wielded ~= "vein_miner:auto_floor" then
 			if not scan_state.fresh then
-				scan_state.max_place_distance = nil
 				last_yaw_per_player[plr_name] = nil
 				is_yaw_update_per_player_disabled[plr_name] = false
 				scan_state.fresh = true
 				scan_state.player_start_yaw = nil
 				scan_state.scan_radians = 0
 				logged_min_block_distance = 0
+				scan_state.max_place_distance = nil
+				scan_state.min_block_distance = nil
 			end
 			goto continue
 		end
@@ -270,13 +271,12 @@ core.register_globalstep(function(dtime)
 				break
 			end
 		end
-		local min_block_distance
+		local min_block_distance = scan_state.min_block_distance
 		local max_place_distance = scan_state.max_place_distance
 		for i = 1, LINE_LENGTH do
 			local target_offset = forward_dir * i
 			local target_len = target_offset:length()
-			local round_len = target_len - target_len % 8
-			if max_place_distance ~= nil and round_len > max_place_distance + 32 then
+			if max_place_distance ~= nil and target_len > max_place_distance + 48 then
 				break
 			end
 			local target_pos = round(line_start + forward_dir * i)
@@ -287,17 +287,16 @@ core.register_globalstep(function(dtime)
 					break
 				end
 				if try_place_block_from_inventory(player, sound_info, target_pos, LINE_LENGTH) then
-					if min_block_distance == nil or target_len < min_block_distance then
-						min_block_distance = target_len
-						local log_block_distance = (min_block_distance - min_block_distance % 8) / 8
+					if min_block_distance == nil or target_len % 32 < min_block_distance then
+						min_block_distance = target_len % 32
+						local log_block_distance = (min_block_distance - min_block_distance % 32) / 32
 						if log_block_distance ~= logged_min_block_distance then
-							core.log("action", "min block placed " .. log_block_distance .. " 8x8 chunks away")
+							core.log("action", "min block placed " .. log_block_distance .. " 48x48 chunks away")
 							logged_min_block_distance = log_block_distance
 						end
 					end
-					if max_place_distance == nil or round_len + 8 < max_place_distance then
-						local next_place_nearest = round_len + 8
-						next_place_nearest = next_place_nearest + (8 - next_place_nearest % 8)
+					if max_place_distance == nil or target_len < max_place_distance then
+						local next_place_nearest = target_len + (8 - target_len % 8)
 						if max_place_distance ~= next_place_nearest then
 							max_place_distance = next_place_nearest
 							core.log("action", "set place distance to " .. (max_place_distance - max_place_distance % 8) / 8 .. " 8x8 chunks")
@@ -307,6 +306,7 @@ core.register_globalstep(function(dtime)
 				end
 			end
 		end
+		scan_state.min_block_distance = min_block_distance
 		scan_state.max_place_distance = max_place_distance
 		if j <= 1 and not is_yaw_update_per_player_disabled[plr_name] then
 			local yaw_div
