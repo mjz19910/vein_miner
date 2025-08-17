@@ -168,7 +168,6 @@ local function try_place_block_from_inventory(player, sound_info, target_pos, ma
 	return false
 end
 
-local dbg_count = 0
 local time_until_block_place = 0
 ---@type table<string, SoundInfo>
 local sound_info_per_player = {}
@@ -215,8 +214,7 @@ core.register_globalstep(function(dtime)
 		local scan_state = scan_state_map[plr_name]
 		local wielded = player:get_wielded_item():get_name()
 		if wielded ~= "vein_miner:auto_floor" then
-			scan_state.max_place_distance = 3
-			dbg_count = 0
+			scan_state.max_place_distance = LINE_LENGTH * 1.2599210498948732 * 2
 			last_yaw_per_player[plr_name] = nil
 			is_yaw_update_per_player_disabled[plr_name] = false
 			goto continue
@@ -266,7 +264,7 @@ core.register_globalstep(function(dtime)
 					break
 				end
 				if try_place_block_from_inventory(player, sound_info, target_pos, LINE_LENGTH) then
-					if target_offset:length() > max_place_distance then
+					if target_offset:length() < max_place_distance then
 						max_place_distance = target_offset:length()
 					end
 					j = j + 1
@@ -275,8 +273,8 @@ core.register_globalstep(function(dtime)
 		end
 		scan_state.max_place_distance = max_place_distance
 		if j <= 1 and not is_yaw_update_per_player_disabled[plr_name] then
-			local yaw_speed = yaw_max * math.log(dbg_count + 1, 1.7) / max_place_distance
-			local new_yaw = (yaw + yaw_speed) % math.pi * 2
+			local yaw_speed = yaw_max / max_place_distance
+			local new_yaw = yaw + yaw_speed
 			scan_state.scan_radians = scan_state.scan_radians + yaw_speed
 			if last_yaw_per_player[plr_name] and scan_state.scan_radians >= target_radians then
 				is_yaw_update_per_player_disabled[plr_name] = true
@@ -286,17 +284,12 @@ core.register_globalstep(function(dtime)
 			if new_yaw == new_yaw then
 				player:set_look_horizontal(new_yaw)
 			else
-				core.log("error", "yaw is " .. math.deg(yaw) .. ", next yaw is invalid " .. dbg_count + 1 .. " " .. math.log(dbg_count + 1, 1.7))
+				core.log("error", "yaw is " .. math.deg(yaw) .. ", next yaw is invalid " .. new_yaw)
 			end
-			dbg_count = dbg_count + 1
 			if vector.length(player:get_velocity()) > 0.3 then
 				is_yaw_update_per_player_disabled[plr_name] = true
 				goto continue
 			end
-		elseif not is_yaw_update_per_player_disabled[plr_name] then
-			dbg_count = math.floor(dbg_count / (math.log(dbg_count + 1, 1.6) + 1))
-		else
-			dbg_count = 0
 		end
 		last_yaw_per_player[plr_name] = yaw
 		if j <= 1 then
