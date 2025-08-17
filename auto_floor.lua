@@ -111,6 +111,16 @@ local function is_supported(pos, invalid_support_name)
 	return false
 end
 
+local function make_set(table, init)
+	local ret = {}
+	for _, value in ipairs(table) do
+		ret[value] = init
+	end
+	return ret
+end
+
+local placeable_nodes_to_skip = make_set({"default:jungletree"}, true)
+
 local LINE_LENGTH = 256
 ---@class SoundInfo
 ---@field playing_sounds table<string, boolean>
@@ -125,7 +135,7 @@ local function try_place_block_from_inventory(player, sound_info, target_pos, ma
 		local stack = inv:get_stack("main", i)
 		local name = stack:get_name()
 		local def = registered_nodes[name]
-		if def and name ~= "air" and not def.groups.falling_node then
+		if not placeable_nodes_to_skip[name] and def and name ~= "air" and not def.groups.falling_node then
 			local cur_node = core.get_node(target_pos)
 			if cur_node and cur_node.name ~= "air" then
 				if cur_node.name == "ignore" then
@@ -240,7 +250,7 @@ core.register_globalstep(function(dtime)
 			local stack = inv:get_stack("main", i)
 			local name = stack:get_name()
 			local def = registered_nodes[name]
-			if def and name ~= "air" and not def.groups.falling_node then
+			if not placeable_nodes_to_skip[name] and def and name ~= "air" and not def.groups.falling_node then
 				placeable_node_name = def.name
 				break
 			end
