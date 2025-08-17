@@ -241,6 +241,7 @@ function FloorScanState_mt:run(player, player_name, yaw)
 			break
 		end
 		local target_pos = round(line_start + forward_dir * i)
+		local fmt_place_distance = "place distance (%s,%s) 8x8 chunks away"
 
 		local node_below = get_node(target_pos)
 		if is_passable(node_below) and is_supported(target_pos, placeable_node_name) then
@@ -250,33 +251,32 @@ function FloorScanState_mt:run(player, player_name, yaw)
 			if try_place_block_from_inventory(player, sound_info, target_pos, LINE_LENGTH) then
 				if min_block_distance == nil or target_len < min_block_distance then
 					min_block_distance = target_len
-					local log_block_distance = (min_block_distance - min_block_distance % 8) / 8 + 1
-					if log_block_distance ~= self.logged_min_block_distance then
-						local prev_dist = self.logged_min_block_distance
-						local cur_dist = log_block_distance
+					local log_min_block_distance = (min_block_distance - min_block_distance % 8) / 8
+					if log_min_block_distance ~= self.log_min_block_distance then
+						local prev_dist = self.log_min_block_distance
+						local cur_dist = log_min_block_distance
 						if cur_dist >= prev_dist and cur_dist <= prev_dist + 1 then
 							goto skip1
 						end
 						if cur_dist <= prev_dist and cur_dist >= prev_dist - 1 then
 							goto skip1
 						end
-						core.log("action", "block placed   " .. log_block_distance .. " 8x8 chunks away")
-						self.logged_min_block_distance = log_block_distance
+						self.log_min_block_distance = log_min_block_distance
 						::skip1::
 					end
 				end
 				if max_place_distance == nil or target_len < max_place_distance then
-					local next_place_nearest = target_len + (8 - target_len % 8)
+					local next_place_nearest = target_len + (8 - target_len % 8) + 8
 					if max_place_distance ~= next_place_nearest then
-						local prev_dist = max_place_distance
-						local cur_dist = next_place_nearest
-						if prev_dist ~= nil and cur_dist >= prev_dist and cur_dist <= prev_dist + 8 then
+						local prev_dist = (max_place_distance - max_place_distance % 8) / 8
+						local cur_dist = (next_place_nearest - next_place_nearest % 8) / 8
+						if prev_dist ~= nil and cur_dist >= prev_dist and cur_dist <= prev_dist + 1 then
 							goto skip2
 						end
-						if prev_dist ~= nil and cur_dist >= prev_dist - 8 and cur_dist <= prev_dist then
+						if prev_dist ~= nil and cur_dist <= prev_dist and cur_dist >= prev_dist - 1 then
 							goto skip2
 						end
-						core.log("action", "place distance " .. (next_place_nearest - next_place_nearest % 8) / 8 .. " 8x8 chunks away")
+						core.log("action", fmt_place_distance:format(self.log_min_block_distance, cur_dist))
 						::skip2::
 						max_place_distance = next_place_nearest
 					end
@@ -323,12 +323,12 @@ function FloorScanState_mt:run(player, player_name, yaw)
 end
 ---@param self FloorScanState
 function FloorScanState_mt:reset()
-	self.fresh = true
 	self.player_start_yaw = nil
 	self.scan_radians = 0
-	self.logged_min_block_distance = 0
+	self.log_min_block_distance = 0
 	self.max_place_distance = nil
 	self.min_block_distance = nil
+	self.fresh = true
 end
 
 local floor_filler = {}
@@ -340,11 +340,11 @@ function floor_filler.new()
 	---@field max_place_distance number | nil
 	---@field min_block_distance number | nil
 	local self = {}
-	self.player_start_yaw = nil
-	self.scan_radians = 0
 	self.target_rad = math.rad(360)
 	self.yaw_max = math.rad(5)
-	self.logged_min_block_distance = 0
+	self.player_start_yaw = nil
+	self.scan_radians = 0
+	self.log_min_block_distance = 0
 	self.max_place_distance = nil
 	self.min_block_distance = nil
 	self.fresh = true
