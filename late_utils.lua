@@ -113,6 +113,15 @@ function l_utils.is_holding_liquid_back(pos, node)
 		return true
 	end
 	local def1 = core.registered_nodes[node1.name]
+	local pos2 = vector.offset(pos, 1, 0, 0)
+	local node2 = core.get_node_or_nil(pos2)
+	if not node2 then
+		return true
+	end
+	local def2 = core.registered_nodes[node2.name]
+	if def1.liquidtype == "source" and def2.liquidtype == "source" then
+		return false
+	end
 	local pos2 = vector.offset(pos, -1, 0, 0)
 	local node2 = core.get_node_or_nil(pos2)
 	if not node2 then
@@ -123,6 +132,15 @@ function l_utils.is_holding_liquid_back(pos, node)
 		return false
 	end
 	local pos2 = vector.offset(pos, 0, 0, 1)
+	local node2 = core.get_node_or_nil(pos2)
+	if not node2 then
+		return true
+	end
+	local def2 = core.registered_nodes[node2.name]
+	if def1.liquidtype == "source" and def2.liquidtype == "source" then
+		return false
+	end
+	local pos2 = vector.offset(pos, 0, 0, -1)
 	local node2 = core.get_node_or_nil(pos2)
 	if not node2 then
 		return true
