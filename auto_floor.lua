@@ -241,7 +241,7 @@ function FloorScanState_mt:run(player, player_name, yaw)
 	for i = 1, LINE_LENGTH do
 		local target_offset = forward_dir * i
 		local target_len = target_offset:length()
-		if max_place_distance ~= nil and target_len > max_place_distance then
+		if min_block_distance ~= nil and target_len > min_block_distance + 8 * 1 then
 			break
 		end
 		local target_pos = round(line_start + forward_dir * i)
@@ -253,25 +253,25 @@ function FloorScanState_mt:run(player, player_name, yaw)
 			end
 			if try_place_block_from_inventory(player, sound_info, target_pos, LINE_LENGTH) then
 				if min_block_distance == nil or target_len < min_block_distance then
-					min_block_distance = (target_len - target_len % 8) / 8
-					local log_block_distance = min_block_distance
-					if min_block_distance ~= self.log_min_block_distance then
+					min_block_distance = target_len - target_len % 8
+					local log_min_block_distance = min_block_distance / 8
+					if log_min_block_distance ~= self.log_min_block_distance then
 						local prev_dist = self.log_min_block_distance
-						local cur_dist = min_block_distance
+						local cur_dist = log_min_block_distance
 						if cur_dist >= prev_dist and cur_dist <= prev_dist + 1 then
 							goto skip1
 						end
 						if cur_dist <= prev_dist and cur_dist >= prev_dist - 1 then
 							goto skip1
 						end
-						self.log_min_block_distance = min_block_distance
+						self.log_min_block_distance = log_min_block_distance
 						self.show_log_min = true
-						core.log("action", fmt_place_distance_unit_min:format(min_block_distance))
+						core.log("action", fmt_place_distance_unit_min:format(log_min_block_distance))
 						::skip1::
 					end
 				end
-				if max_place_distance == nil or target_len * 8 < max_place_distance then
-					local next_place_nearest = (target_len - target_len % 8) / 8 + 1
+				if max_place_distance == nil or target_len > max_place_distance then
+					local next_place_nearest = target_len - target_len % 8 + 8
 					if max_place_distance ~= next_place_nearest then
 						local prev_dist
 						local cur_dist
@@ -280,18 +280,19 @@ function FloorScanState_mt:run(player, player_name, yaw)
 						if not prev_dist then
 							goto skip2
 						end
-						if cur_dist >= prev_dist and cur_dist <= prev_dist + 1 then
+						if cur_dist >= prev_dist and cur_dist <= prev_dist + 8 then
 							goto skip2
 						end
-						if cur_dist <= prev_dist and cur_dist >= prev_dist - 1 then
+						if cur_dist <= prev_dist and cur_dist >= prev_dist - 8 then
 							goto skip2
 						end
+						local log_min_block_dist = cur_dist / 8
 						if self.log_min_block_distance ~= nil and self.log_min_block_distance > self.log_max_block_distance then
-							self.log_min_block_distance = cur_dist - 1
+							self.log_min_block_distance = log_min_block_dist
 						end
-						self.log_max_block_distance = cur_dist
+						self.log_max_block_distance = log_min_block_dist
 						self.show_log_max = true
-						core.log("action", fmt_place_distance_unit_max:format(cur_dist))
+						core.log("action", fmt_place_distance_unit_max:format(log_min_block_dist))
 						::skip2::
 						max_place_distance = next_place_nearest
 					end
