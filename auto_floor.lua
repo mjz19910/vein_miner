@@ -375,7 +375,7 @@ function floor_filler.new()
 				core.log("action", ("more than 1 block placed after %d steps"):format(time_until_block_place))
 			end
 			time_until_block_place = 0
-			if self.count > 120 and self.scan_radians > self.req_next_reset_scan_radians then
+			if self.count > 30 and self.scan_radians > self.req_next_reset_scan_radians then
 				self.req_next_reset_scan_radians = self.scan_radians + 0.01 * 3
 				self.scan_radians = self.scan_radians - self.yaw_max / 4
 			end
