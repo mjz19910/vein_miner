@@ -237,7 +237,7 @@ function FloorScanState_mt:run(player, player_name, yaw)
 	for i = 1, LINE_LENGTH do
 		local target_offset = forward_dir * i
 		local target_len = target_offset:length()
-		if max_place_distance ~= nil and target_len > max_place_distance + 24 then
+		if max_place_distance ~= nil and target_len > max_place_distance then
 			break
 		end
 		local target_pos = round(line_start + forward_dir * i)
@@ -250,7 +250,7 @@ function FloorScanState_mt:run(player, player_name, yaw)
 			if try_place_block_from_inventory(player, sound_info, target_pos, LINE_LENGTH) then
 				if min_block_distance == nil or target_len < min_block_distance then
 					min_block_distance = target_len
-					local log_block_distance = (min_block_distance - min_block_distance % 8) / 8 + 2
+					local log_block_distance = (min_block_distance - min_block_distance % 8) / 8 + 1
 					if log_block_distance ~= self.logged_min_block_distance then
 						local prev_dist = self.logged_min_block_distance
 						local cur_dist = log_block_distance
@@ -266,21 +266,16 @@ function FloorScanState_mt:run(player, player_name, yaw)
 					end
 				end
 				if max_place_distance == nil or target_len < max_place_distance then
-					local next_place_nearest = target_len + (8 - target_len % 8) + 8
+					local next_place_nearest = target_len + (8 - target_len % 8)
 					if max_place_distance ~= next_place_nearest then
 						local prev_dist = max_place_distance
 						local cur_dist = next_place_nearest
 						if prev_dist ~= nil and cur_dist >= prev_dist and cur_dist <= prev_dist + 8 then
-							-- core.log("action", "place distance(+1) " .. (next_place_nearest - next_place_nearest % 8) / 8 .. " 8x8 chunks away")
 							goto skip2
 						end
 						if prev_dist ~= nil and cur_dist >= prev_dist - 8 and cur_dist <= prev_dist then
-							-- core.log("action", "place distance(-1) " .. (next_place_nearest - next_place_nearest % 8) / 8 .. " 8x8 chunks away")
 							goto skip2
 						end
-						-- if prev_dist ~= nil then
-						-- 	core.log("action", ("place dist dbg %d %d %d %d"):format(cur_dist, prev_dist, prev_dist - 8, prev_dist + 8))
-						-- end
 						core.log("action", "place distance " .. (next_place_nearest - next_place_nearest % 8) / 8 .. " 8x8 chunks away")
 						::skip2::
 						max_place_distance = next_place_nearest
