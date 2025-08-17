@@ -308,8 +308,8 @@ core.register_globalstep(function(dtime)
 			time_until_block_place = 0
 		end
 		if j == 0 then
-			if max_place_distance_map[plr_name] > 6 then
-				max_place_distance_map[plr_name] = max_place_distance_map[plr_name] - 1
+			if scan_state.max_place_distance > 6 then
+				scan_state.max_place_distance = scan_state.max_place_distance - 0.5
 			end
 		end
 		::continue::
