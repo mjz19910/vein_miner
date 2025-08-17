@@ -339,15 +339,13 @@ function floor_filler.new()
 	---@field player_start_yaw number | nil
 	---@field max_place_distance number | nil
 	---@field min_block_distance number | nil
-	local self = {}
-	self.target_rad = math.rad(360)
-	self.yaw_max = math.rad(5)
-	self.player_start_yaw = nil
-	self.scan_radians = 0
-	self.log_min_block_distance = 0
-	self.max_place_distance = nil
-	self.min_block_distance = nil
-	self.fresh = true
+	local self = {
+		target_rad = math.rad(360),
+		yaw_max = math.rad(5),
+		scan_radians = 0,
+		log_min_block_distance = 0,
+		fresh = true,
+	}
 	return setmetatable(self, {
 		__index = FloorScanState_mt,
 	})
