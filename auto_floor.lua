@@ -270,11 +270,13 @@ function FloorScanState_mt:run(player, player_name, yaw)
 				if max_place_distance == nil or target_len < max_place_distance then
 					local next_place_nearest = target_len + (8 - target_len % 8) + 8
 					if max_place_distance ~= next_place_nearest then
+						local prev_dist
+						local cur_dist
 						if not max_place_distance then
 							goto skip2
 						end
-						local prev_dist = (max_place_distance - max_place_distance % 8) / 8
-						local cur_dist = (next_place_nearest - next_place_nearest % 8) / 8
+						prev_dist = (max_place_distance - max_place_distance % 8) / 8
+						cur_dist = (next_place_nearest - next_place_nearest % 8) / 8
 						if cur_dist >= prev_dist and cur_dist <= prev_dist + 1 then
 							goto skip2
 						end
