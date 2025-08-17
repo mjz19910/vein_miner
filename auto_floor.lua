@@ -253,8 +253,8 @@ function FloorScanState_mt:run(player, player_name, yaw)
 			end
 			if try_place_block_from_inventory(player, sound_info, target_pos, LINE_LENGTH) then
 				if min_block_distance == nil or target_len < min_block_distance then
-					min_block_distance = target_len
-					local log_block_distance = (min_block_distance - min_block_distance % 8) / 8
+					min_block_distance = target_len - target_len % 8
+					local log_block_distance = min_block_distance / 8
 					if log_block_distance ~= self.logged_min_block_distance then
 						local prev_dist = self.logged_min_block_distance
 						local cur_dist = log_block_distance
@@ -271,7 +271,7 @@ function FloorScanState_mt:run(player, player_name, yaw)
 					end
 				end
 				if max_place_distance == nil or target_len < max_place_distance then
-					local next_place_nearest = target_len + (8 - target_len % 8) + 8
+					local next_place_nearest = target_len + (8 - target_len % 8)
 					if max_place_distance ~= next_place_nearest then
 						local prev_dist
 						local cur_dist
