@@ -301,11 +301,6 @@ core.register_globalstep(function(dtime)
 			end
 			time_until_block_place = 0
 		end
-		if j == 0 then
-			if scan_state.max_place_distance > 6 then
-				scan_state.max_place_distance = scan_state.max_place_distance - 0.5
-			end
-		end
 		::continue::
 	end
 	core.is_async = nil
