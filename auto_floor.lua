@@ -198,7 +198,7 @@ local max_place_distance_map = {}
 ---@type table<string, FloorScanState>
 local scan_state_map = {}
 local target_rad = math.rad(360)
-local yaw_max = math.rad(math.pow(9 / 10, 1) * 8)
+local yaw_max = math.rad(5)
 
 core.register_on_joinplayer(function(player)
 	local player_name = player:get_player_name()
