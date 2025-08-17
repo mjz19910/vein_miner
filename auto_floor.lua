@@ -254,10 +254,10 @@ function FloorScanState_mt:run(player, player_name, yaw)
 					if log_block_distance ~= self.logged_min_block_distance then
 						local prev_dist = self.logged_min_block_distance
 						local cur_dist = log_block_distance
-						if cur_dist == prev_dist + 1 then
+						if cur_dist >= prev_dist and cur_dist <= prev_dist + 1 then
 							goto skip1
 						end
-						if cur_dist == prev_dist - 1 then
+						if cur_dist <= prev_dist and cur_dist >= prev_dist - 1 then
 							goto skip1
 						end
 						core.log("action", "block placed   " .. log_block_distance .. " 8x8 chunks away")
