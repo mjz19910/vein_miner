@@ -203,7 +203,7 @@ function floor_filler.new()
 	---@field min_block_distance number | nil
 	local self = {
 		fresh = true,
-		yaw_max = math.rad(5),
+		yaw_max = math.rad(6),
 		target_rad = math.rad(360),
 		scan_radians = 0,
 		log_min_block_distance = 0,
