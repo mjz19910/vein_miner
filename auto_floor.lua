@@ -1,3 +1,4 @@
+local print = print
 local setmetatable = setmetatable
 local tostring = tostring
 local type = type
@@ -267,14 +268,17 @@ function FloorScanState_mt:run(player, player_name, yaw)
 					if max_place_distance ~= next_place_nearest then
 						local prev_dist = max_place_distance
 						local cur_dist = next_place_nearest
-						if prev_dist ~= nil and cur_dist > prev_dist and cur_dist < prev_dist + 8 then
-							core.log("action", "place distance(+1) " .. (next_place_nearest - next_place_nearest % 8) / 8 .. " 8x8 chunks away")
+						if prev_dist ~= nil and cur_dist >= prev_dist and cur_dist <= prev_dist + 8 then
+							-- core.log("action", "place distance(+1) " .. (next_place_nearest - next_place_nearest % 8) / 8 .. " 8x8 chunks away")
 							goto skip2
 						end
-						if prev_dist ~= nil and cur_dist > prev_dist - 8 and cur_dist < prev_dist then
-							core.log("action", "place distance(-1) " .. (next_place_nearest - next_place_nearest % 8) / 8 .. " 8x8 chunks away")
+						if prev_dist ~= nil and cur_dist >= prev_dist - 8 and cur_dist <= prev_dist then
+							-- core.log("action", "place distance(-1) " .. (next_place_nearest - next_place_nearest % 8) / 8 .. " 8x8 chunks away")
 							goto skip2
 						end
+						-- if prev_dist ~= nil then
+						-- 	core.log("action", ("place dist dbg %d %d %d %d"):format(cur_dist, prev_dist, prev_dist - 8, prev_dist + 8))
+						-- end
 						core.log("action", "place distance " .. (next_place_nearest - next_place_nearest % 8) / 8 .. " 8x8 chunks away")
 						::skip2::
 						max_place_distance = next_place_nearest

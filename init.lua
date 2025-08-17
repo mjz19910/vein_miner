@@ -472,6 +472,7 @@ local known_groups = {
 	desert_sand = true,
 	apple = true,
 	butterfly = true,
+	firefly = true,
 	coral = true,
 }
 local green_groups = {
@@ -533,6 +534,7 @@ local cobble_target_groups = {
 	stone = true,
 	dirt = true,
 	butterfly = true,
+	firefly = true,
 	papyrus = true,
 	blueberry = true,
 	mushroom = true,

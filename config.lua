@@ -206,6 +206,7 @@ local mg = {
 	apple = {apple},
 	butterfly = {butterfly.white, butterfly.red, butterfly.violet},
 	papyrus = {papyrus},
+	firefly = {"fireflies:firefly"}
 }
 ---@type MiningGroups
 CFG.mining_groups = mg
