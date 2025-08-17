@@ -4,7 +4,6 @@ local l_utils = {}
 local vein_miner = vein_miner
 local table = table
 local vector = vector
-local contains = table.contains
 local ItemStack = ItemStack
 ---@type LuantiCore
 local core = core
@@ -22,7 +21,7 @@ local node_scan_options_cache = {}
 ---@param options ScanOptions
 local function get_real_scan_options(node_name, options)
 	options = options or {}
-	if contains(light_nodes, node_name) then
+	if table.contains(light_nodes, node_name) then
 		options.light = true
 	end
 	if node_name == "default:cobble" then
@@ -133,6 +132,9 @@ function l_utils.is_holding_liquid_back(pos, node)
 		return false
 	end
 	for _, offset in ipairs(floating_dirs) do
+		if offset.y == -1 then
+			goto continue
+		end
 		local neighbor_pos = pos + offset
 		local neighbor = core.get_node_or_nil(neighbor_pos)
 		if not neighbor then
