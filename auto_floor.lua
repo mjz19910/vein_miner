@@ -86,9 +86,11 @@ local function is_supported(pos, invalid_support_name)
 	for _, dir in ipairs(support_dirs) do
 		for _, vert in ipairs(vertical_offsets) do
 			local sup_pos = pos + dir + vert
-			local node = get_node_or_nil(sup_pos)
-			if is_node_supporting(node, invalid_support_name) then
-				return true
+			if sup_pos ~= pos then
+				local node = get_node_or_nil(sup_pos)
+				if is_node_supporting(node, invalid_support_name) then
+					return true
+				end
 			end
 		end
 	end
@@ -235,9 +237,9 @@ function FloorScanState_mt:run(player, player_name, yaw)
 	for i = 1, LINE_LENGTH do
 		local target_offset = forward_dir * i
 		local target_len = target_offset:length()
-		-- if max_place_distance ~= nil and target_len > max_place_distance + 48 then
-		-- 	break
-		-- end
+		if max_place_distance ~= nil and target_len > max_place_distance + 24 then
+			break
+		end
 		local target_pos = round(line_start + forward_dir * i)
 
 		local node_below = get_node(target_pos)
