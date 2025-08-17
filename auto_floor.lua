@@ -190,6 +190,9 @@ local debug_log = false
 ---@type FloorScanState
 local FloorScanState_mt = {}
 
+local fmt_place_distance_vec2 = "place distance (%s,%s) 8x8 chunks away"
+local fmt_place_distance_unit_min = "place distance (%s,--) 8x8 chunks away"
+local fmt_place_distance_unit_max = "place distance (--,%s) 8x8 chunks away"
 ---@param self FloorScanState
 ---@param player Player
 ---@param player_name string
@@ -242,7 +245,6 @@ function FloorScanState_mt:run(player, player_name, yaw)
 			break
 		end
 		local target_pos = round(line_start + forward_dir * i)
-		local fmt_place_distance = "place distance (%s,%s) 8x8 chunks away"
 
 		local node_below = get_node(target_pos)
 		if is_passable(node_below) and is_supported(target_pos, placeable_node_name) then
@@ -264,11 +266,12 @@ function FloorScanState_mt:run(player, player_name, yaw)
 						end
 						self.log_min_block_distance = log_block_distance
 						self.show_log_min = true
+						core.log("action", fmt_place_distance_unit_min:format(log_block_distance))
 						::skip1::
 					end
 				end
 				if max_place_distance == nil or target_len < max_place_distance then
-					local next_place_nearest = target_len + (8 - target_len % 8) + 8
+					local next_place_nearest = target_len + (8 - target_len % 8)
 					if max_place_distance ~= next_place_nearest then
 						local prev_dist
 						local cur_dist
@@ -285,14 +288,15 @@ function FloorScanState_mt:run(player, player_name, yaw)
 						end
 						self.log_max_block_distance = cur_dist
 						self.show_log_max = true
+						core.log("action", fmt_place_distance_unit_max:format(cur_dist))
 						::skip2::
 						max_place_distance = next_place_nearest
 					end
 				end
 				if self.show_log_min and self.show_log_max then
 					local cur_pos = vector.new(self.log_min_block_distance, self.log_max_block_distance, 0)
-					if cur_pos ~= self.last_pos then
-						core.log("action", fmt_place_distance:format(self.log_min_block_distance, self.log_max_block_distance))
+					if self.last_pos == nil or cur_pos ~= self.last_pos then
+						core.log("action", fmt_place_distance_vec2:format(self.log_min_block_distance, self.log_max_block_distance))
 						self.show_log_min = false
 						self.show_log_max = false
 						self.last_pos = cur_pos
