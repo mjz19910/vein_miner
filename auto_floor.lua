@@ -383,7 +383,6 @@ function floor_filler.new()
 	return self
 end
 
-local max_place_distance_map = {}
 ---@type table<string, FloorScanState>
 local scan_state_map = {}
 
