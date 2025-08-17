@@ -172,12 +172,24 @@ local function is_passable(node)
 	return def and def.walkable == false
 end
 
+local scan_state = {}
+
+---@return FloorScanState
+function scan_state.new()
+	---@class FloorScanState
+	local self = {}
+	self.max_place_distance = 3
+	self.scan_radians = 0
+end
+
 local debug_log = false
 local max_place_distance_map = {}
+---@type table<string, FloorScanState>
+local scan_state_map = {}
+local target_radians = math.pi * 4
+local yaw_max = math.rad(math.pow(9 / 10, 1) * 4)
 
-core.register_on_joinplayer(function(player)
-	max_place_distance_map[player:get_player_name()] = 1
-end)
+core.register_on_joinplayer(function(player) scan_state_map[player:get_player_name()] = scan_state.new() end)
 
 -- globalstep for vein_miner:auto_floor tool
 core.register_globalstep(function(dtime)
@@ -189,9 +201,10 @@ core.register_globalstep(function(dtime)
 			yaw = 0
 		end
 		local plr_name = player:get_player_name()
+		local scan_state = scan_state_map[plr_name]
 		local wielded = player:get_wielded_item():get_name()
 		if wielded ~= "vein_miner:auto_floor" then
-			max_place_distance_map[plr_name] = 1
+			scan_state.max_place_distance = 3
 			dbg_count = 0
 			last_yaw_per_player[plr_name] = nil
 			is_yaw_update_per_player_disabled[plr_name] = false
@@ -231,7 +244,7 @@ core.register_globalstep(function(dtime)
 				break
 			end
 		end
-		local max_place_distance = max_place_distance_map[plr_name]
+		local max_place_distance = scan_state.max_place_distance
 		for i = 1, LINE_LENGTH do
 			local target_offset = forward_dir * i
 			local target_pos = round(line_start + forward_dir * i)
@@ -242,21 +255,21 @@ core.register_globalstep(function(dtime)
 					break
 				end
 				if try_place_block_from_inventory(player, sound_info, target_pos, LINE_LENGTH) then
-					if max_place_distance > target_offset:length() then
+					if target_offset:length() > max_place_distance then
 						max_place_distance = target_offset:length()
 					end
 					j = j + 1
 				end
 			end
 		end
-		max_place_distance_map[plr_name] = max_place_distance
+		scan_state.max_place_distance = max_place_distance
 		if j <= 1 and not is_yaw_update_per_player_disabled[plr_name] then
-			local yaw_max = math.pow(9 / 10, 1) * 7
 			local yaw_speed = yaw_max * math.log(dbg_count + 1, 1.7) / max_place_distance
-			local new_yaw = math.rad((math.deg(yaw) + yaw_speed) % 360)
-			if last_yaw_per_player[plr_name] and new_yaw + 0.1 < last_yaw_per_player[plr_name] then
+			local new_yaw = (yaw + yaw_speed) % math.pi * 2
+			scan_state.scan_radians = scan_state.scan_radians + yaw_speed
+			if last_yaw_per_player[plr_name] and scan_state.scan_radians >= target_radians then
 				is_yaw_update_per_player_disabled[plr_name] = true
-				player:set_look_horizontal(0)
+				scan_state.scan_radians = 0
 				goto continue
 			end
 			if new_yaw == new_yaw then
@@ -282,6 +295,11 @@ core.register_globalstep(function(dtime)
 				core.log("action", ("more than 1 block placed after %d steps"):format(time_until_block_place))
 			end
 			time_until_block_place = 0
+		end
+		if j == 0 then
+			if max_place_distance_map[plr_name] > 6 then
+				max_place_distance_map[plr_name] = max_place_distance_map[plr_name] - 1
+			end
 		end
 		::continue::
 	end
