@@ -276,7 +276,7 @@ core.register_globalstep(function(dtime)
 		for i = 1, LINE_LENGTH do
 			local target_offset = forward_dir * i
 			local target_len = target_offset:length()
-			if max_place_distance ~= nil and target_len > max_place_distance + 8 then
+			if max_place_distance ~= nil and target_len > max_place_distance + 48 then
 				break
 			end
 			local target_pos = round(line_start + forward_dir * i)
