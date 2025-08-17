@@ -360,7 +360,7 @@ function floor_filler.new()
 				goto update_yaw
 			end
 			player:set_look_horizontal(self.scan_radians + self.player_start_yaw)
-			if vector.length(player:get_velocity()) > 0.3 then
+			if vector.length(player:get_velocity()) > 0.05 then
 				is_yaw_update_per_player_disabled[plr_name] = true
 				self.count = 0
 				goto update_yaw
