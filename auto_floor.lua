@@ -333,13 +333,16 @@ local floor_filler = {}
 ---@return FloorScanState
 function floor_filler.new()
 	---@class FloorScanState
+	---@field player_start_yaw number | nil
+	---@field max_place_distance number | nil
+	---@field min_block_distance number | nil
 	local self = {}
-	self.max_place_distance = 3
-	self.scan_radians = 0
 	self.player_start_yaw = nil
-	self.logged_min_block_distance = 0
+	self.scan_radians = 0
 	self.target_rad = math.rad(360)
 	self.yaw_max = math.rad(5)
+	self.logged_min_block_distance = 0
+	self.max_place_distance = nil
 	self.min_block_distance = nil
 	return setmetatable(self, {
 		__index = FloorScanState_mt,
@@ -371,7 +374,7 @@ core.register_globalstep(function(dtime)
 			if not scan_state.fresh then
 				last_yaw_per_player[plr_name] = nil
 				is_yaw_update_per_player_disabled[plr_name] = false
-				scan_state.reset()
+				scan_state:reset()
 			end
 			goto continue
 		end
