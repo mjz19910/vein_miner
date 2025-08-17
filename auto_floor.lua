@@ -294,21 +294,30 @@ core.register_globalstep(function(dtime)
 							local prev_dist = logged_min_block_distance
 							local cur_dist = log_block_distance
 							if cur_dist == prev_dist + 1 then
-								goto skip
+								goto skip1
 							end
 							if cur_dist == prev_dist - 1 then
-								goto skip
+								goto skip1
 							end
 							core.log("action", "block placed   " .. log_block_distance .. " 8x8 chunks away")
 							logged_min_block_distance = log_block_distance
-							::skip::
+							::skip1::
 						end
 					end
 					if max_place_distance == nil or target_len < max_place_distance then
 						local next_place_nearest = target_len + (8 - target_len % 8) + 8
 						if max_place_distance ~= next_place_nearest then
+							local prev_dist = max_place_distance
+							local cur_dist = next_place_nearest
+							if prev_dist ~= nil and cur_dist == prev_dist + 1 then
+								goto skip2
+							end
+							if prev_dist ~= nil and cur_dist == prev_dist - 1 then
+								goto skip2
+							end
+							core.log("action", "place distance " .. (next_place_nearest - next_place_nearest % 8) / 8 .. " 8x8 chunks away")
 							max_place_distance = next_place_nearest
-							core.log("action", "place distance " .. (max_place_distance - max_place_distance % 8) / 8 .. " 8x8 chunks away")
+							::skip2::
 						end
 					end
 					j = j + 1
