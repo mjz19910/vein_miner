@@ -295,7 +295,7 @@ function FloorScanState_mt:run(player, player_name, yaw)
 						core.log("action", fmt_place_distance:format(self.log_min_block_distance, self.log_max_block_distance))
 						self.show_log_min = false
 						self.show_log_max = false
-						self.last_pos = vector.new(self.log_min_block_distance, self.log_max_block_distance, 0)
+						self.last_pos = cur_pos
 					end
 				end
 				j = j + 1
