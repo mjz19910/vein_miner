@@ -213,6 +213,7 @@ function floor_filler.new()
 		max_place_distance = nil,
 		min_block_distance = nil,
 	}
+	self.req_next_reset_scan_radians = 0
 	---@param self FloorScanState
 	---@param player Player
 	---@param player_name string
@@ -342,7 +343,7 @@ function floor_filler.new()
 		if j <= 1 and not is_yaw_update_per_player_disabled[plr_name] then
 			local yaw_div
 			if min_block_distance ~= nil then
-				yaw_div = (min_block_distance + 1) * 7 * math.log(self.count + 2, 2)
+				yaw_div = (min_block_distance + 1) * 7 / math.log(self.count + 1.8, 1.8)
 			else
 				yaw_div = LINE_LENGTH / 2
 			end
@@ -374,6 +375,11 @@ function floor_filler.new()
 				core.log("action", ("more than 1 block placed after %d steps"):format(time_until_block_place))
 			end
 			time_until_block_place = 0
+			if self.count > 120 and self.scan_radians > self.req_next_reset_scan_radians then
+				self.req_next_reset_scan_radians = self.scan_radians + 0.01 * 3
+				self.scan_radians = self.scan_radians - self.yaw_max / 4
+			end
+			self.count = math.floor(self.count / 3)
 		end
 	end
 	function self:reset()
@@ -384,6 +390,7 @@ function floor_filler.new()
 		self.count = 0
 		self.max_place_distance = nil
 		self.min_block_distance = nil
+		self.req_next_reset_scan_radians = 0
 	end
 	return self
 end
