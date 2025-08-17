@@ -300,8 +300,8 @@ core.register_globalstep(function(dtime)
 								goto skip
 							end
 							core.log("action", "block placed   " .. log_block_distance .. " 8x8 chunks away")
-							::skip::
 							logged_min_block_distance = log_block_distance
+							::skip::
 						end
 					end
 					if max_place_distance == nil or target_len < max_place_distance then
