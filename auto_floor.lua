@@ -291,7 +291,16 @@ core.register_globalstep(function(dtime)
 						min_block_distance = target_len
 						local log_block_distance = (min_block_distance - min_block_distance % 8) / 8 + 2
 						if log_block_distance ~= logged_min_block_distance then
+							local prev_dist = logged_min_block_distance
+							local cur_dist = log_block_distance
+							if cur_dist == prev_dist + 1 then
+								goto skip
+							end
+							if cur_dist == prev_dist - 1 then
+								goto skip
+							end
 							core.log("action", "block placed   " .. log_block_distance .. " 8x8 chunks away")
+							::skip::
 							logged_min_block_distance = log_block_distance
 						end
 					end
