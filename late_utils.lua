@@ -132,15 +132,15 @@ function l_utils.is_holding_liquid_back(pos, node)
 		return false
 	end
 	for _, offset in ipairs(floating_dirs) do
+		if offset.y == -1 then
+			goto continue
+		end
 		local neighbor_pos = pos + offset
 		local neighbor = core.get_node_or_nil(neighbor_pos)
 		if not neighbor then
 			return true
 		end
 		local ndef = core.registered_nodes[neighbor.name]
-		if offset.y == -1 and ndef.liquidtype == "source" then
-			goto continue
-		end
 		if ndef.liquidtype == "source" or ndef.liquidtype == "flowing" then
 			return true
 		end
