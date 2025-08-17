@@ -49,7 +49,7 @@ for _, dir in ipairs(cardinal_dirs) do
 	end
 end
 table.insert_all(support_dirs, diagonal_dirs)
-local vertical_offsets = {down * 2, down, new_vec(0, 0, 0), up, up * 2}
+local vertical_offsets = {new_vec(0, 0, 0), up, up * 2}
 
 local function is_node_supporting(node, skip_name)
 	if node == nil then
