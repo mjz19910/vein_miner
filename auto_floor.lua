@@ -205,6 +205,7 @@ function floor_filler.new()
 		fresh = true,
 		yaw_max = math.rad(6),
 		target_rad = math.rad(360),
+		count = 0,
 		scan_radians = 0,
 		log_min_block_distance = 0,
 		log_max_block_distance = 0,
@@ -341,7 +342,7 @@ function floor_filler.new()
 		if j <= 1 and not is_yaw_update_per_player_disabled[plr_name] then
 			local yaw_div
 			if min_block_distance ~= nil then
-				yaw_div = (min_block_distance + 1) * 7
+				yaw_div = (min_block_distance + 1) * 7 * math.log(self.count + 2, 2)
 			else
 				yaw_div = LINE_LENGTH / 2
 			end
@@ -349,15 +350,18 @@ function floor_filler.new()
 			local s_yaw = self.scan_radians
 			local new_yaw = s_yaw + yaw_speed
 			self.scan_radians = new_yaw
+			self.count = self.count + 1
 			if self.scan_radians > self.target_rad then
 				player:set_look_horizontal(self.target_rad + self.player_start_yaw)
 				is_yaw_update_per_player_disabled[plr_name] = true
 				self.scan_radians = 0
+				self.count = 0
 				goto update_yaw
 			end
 			player:set_look_horizontal(self.scan_radians + self.player_start_yaw)
 			if vector.length(player:get_velocity()) > 0.3 then
 				is_yaw_update_per_player_disabled[plr_name] = true
+				self.count = 0
 				goto update_yaw
 			end
 		end
@@ -377,6 +381,7 @@ function floor_filler.new()
 		self.player_start_yaw = nil
 		self.scan_radians = 0
 		self.log_min_block_distance = 0
+		self.count = 0
 		self.max_place_distance = nil
 		self.min_block_distance = nil
 	end
