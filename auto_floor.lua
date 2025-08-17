@@ -289,17 +289,17 @@ core.register_globalstep(function(dtime)
 				if try_place_block_from_inventory(player, sound_info, target_pos, LINE_LENGTH) then
 					if min_block_distance == nil or target_len < min_block_distance then
 						min_block_distance = target_len
-						local log_block_distance = (min_block_distance - min_block_distance % 8) / 8
+						local log_block_distance = (min_block_distance - min_block_distance % 8) / 8 + 2
 						if log_block_distance ~= logged_min_block_distance then
-							core.log("action", "min block placed " .. log_block_distance .. " 8x8 chunks away")
+							core.log("action", "block placed   " .. log_block_distance .. " 8x8 chunks away")
 							logged_min_block_distance = log_block_distance
 						end
 					end
 					if max_place_distance == nil or target_len < max_place_distance then
-						local next_place_nearest = target_len + (8 - target_len % 8)
+						local next_place_nearest = target_len + (8 - target_len % 8) + 8
 						if max_place_distance ~= next_place_nearest then
 							max_place_distance = next_place_nearest
-							core.log("action", "set place distance to " .. (max_place_distance - max_place_distance % 8) / 8 .. " 8x8 chunks")
+							core.log("action", "place distance " .. (max_place_distance - max_place_distance % 8) / 8 .. " 8x8 chunks away")
 						end
 					end
 					j = j + 1
