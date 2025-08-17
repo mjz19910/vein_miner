@@ -42,7 +42,7 @@ local down = new_vec(0, -1, 0)
 local p = new_vec
 local cardinal_dirs = vein_miner.CFG.cardinal_dirs
 local diagonal_dirs = {p(1, 0, 1), p(-1, 0, 1), p(1, 0, -1), p(-1, 0, -1)}
-local support_dirs = {}
+local support_dirs = {new_vec(0, 0, 0)}
 for _, dir in ipairs(cardinal_dirs) do
 	if dir.y == 0 then
 		table.insert(support_dirs, dir)
