@@ -298,15 +298,15 @@ core.register_globalstep(function(dtime)
 		end
 		scan_state.max_place_distance = max_place_distance
 		if j <= 1 and not is_yaw_update_per_player_disabled[plr_name] then
-			local yaw_mul
+			local yaw_div
 			if max_place_distance == nil then
-				yaw_mul = LINE_LENGTH / 4
+				yaw_div = LINE_LENGTH / 4
 			elseif max_place_distance - 8 > 1 then
-				yaw_mul = max_place_distance - 8
+				yaw_div = max_place_distance - 8
 			else
-				yaw_mul = 1
+				yaw_div = 1
 			end
-			local yaw_speed = yaw_max / (max_place_distance or LINE_LENGTH / 3)
+			local yaw_speed = yaw_max / yaw_div
 			local s_yaw = scan_state.scan_radians
 			local new_yaw = s_yaw + yaw_speed
 			scan_state.scan_radians = new_yaw
