@@ -1,3 +1,4 @@
+local setmetatable = setmetatable
 local tostring = tostring
 local type = type
 ---@type LuantiCore
@@ -181,30 +182,178 @@ local function is_passable(node)
 	return def and def.walkable == false
 end
 
-local scan_state_init = {}
+local debug_log = false
 
----@return FloorScanState
-function scan_state_init.new()
-	---@class FloorScanState
-	local scan_state = {}
-	scan_state.max_place_distance = 3
-	scan_state.scan_radians = 0
-	scan_state.player_start_yaw = nil
-	return scan_state
+---@type FloorScanState
+local FloorScanState_mt = {}
+
+---@param self FloorScanState
+---@param player Player
+---@param player_name string
+---@param yaw number
+function FloorScanState_mt:run(player, player_name, yaw)
+	self.fresh = false
+
+	local plr_name = player_name
+
+	local pos = player:get_pos()
+	local dir = normalize(player:get_look_dir())
+	local front_dir = normalize(new_vec(dir.x, 0, dir.z)) * 3
+	local floor_pos = pos + front_dir + down
+	local node_below = get_node_or_nil(floor_pos)
+	if not node_below then
+		return
+	end
+
+	local ctrl = player:get_player_control()
+	local config = player_config_mgr.data[plr_name]
+	local sound_info = sound_info_per_player[plr_name] or {}
+	sound_info.playing_sounds = {}
+
+	-- Place multiple floor blocks in a line in front of player
+	local base_pos = pos
+	local look_dir = player:get_look_dir()
+	local forward_dir = normalize(p(look_dir.x, 0, look_dir.z))
+
+	local line_start = round(base_pos + down + up / 2)
+	local max_blocks = config.blocks_per_tick
+	local j = 0
+	local placeable_node_name = nil
+	local inv = player:get_inventory()
+	for i = 1, inv:get_size("main") do
+		local stack = inv:get_stack("main", i)
+		local name = stack:get_name()
+		local def = registered_nodes[name]
+		if not placeable_nodes_to_skip[name] and def and name ~= "air" and not def.groups.falling_node then
+			placeable_node_name = def.name
+			break
+		end
+	end
+	local min_block_distance = self.min_block_distance
+	local max_place_distance = self.max_place_distance
+	for i = 1, LINE_LENGTH do
+		local target_offset = forward_dir * i
+		local target_len = target_offset:length()
+		if max_place_distance ~= nil and target_len > max_place_distance + 48 then
+			break
+		end
+		local target_pos = round(line_start + forward_dir * i)
+
+		local node_below = get_node(target_pos)
+		if is_passable(node_below) and is_supported(target_pos, placeable_node_name) then
+			if j >= max_blocks then
+				break
+			end
+			if try_place_block_from_inventory(player, sound_info, target_pos, LINE_LENGTH) then
+				if min_block_distance == nil or target_len < min_block_distance then
+					min_block_distance = target_len
+					local log_block_distance = (min_block_distance - min_block_distance % 8) / 8 + 2
+					if log_block_distance ~= self.logged_min_block_distance then
+						local prev_dist = self.logged_min_block_distance
+						local cur_dist = log_block_distance
+						if cur_dist == prev_dist + 1 then
+							goto skip1
+						end
+						if cur_dist == prev_dist - 1 then
+							goto skip1
+						end
+						core.log("action", "block placed   " .. log_block_distance .. " 8x8 chunks away")
+						self.logged_min_block_distance = log_block_distance
+						::skip1::
+					end
+				end
+				if max_place_distance == nil or target_len < max_place_distance then
+					local next_place_nearest = target_len + (8 - target_len % 8) + 8
+					if max_place_distance ~= next_place_nearest then
+						local prev_dist = max_place_distance
+						local cur_dist = next_place_nearest
+						if prev_dist ~= nil and cur_dist == prev_dist + 1 then
+							goto skip2
+						end
+						if prev_dist ~= nil and cur_dist == prev_dist - 1 then
+							goto skip2
+						end
+						core.log("action", "place distance " .. (next_place_nearest - next_place_nearest % 8) / 8 .. " 8x8 chunks away")
+						max_place_distance = next_place_nearest
+						::skip2::
+					end
+				end
+				j = j + 1
+			end
+		end
+	end
+	self.min_block_distance = min_block_distance
+	self.max_place_distance = max_place_distance
+	if j <= 1 and not is_yaw_update_per_player_disabled[plr_name] then
+		local yaw_div
+		if min_block_distance ~= nil then
+			yaw_div = min_block_distance
+		else
+			yaw_div = LINE_LENGTH / 2
+		end
+		local yaw_speed = self.yaw_max / yaw_div
+		local s_yaw = self.scan_radians
+		local new_yaw = s_yaw + yaw_speed
+		self.scan_radians = new_yaw
+		if self.scan_radians > self.target_rad then
+			player:set_look_horizontal(self.target_rad + self.player_start_yaw)
+			is_yaw_update_per_player_disabled[plr_name] = true
+			self.scan_radians = 0
+			goto update_yaw
+		end
+		player:set_look_horizontal(self.scan_radians + self.player_start_yaw)
+		if vector.length(player:get_velocity()) > 0.3 then
+			is_yaw_update_per_player_disabled[plr_name] = true
+			goto update_yaw
+		end
+	end
+	::update_yaw::
+	last_yaw_per_player[plr_name] = yaw
+	if j <= 1 then
+		time_until_block_place = time_until_block_place + 1
+	else
+		if debug_log then
+			core.log("action", ("more than 1 block placed after %d steps"):format(time_until_block_place))
+		end
+		time_until_block_place = 0
+	end
+end
+---@param self FloorScanState
+function FloorScanState_mt:freshen()
+	self.fresh = true
+	self.player_start_yaw = nil
+	self.scan_radians = 0
+	self.logged_min_block_distance = 0
+	self.max_place_distance = nil
+	self.min_block_distance = nil
 end
 
-local debug_log = false
+local floor_filler = {}
+
+---@return FloorScanState
+function floor_filler.new()
+	---@class FloorScanState
+	local self = {}
+	self.max_place_distance = 3
+	self.scan_radians = 0
+	self.player_start_yaw = nil
+	self.logged_min_block_distance = 0
+	self.target_rad = math.rad(360)
+	self.yaw_max = math.rad(5)
+	self.min_block_distance = nil
+	return setmetatable(self, {
+		__index = FloorScanState_mt,
+	})
+end
+
 local max_place_distance_map = {}
 ---@type table<string, FloorScanState>
 local scan_state_map = {}
-local target_rad = math.rad(360)
-local yaw_max = math.rad(5)
 
 core.register_on_joinplayer(function(player)
 	local player_name = player:get_player_name()
-	scan_state_map[player_name] = scan_state_init.new()
+	scan_state_map[player_name] = floor_filler.new()
 end)
-local logged_min_block_distance = 0
 
 -- globalstep for vein_miner:auto_floor tool
 core.register_globalstep(function(dtime)
@@ -222,12 +371,7 @@ core.register_globalstep(function(dtime)
 			if not scan_state.fresh then
 				last_yaw_per_player[plr_name] = nil
 				is_yaw_update_per_player_disabled[plr_name] = false
-				scan_state.fresh = true
-				scan_state.player_start_yaw = nil
-				scan_state.scan_radians = 0
-				logged_min_block_distance = 0
-				scan_state.max_place_distance = nil
-				scan_state.min_block_distance = nil
+				scan_state.reset()
 			end
 			goto continue
 		end
@@ -236,129 +380,8 @@ core.register_globalstep(function(dtime)
 			scan_state.player_start_yaw = yaw
 		end
 
-		scan_state.fresh = false
+		scan_state:run(player, plr_name, yaw)
 
-		local pos = player:get_pos()
-		local dir = normalize(player:get_look_dir())
-		local front_dir = normalize(new_vec(dir.x, 0, dir.z)) * 3
-		local floor_pos = pos + front_dir + down
-		local node_below = get_node_or_nil(floor_pos)
-		if not node_below then
-			goto continue
-		end
-
-		local ctrl = player:get_player_control()
-		local config = player_config_mgr.data[plr_name]
-		local sound_info = sound_info_per_player[plr_name] or {}
-		sound_info.playing_sounds = {}
-
-		-- Place multiple floor blocks in a line in front of player
-		local base_pos = pos
-		local look_dir = player:get_look_dir()
-		local forward_dir = normalize(p(look_dir.x, 0, look_dir.z))
-
-		local line_start = round(base_pos + down + up / 2)
-		local max_blocks = config.blocks_per_tick
-		local j = 0
-		local placeable_node_name = nil
-		local inv = player:get_inventory()
-		for i = 1, inv:get_size("main") do
-			local stack = inv:get_stack("main", i)
-			local name = stack:get_name()
-			local def = registered_nodes[name]
-			if not placeable_nodes_to_skip[name] and def and name ~= "air" and not def.groups.falling_node then
-				placeable_node_name = def.name
-				break
-			end
-		end
-		local min_block_distance = scan_state.min_block_distance
-		local max_place_distance = scan_state.max_place_distance
-		for i = 1, LINE_LENGTH do
-			local target_offset = forward_dir * i
-			local target_len = target_offset:length()
-			if max_place_distance ~= nil and target_len > max_place_distance + 48 then
-				break
-			end
-			local target_pos = round(line_start + forward_dir * i)
-
-			local node_below = get_node(target_pos)
-			if is_passable(node_below) and is_supported(target_pos, placeable_node_name) then
-				if j >= max_blocks then
-					break
-				end
-				if try_place_block_from_inventory(player, sound_info, target_pos, LINE_LENGTH) then
-					if min_block_distance == nil or target_len < min_block_distance then
-						min_block_distance = target_len
-						local log_block_distance = (min_block_distance - min_block_distance % 8) / 8 + 2
-						if log_block_distance ~= logged_min_block_distance then
-							local prev_dist = logged_min_block_distance
-							local cur_dist = log_block_distance
-							if cur_dist == prev_dist + 1 then
-								goto skip1
-							end
-							if cur_dist == prev_dist - 1 then
-								goto skip1
-							end
-							core.log("action", "block placed   " .. log_block_distance .. " 8x8 chunks away")
-							logged_min_block_distance = log_block_distance
-							::skip1::
-						end
-					end
-					if max_place_distance == nil or target_len < max_place_distance then
-						local next_place_nearest = target_len + (8 - target_len % 8) + 8
-						if max_place_distance ~= next_place_nearest then
-							local prev_dist = max_place_distance
-							local cur_dist = next_place_nearest
-							if prev_dist ~= nil and cur_dist == prev_dist + 1 then
-								goto skip2
-							end
-							if prev_dist ~= nil and cur_dist == prev_dist - 1 then
-								goto skip2
-							end
-							core.log("action", "place distance " .. (next_place_nearest - next_place_nearest % 8) / 8 .. " 8x8 chunks away")
-							max_place_distance = next_place_nearest
-							::skip2::
-						end
-					end
-					j = j + 1
-				end
-			end
-		end
-		scan_state.min_block_distance = min_block_distance
-		scan_state.max_place_distance = max_place_distance
-		if j <= 1 and not is_yaw_update_per_player_disabled[plr_name] then
-			local yaw_div
-			if min_block_distance ~= nil then
-				yaw_div = min_block_distance
-			else
-				yaw_div = LINE_LENGTH / 2
-			end
-			local yaw_speed = yaw_max / yaw_div
-			local s_yaw = scan_state.scan_radians
-			local new_yaw = s_yaw + yaw_speed
-			scan_state.scan_radians = new_yaw
-			if scan_state.scan_radians > target_rad then
-				player:set_look_horizontal(target_rad + scan_state.player_start_yaw)
-				is_yaw_update_per_player_disabled[plr_name] = true
-				scan_state.scan_radians = 0
-				goto update_yaw
-			end
-			player:set_look_horizontal(scan_state.scan_radians + scan_state.player_start_yaw)
-			if vector.length(player:get_velocity()) > 0.3 then
-				is_yaw_update_per_player_disabled[plr_name] = true
-				goto update_yaw
-			end
-		end
-		::update_yaw::
-		last_yaw_per_player[plr_name] = yaw
-		if j <= 1 then
-			time_until_block_place = time_until_block_place + 1
-		else
-			if debug_log then
-				core.log("action", ("more than 1 block placed after %d steps"):format(time_until_block_place))
-			end
-			time_until_block_place = 0
-		end
 		::continue::
 	end
 	core.is_async = nil
