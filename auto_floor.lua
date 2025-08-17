@@ -234,6 +234,7 @@ function FloorScanState_mt:run(player, player_name, yaw)
 	end
 	local min_block_distance = self.min_block_distance
 	local max_place_distance = self.max_place_distance
+	local prev_max_place_distance = max_place_distance
 	for i = 1, LINE_LENGTH do
 		local target_offset = forward_dir * i
 		local target_len = target_offset:length()
@@ -261,26 +262,33 @@ function FloorScanState_mt:run(player, player_name, yaw)
 						if cur_dist <= prev_dist and cur_dist >= prev_dist - 1 then
 							goto skip1
 						end
-						self.logged_min_block_distance = log_block_distance
+						self.log_min_block_distance = log_block_distance
+						self.show_log_min = true
 						::skip1::
 					end
 				end
 				if max_place_distance == nil or target_len < max_place_distance then
 					local next_place_nearest = target_len + (8 - target_len % 8) + 8
 					if max_place_distance ~= next_place_nearest then
-						local prev_dist = max_place_distance
-						local cur_dist = next_place_nearest
-						if prev_dist ~= nil and cur_dist >= prev_dist and cur_dist <= prev_dist + 8 then
+						if not max_place_distance then
 							goto skip2
 						end
-						if prev_dist ~= nil and cur_dist >= prev_dist - 8 and cur_dist <= prev_dist then
+						local prev_dist = (max_place_distance - max_place_distance % 8) / 8
+						local cur_dist = (next_place_nearest - next_place_nearest % 8) / 8
+						if cur_dist >= prev_dist and cur_dist <= prev_dist + 1 then
 							goto skip2
 						end
-						local log_max_dist = (next_place_nearest - next_place_nearest % 8) / 8
-						core.log("action", fmt_place_distance:format(self.logged_min_block_distance, log_max_dist))
+						if cur_dist >= prev_dist - 1 and cur_dist <= prev_dist then
+							goto skip2
+						end
+						self.log_max_block_distance = cur_dist
+						self.show_log_max = true
 						::skip2::
 						max_place_distance = next_place_nearest
 					end
+				end
+				if self.show_log_min and self.show_log_max then
+					core.log("action", fmt_place_distance:format(self.log_min_block_distance, self.log_max_block_distance))
 				end
 				j = j + 1
 			end
