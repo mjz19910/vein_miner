@@ -234,9 +234,9 @@ function FloorScanState_mt:run(player, player_name, yaw)
 	for i = 1, LINE_LENGTH do
 		local target_offset = forward_dir * i
 		local target_len = target_offset:length()
-		if max_place_distance ~= nil and target_len > max_place_distance + 48 then
-			break
-		end
+		-- if max_place_distance ~= nil and target_len > max_place_distance + 48 then
+		-- 	break
+		-- end
 		local target_pos = round(line_start + forward_dir * i)
 
 		local node_below = get_node(target_pos)
@@ -267,15 +267,17 @@ function FloorScanState_mt:run(player, player_name, yaw)
 					if max_place_distance ~= next_place_nearest then
 						local prev_dist = max_place_distance
 						local cur_dist = next_place_nearest
-						if prev_dist ~= nil and cur_dist == prev_dist + 1 then
+						if prev_dist ~= nil and cur_dist > prev_dist and cur_dist < prev_dist + 8 then
+							core.log("action", "place distance(+1) " .. (next_place_nearest - next_place_nearest % 8) / 8 .. " 8x8 chunks away")
 							goto skip2
 						end
-						if prev_dist ~= nil and cur_dist == prev_dist - 1 then
+						if prev_dist ~= nil and cur_dist > prev_dist - 8 and cur_dist < prev_dist then
+							core.log("action", "place distance(-1) " .. (next_place_nearest - next_place_nearest % 8) / 8 .. " 8x8 chunks away")
 							goto skip2
 						end
 						core.log("action", "place distance " .. (next_place_nearest - next_place_nearest % 8) / 8 .. " 8x8 chunks away")
-						max_place_distance = next_place_nearest
 						::skip2::
+						max_place_distance = next_place_nearest
 					end
 				end
 				j = j + 1
