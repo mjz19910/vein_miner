@@ -180,6 +180,7 @@ function scan_state.new()
 	local self = {}
 	self.max_place_distance = 3
 	self.scan_radians = 0
+	return self
 end
 
 local debug_log = false
