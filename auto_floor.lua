@@ -289,6 +289,8 @@ function FloorScanState_mt:run(player, player_name, yaw)
 				end
 				if self.show_log_min and self.show_log_max then
 					core.log("action", fmt_place_distance:format(self.log_min_block_distance, self.log_max_block_distance))
+					self.show_log_min = false
+					self.show_log_max = false
 				end
 				j = j + 1
 			end
