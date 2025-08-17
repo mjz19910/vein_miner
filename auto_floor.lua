@@ -319,7 +319,7 @@ function FloorScanState_mt:run(player, player_name, yaw)
 	end
 end
 ---@param self FloorScanState
-function FloorScanState_mt:freshen()
+function FloorScanState_mt:reset()
 	self.fresh = true
 	self.player_start_yaw = nil
 	self.scan_radians = 0
