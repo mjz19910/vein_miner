@@ -344,6 +344,7 @@ function floor_filler.new()
 	self.logged_min_block_distance = 0
 	self.max_place_distance = nil
 	self.min_block_distance = nil
+	self.fresh = true
 	return setmetatable(self, {
 		__index = FloorScanState_mt,
 	})
