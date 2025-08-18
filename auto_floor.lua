@@ -123,7 +123,7 @@ local function make_set(table, init)
 	return ret
 end
 
-local placeable_nodes_to_skip = make_set({"default:jungletree"}, true)
+local placeable_nodes_to_skip = make_set({"default:jungletree", "digtron:light"}, true)
 
 local LINE_LENGTH = 256
 ---@class SoundInfo
