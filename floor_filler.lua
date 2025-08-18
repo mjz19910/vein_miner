@@ -381,7 +381,7 @@ function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 	if self.blocks_this_tick ~= 0 or self.yaw_update_disabled then return end
 	local yaw_speed
 	if self.min_dist and self.max_dist then
-		yaw_speed = yaw_for_arc(self.min_dist * (2 ^ 0.5) + 4) / 2
+		yaw_speed = yaw_for_arc(self.max_dist * (2 ^ 0.5) + 4) / 2
 	else
 		yaw_speed = yaw_for_arc(LINE_LENGTH * (2 ^ 0.5) + 4) / 2
 	end
