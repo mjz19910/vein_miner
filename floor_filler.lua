@@ -39,6 +39,7 @@ local down = new_vec(0, -1, 0)
 local player_config_mgr = vein_miner.player_config_mgr
 assert(player_config_mgr, "need vein_miner.player_config_mgr")
 
+---@class FloorFiller
 local floor_filler = {}
 
 local placeable_nodes_to_skip = h.make_set({"default:jungletree", "digtron:light"}, true)
@@ -135,7 +136,7 @@ local FloorScanState = {}
 
 ---@param self FloorScanState
 function FloorScanState:reset()
-	self.fresh = true
+	self.active = false
 	self.count = 0
 	self.player_start_yaw = nil
 	self.scan_radians = 0
@@ -152,6 +153,7 @@ function FloorScanState:reset()
 	self.all_blocks_placed = 0
 end
 
+---@param self FloorScanState
 ---@param pos Vector
 function FloorScanState:leave_floor_scan(pos)
 	if self.blocks_placed > 0 then
@@ -160,6 +162,7 @@ function FloorScanState:leave_floor_scan(pos)
 	if self.all_blocks_placed > 0 then
 		core.log("action", "finished placing floor " .. self.all_blocks_placed .. " blocks placed from center " .. core.pos_to_string(pos))
 	end
+	self.should_leave = false
 end
 
 local time_until_block_place = 0
@@ -177,6 +180,7 @@ local function rad_to_deg_wrap360(rad)
 	return deg
 end
 --- Update the minimum placement distance and maybe schedule a log
+---@param self FloorScanState
 ---@param dist number
 function FloorScanState:_update_min_dist(dist)
 	if not self.min_dist or dist < self.min_dist then
@@ -202,6 +206,7 @@ function FloorScanState:_update_max_dist(dist)
 end
 
 --- Log the current min/max block distance if needed
+---@param self FloorScanState
 function FloorScanState:_maybe_log_block_distance()
 	if not self.log_min or not self.log_max then
 		return
@@ -220,13 +225,34 @@ function FloorScanState:_maybe_log_block_distance()
 end
 
 ---@param self FloorScanState
-function FloorScanState:run(player)
+function FloorScanState:_mark_active()
 	-- Mark scan state as active
-	self.fresh = false
+	self.active = true
+end
+---@param self FloorScanState
+function FloorScanState:deactivate_tool()
+	if not self.should_leave then
+		-- Reset scan state when stopping
+		self:leave_floor_scan(round(self.player:get_pos()))
+	end
+end
+---@param self FloorScanState
+function FloorScanState:run()
+	-- Skip if player is not holding the auto-floor tool
+	local wielded = self.player:get_wielded_item():get_name()
+	if wielded ~= "vein_miner:auto_floor" then
+		self:deactivate_tool()
+		if self.active then
+			self:reset()
+		end
+		return
+	end
+
+	self:_mark_active()
 
 	-- Initialize player yaw if not already set
 	if self.player_start_yaw == nil then
-		local yaw = player:get_look_horizontal()
+		local yaw = self.player:get_look_horizontal()
 		-- protect against NaN
 		if yaw ~= yaw then
 			yaw = 0
@@ -235,6 +261,7 @@ function FloorScanState:run(player)
 	end
 
 	-- Get player info
+	local player = self.player
 	local yaw = player:get_look_horizontal()
 
 	-- Positioning and direction
@@ -271,7 +298,9 @@ function FloorScanState:run(player)
 	local max_blocks = config.blocks_per_tick
 	for i = 1, LINE_LENGTH do
 		local dist = (forward_dir * i):length()
-		if self.min_dist and dist > self.min_dist + 8 then break end
+		if self.min_dist and dist > self.min_dist + 8 then
+			break
+		end
 		local target_pos = round(line_start + forward_dir * i)
 		local node_below = get_node(target_pos)
 		if is_passable(node_below) and is_supported(target_pos, placeable_node_name) then
@@ -279,6 +308,7 @@ function FloorScanState:run(player)
 				break
 			end
 			if try_place_block_from_inventory(player, sound_info, target_pos, LINE_LENGTH) then
+				self.should_leave = true
 				self:_update_min_dist(dist)
 				self:_update_max_dist(dist)
 				if self.show_log then
@@ -369,11 +399,13 @@ function FloorScanState:_maybe_update_yaw(player, yaw, ctrl, blocks_this_tick)
 	if vector.length(player:get_velocity()) > 0.05 then
 		self.yaw_update_disabled = true
 		self.count = 0
+		self:deactivate_tool()
 	end
 end
 
+---@param player Player
 ---@return FloorScanState
-function floor_filler.new()
+function floor_filler.new(player)
 	---@class FloorScanState
 	---@field playing_sounds table<string, boolean>
 	--- player yaw vars
@@ -385,6 +417,7 @@ function floor_filler.new()
 	---@field min_dist number|nil
 	---@field max_dist number|nil
 	local self = {
+		player = player,
 		playing_sounds = {},
 		-- generic
 		fresh = true,

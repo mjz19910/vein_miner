@@ -39,6 +39,7 @@ core.register_tool("vein_miner:auto_floor", {
 	inventory_image = "default_wood.png",
 })
 
+---@type FloorFiller
 local floor_filler = require("mods.vein_miner.floor_filler")
 
 ---@type table<string, FloorScanState>
@@ -46,7 +47,7 @@ local scan_state_map = {}
 
 core.register_on_joinplayer(function(player)
 	local player_name = player:get_player_name()
-	scan_state_map[player_name] = floor_filler.new()
+	scan_state_map[player_name] = floor_filler.new(player)
 end)
 
 core.register_on_leaveplayer(function(player)
@@ -60,22 +61,7 @@ core.register_globalstep(function(dtime)
 
 	for _, player in ipairs(get_connected_players()) do
 		local plr_name = player:get_player_name()
-		local scan_state = scan_state_map[plr_name]
-
-		-- Skip if player is not holding the auto-floor tool
-		local wielded = player:get_wielded_item():get_name()
-		if wielded ~= "vein_miner:auto_floor" then
-			if not scan_state.fresh then
-				-- Reset scan state when stopping
-				scan_state:leave_floor_scan(round(player:get_pos()))
-				scan_state:reset()
-			end
-			goto continue
-		end
-
-		scan_state:run(player)
-
-		::continue::
+		scan_state_map[plr_name]:run()
 	end
 
 	core.is_async = nil
