@@ -258,6 +258,10 @@ function FloorScanState:on_node_placed(target_pos, dist)
 		self:_maybe_log_block_distance()
 	end
 	if self.blocks_this_tick == 0 and self.blocks_placed == 0 then
+		local t = self.log_range
+		if self.count >= t.min and self.count < t.max then
+			core.log("action", "count " .. self.count)
+		end
 		if self.count >= 400 then
 			core.log("action", ("started placing floor after %d steps at %s"):format(self.count, core.pos_to_string(target_pos)))
 		end
@@ -389,11 +393,6 @@ end
 function FloorScanState:_update_counters(player_name)
 	-- no blocks placed: increment timer
 	if self.blocks_this_tick > 0 then
-		local t = self.log_range
-		if self.count >= t.min and self.count < t.max then
-			core.log("action", "count " .. self.count)
-		end
-
 		-- Reset count
 		self.count = 0
 
