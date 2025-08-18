@@ -189,9 +189,10 @@ local debug_log = false
 
 local FloorScanState_mt = {}
 
-local fmt_place_distance_vec2 = "place distance %s (%s,%s) 8x8 chunks away"
-local fmt_place_distance_unit_min = "place distance (%s,--) 8x8 chunks away"
-local fmt_place_distance_unit_max = "place distance (--,%s) 8x8 chunks away"
+local function log_place_distance(params)
+	local fmt = "place distance %s (%s,%s) 8x8 chunks away deg=%.1f"
+	core.log("action", fmt:format(params.tag, params.min, params.max, params.deg))
+end
 
 local floor_filler = {}
 
@@ -303,7 +304,12 @@ function floor_filler.new()
 							self.show_log_min = true
 							self.log_max_block_distance = max
 							self.log_min_block_distance = min
-							core.log("action", fmt_place_distance_vec2:format("min ", self.log_min_block_distance, self.log_max_block_distance))
+							log_place_distance({
+								tag = "min ",
+								min = min,
+								max = max,
+								deg = math.deg(self.scan_radians + self.player_start_yaw),
+							})
 							::skip1::
 						end
 					end
@@ -332,14 +338,24 @@ function floor_filler.new()
 							self.show_log_max = true
 							self.log_max_block_distance = max
 							self.log_min_block_distance = min
-							core.log("action", fmt_place_distance_vec2:format("max ", self.log_min_block_distance, self.log_max_block_distance))
+							log_place_distance({
+								tag = "max ",
+								min = min,
+								max = max,
+								deg = math.deg(self.scan_radians + self.player_start_yaw),
+							})
 							::skip2::
 						end
 					end
 					if self.show_log_min and self.show_log_max then
 						local cur_pos = vector.new(self.log_min_block_distance, self.log_max_block_distance, 0)
 						if self.last_pos == nil or cur_pos ~= self.last_pos then
-							core.log("action", fmt_place_distance_vec2:format("both", self.log_min_block_distance, self.log_max_block_distance))
+							log_place_distance({
+								tag = "both",
+								min = self.log_min_block_distance,
+								max = self.log_max_block_distance,
+								deg = math.deg(self.scan_radians + self.player_start_yaw),
+							})
 							self.show_log_min = false
 							self.show_log_max = false
 							self.last_pos = cur_pos
