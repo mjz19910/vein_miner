@@ -185,8 +185,6 @@ local function is_passable(node)
 	return def and def.walkable == false
 end
 
-local debug_log = true
-
 local FloorScanState_mt = {}
 
 ---@param rad number
@@ -370,9 +368,13 @@ function floor_filler.new()
 							self.last_pos = cur_pos
 						end
 					end
-					if time_until_block_place > 500 and self.count > 500 and j == 0 and self.blocks_placed == 0 then
-						core.log("action", "started placing floor " .. core.pos_to_string(target_pos))
-						core.log("action", "start_place_floor time_until_block_place " .. time_until_block_place .. " count " .. self.count)
+					if j == 0 and self.blocks_placed == 0 then
+						local a, b = time_until_block_place, self.count
+						if a > 500 and b > 500 then
+							core.log("action", "started placing floor " .. core.pos_to_string(target_pos))
+						elseif a > 400 and a < 500 and b > 400 and b < 500 then
+							core.log("action", "group1 time_until_block_place " .. time_until_block_place .. " count " .. self.count)
+						end
 					end
 					j = j + 1
 					self.blocks_placed = self.blocks_placed + 1
@@ -416,15 +418,17 @@ function floor_filler.new()
 		if j <= 1 then
 			time_until_block_place = time_until_block_place + 1
 		else
-			if time_until_block_place > 500 and self.count > 500 and debug_log then
-				core.log("action", ("more than 1 block placed after %d steps"):format(time_until_block_place))
-				core.log("action", "more_floor_placed time_until_block_place " .. time_until_block_place .. " count " .. self.count)
+			local a, b = time_until_block_place, self.count
+			if a > 500 and b > 500 then
+				core.log("action", ("more than 1 block placed after %d steps"):format(a))
+			elseif a > 400 and a < 500 and b > 400 and b < 500 then
+				core.log("action", "group1 time_until_block_place " .. a .. " count " .. b)
 			end
 			time_until_block_place = 0
-			-- if self.count > 30 and self.scan_radians > self.req_next_reset_scan_radians then
-			-- 	self.req_next_reset_scan_radians = self.scan_radians + 0.01 * 3
-			-- 	self.scan_radians = self.scan_radians - self.yaw_max / 4
-			-- end
+			if false and self.count > 30 and self.scan_radians > self.req_next_reset_scan_radians then
+				self.req_next_reset_scan_radians = self.scan_radians + 0.01 * 3
+				self.scan_radians = self.scan_radians - self.yaw_max / 4
+			end
 			self.count = math.floor(self.count / 2)
 			self.all_blocks_placed = self.all_blocks_placed + self.blocks_placed
 			self.blocks_placed = 0
