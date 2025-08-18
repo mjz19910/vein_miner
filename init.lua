@@ -1083,3 +1083,4 @@ require("mods.vein_miner.auto_floor")
 -- load the tools module
 require("mods.vein_miner.tools")
 require("mods.vein_miner.abm")
+require("mods.vein_miner.src.mod")

@@ -10,7 +10,6 @@ local new_vec = vector.new
 
 ---@type VeinMinerGlobal
 local vein_miner = vein_miner
-
 local voxel_util = vein_miner.voxel_util
 
 local dirt = {
@@ -369,6 +368,4 @@ CFG.SUPPORT_DIRS = support_dirs
 ---@type Vector[]
 local vertical_offsets = {down, new_vec(0, 0, 0), up, up * 2}
 CFG.VERTICAL_OFFSETS = vertical_offsets
-
 return CFG
-
