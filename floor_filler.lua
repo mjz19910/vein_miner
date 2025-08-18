@@ -145,7 +145,7 @@ end
 local FloorScanState = {
 	-- player yaw constants
 	yaw_max = math.rad(6),
-	target_rad = math.rad(180),
+	target_rad = math.rad(90),
 }
 
 ---@param self FloorScanState
