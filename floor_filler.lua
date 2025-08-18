@@ -130,7 +130,7 @@ local DISTANCE_INCREASE = 1 * 8
 ---@field blocks_this_tick integer Number of blocks placed this tick
 local FloorScanState = {
 	-- player yaw constants
-	target_rad = math.rad(360),
+	target_rad = math.rad(360) * 3,
 }
 
 ---@param self FloorScanState
@@ -204,7 +204,7 @@ function FloorScanState:_maybe_log_block_distance()
 			min = cur_pos.x,
 			max = cur_pos.y,
 			size = 8,
-			deg = rad_to_deg_wrap360((self.scan_radians or 0) + (self.player_start_yaw or 0)),
+			deg = math.deg((self.scan_radians or 0) + (self.player_start_yaw or 0)),
 		})
 		self.show_log = false
 		self.last_pos = cur_pos
