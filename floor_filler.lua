@@ -2,6 +2,8 @@ local LINE_LENGTH = 256
 
 local assert = assert
 
+local setmetatable = setmetatable
+
 -- localize table iterators
 local ipairs = ipairs
 
@@ -9,6 +11,7 @@ local math = math
 local vector = vector
 
 local new_vec = vector.new
+local p = new_vec
 local normalize = vector.normalize
 local round = vector.round
 
@@ -42,6 +45,8 @@ local placeable_nodes_to_skip = h.make_set({"default:jungletree", "digtron:light
 
 local support_dirs = vein_miner.CFG.SUPPORT_DIRS
 local vertical_offsets = vein_miner.CFG.VERTICAL_OFFSETS
+
+local sound_info_per_player = {}
 
 ---@param player Player
 ---@param playing_sounds SoundInfo
@@ -125,6 +130,176 @@ local function is_supported(pos, invalid_support_name)
 	return false
 end
 
+---@type FloorScanState
+local FloorScanState = {}
+
+---@param self FloorScanState
+function FloorScanState:reset()
+	self.fresh = true
+	self.count = 0
+	self.player_start_yaw = nil
+	self.scan_radians = 0
+	self.req_next_reset_scan_radians = 0
+	self.yaw_update_disabled = false
+	self.last_yaw = nil
+	self.show_log = false
+	self.log_min = nil
+	self.log_max = nil
+	self.min_dist = nil
+	self.max_dist = nil
+	self.last_pos = vector.new(0, -1, 0)
+	self.blocks_placed = 0
+	self.all_blocks_placed = 0
+end
+
+---@param pos Vector
+function FloorScanState:leave(pos)
+	if self.blocks_placed > 0 then
+		self.all_blocks_placed = self.all_blocks_placed + self.blocks_placed
+	end
+	if self.all_blocks_placed > 0 then
+		core.log("action", "finished placing floor " .. self.all_blocks_placed .. " blocks placed from center " .. core.pos_to_string(pos))
+	end
+end
+
+local time_until_block_place = 0
+
+local block_dist_fmt = "distance (%s,%s) 8x8 chunks away at %.1f°"
+
+local function log_block_distance(v) core.log("action", block_dist_fmt:format(v.pos.x, v.pos.y, v.deg)) end
+
+---@param rad number
+local function rad_to_deg_wrap360(rad)
+	local deg = math.deg(rad) % 360
+	if deg < 0 then
+		deg = deg + 360
+	end
+	return deg
+end
+--- Update the minimum placement distance and maybe schedule a log
+---@param dist number
+function FloorScanState:_update_min_dist(dist)
+	if not self.min_dist or dist < self.min_dist then
+		if self.min_dist and self.log_min ~= dist then
+			self.log_min = dist
+			self.show_log = true
+		end
+		self.min_dist = dist
+	end
+end
+
+--- Update the maximum placement distance and maybe schedule a log
+---@param self FloorScanState
+---@param dist number
+function FloorScanState:_update_max_dist(dist)
+	if not self.max_dist or dist > self.max_dist then
+		if self.max_dist and self.log_max ~= dist then
+			self.log_max = dist
+			self.show_log = true
+		end
+		self.max_dist = dist
+	end
+end
+
+---@param self FloorScanState
+function FloorScanState:run(player)
+	-- Mark scan state as active
+	self.fresh = false
+
+	-- Get player info
+	local player_name = player:get_player_name()
+	local yaw = player:get_look_horizontal()
+
+	-- Reset invalid yaw (NaN)
+	if yaw ~= yaw then
+		player:set_look_horizontal(0)
+		yaw = 0
+	end
+
+	-- Initialize player yaw tracking
+	if self.player_start_yaw == nil then
+		self.player_start_yaw = yaw
+	end
+
+	-- Positioning and direction
+	local pos = player:get_pos()
+	local look_dir = player:get_look_dir()
+	local forward_dir = normalize(vector.new(look_dir.x, 0, look_dir.z))
+
+	-- Start position for the block line
+	local line_start = round(pos + down + up / 2)
+
+	-- Player config + controls
+	local ctrl = player:get_player_control()
+	local config = player_config_mgr.data[player_name]
+
+	-- Sound state
+	local sound_info = sound_info_per_player[player_name] or {}
+	sound_info.playing_sounds = {}
+
+	-- Inventory scan: find a valid node to place
+	-- so we can ignore support provided by this node
+	local placeable_node_name = nil
+	local inv = player:get_inventory()
+	for i = 1, inv:get_size("main") do
+		local stack = inv:get_stack("main", i)
+		local name = stack:get_name()
+		local def = registered_nodes[name]
+		if not placeable_nodes_to_skip[name] and def and name ~= "air" and not def.groups.falling_node then
+			placeable_node_name = def.name
+			break
+		end
+	end
+
+	local max_blocks = config.blocks_per_tick
+	local blocks_this_tick = 0
+
+	for i = 1, LINE_LENGTH do
+		local line_end = forward_dir * i
+		local line_length = line_end:length()
+
+		-- stop if too far
+		if self.min_dist and line_length > self.min_dist + 8 then
+			break
+		end
+
+		local target_pos = round(line_start + forward_dir * i)
+		local node_below = get_node(target_pos)
+
+		if is_passable(node_below) and is_supported(target_pos, placeable_node_name) then
+			if blocks_this_tick >= max_blocks then
+				break
+			end
+
+			-- Try to place
+			if try_place_block_from_inventory(player, sound_info, target_pos, LINE_LENGTH) then
+				-- update min/max placement distances for logging
+				local dist = line_length - line_length % 8 + 8
+				self:_update_min_dist(dist)
+				self:_update_max_dist(dist)
+
+				-- maybe log distance interval (only if changed)
+				if self.show_log then
+					self:_maybe_log_block_distance()
+				end
+
+				-- Log first block placed
+				if blocks_this_tick == 0 and self.blocks_placed == 0 then
+					self:_log_first_block_placed(target_pos)
+				end
+
+				blocks_this_tick = blocks_this_tick + 1
+				self.blocks_placed = self.blocks_placed + 1
+			end
+		end
+	end
+
+	-- Handle yaw rotation if few blocks placed
+	self:_maybe_update_yaw(player, yaw, ctrl, blocks_this_tick)
+
+	-- Handle timers + counters
+	self:_update_counters(blocks_this_tick, player_name, yaw)
+end
 ---@return FloorScanState
 function floor_filler.new()
 	---@class FloorScanState
@@ -147,7 +322,6 @@ function floor_filler.new()
 		target_rad = math.rad(360),
 		-- player yaw vars
 		player_start_yaw = nil,
-		has_player_yaw = false,
 		scan_radians = 0,
 		req_next_reset_scan_radians = 0,
 		yaw_update_disabled = false, -- replaces global table
@@ -163,144 +337,9 @@ function floor_filler.new()
 		all_blocks_placed = 0,
 	}
 
-	---@param self FloorScanState
-	function ret:reset()
-		self.fresh = true
-		self.count = 0
-		self.player_start_yaw = nil
-		self.has_player_yaw = false
-		self.scan_radians = 0
-		self.req_next_reset_scan_radians = 0
-		self.yaw_update_disabled = false
-		self.last_yaw = nil
-		self.show_log = false
-		self.log_min = nil
-		self.log_max = nil
-		self.min_dist = nil
-		self.max_dist = nil
-		self.last_pos = vector.new(0, -1, 0)
-		self.blocks_placed = 0
-		self.all_blocks_placed = 0
-	end
-
-	---@param pos Vector
-	function ret:leave(pos)
-		if self.blocks_placed > 0 then
-			self.all_blocks_placed = self.all_blocks_placed + self.blocks_placed
-		end
-		if self.all_blocks_placed > 0 then
-			core.log("action", "finished placing floor " .. self.all_blocks_placed .. " blocks placed from center " .. core.pos_to_string(pos))
-		end
-	end
-
-	---@param self FloorScanState
-	---@param player Player
-	function ret:run(player)
-		local plr_name = player:get_player_name()
-
-		-- tool check
-		local wielded = player:get_wielded_item():get_name()
-		if wielded ~= "vein_miner:auto_floor" then
-			if not self.fresh then
-				self.yaw_update_disabled = false
-				self.last_yaw = nil
-				self:leave(player:get_pos())
-				self:reset()
-			end
-			return
-		end
-
-		-- normalize yaw
-		local yaw = player:get_look_horizontal()
-		if yaw ~= yaw then -- NaN check
-			player:set_look_horizontal(0)
-			yaw = 0
-		end
-
-		-- first-time init
-		if not self.has_player_yaw then
-			self.player_start_yaw = yaw
-			self.has_player_yaw = true
-		end
-
-		-- main scanning logic
-		self:_do_scan(player, yaw)
-	end
-
-	-- private: scanning & placement logic
-	function ret:_do_scan(player, yaw)
-		local plr_name = player:get_player_name()
-		self.fresh = false
-
-		local pos = player:get_pos()
-		local dir = normalize(player:get_look_dir())
-		local front_dir = normalize(new_vec(dir.x, 0, dir.z)) * 3
-		local floor_pos = pos + front_dir + down
-		if not get_node_or_nil(floor_pos) then
-			return
-		end
-
-		local ctrl = player:get_player_control()
-		local config = player_config_mgr.data[plr_name]
-		local playing_sounds = self.playing_sounds
-
-		-- find a placeable node
-		local inv = player:get_inventory()
-		local placeable_node_name
-		for i = 1, inv:get_size("main") do
-			local stack = inv:get_stack("main", i)
-			local name = stack:get_name()
-			local def = registered_nodes[name]
-			if not placeable_nodes_to_skip[name] and def and name ~= "air" and not def.groups.falling_node then
-				placeable_node_name = def.name
-				break
-			end
-		end
-
-		local base_pos = pos
-		local forward_dir = normalize(new_vec(dir.x, 0, dir.z))
-		local line_start = round(base_pos + down + up / 2)
-		local max_blocks = config.blocks_per_tick
-
-		local blocks_this_tick = 0
-
-		for i = 1, LINE_LENGTH do
-			local target_pos = round(line_start + forward_dir * i)
-			local len = (forward_dir * i):length()
-
-			if self.min_dist and len > self.min_dist + 8 then
-				break
-			end
-
-			local node_below = get_node(target_pos)
-			if is_passable(node_below) and is_supported(target_pos, placeable_node_name) then
-				if blocks_this_tick >= max_blocks then
-					break
-				end
-
-				if try_place_block_from_inventory(placeable_nodes_to_skip, player, playing_sounds, target_pos, LINE_LENGTH) then
-					blocks_this_tick = blocks_this_tick + 1
-					self.blocks_placed = self.blocks_placed + 1
-
-					local dist = len - len % 8 + 8
-					self:_update_min_log(dist)
-					self:_update_max_log(dist)
-					self:_log_positions()
-
-					if blocks_this_tick == 1 and self.blocks_placed == 1 then
-						self:_log_first_block(target_pos)
-					end
-				end
-			end
-		end
-
-		if blocks_this_tick <= 1 and not self.yaw_update_disabled then
-			self:_update_yaw(player, ctrl, blocks_this_tick)
-		end
-
-		self.last_yaw = yaw
-		self:_finalize_tick(blocks_this_tick)
-	end
+	setmetatable(ret, {
+		__index = FloorScanState,
+	})
 
 	-- initialize state
 	ret:reset()

@@ -39,19 +39,6 @@ core.register_tool("vein_miner:auto_floor", {
 	inventory_image = "default_wood.png",
 })
 
----@param rad number
-local function rad_to_deg_wrap360(rad)
-	local deg = math.deg(rad) % 360
-	if deg < 0 then
-		deg = deg + 360
-	end
-	return deg
-end
-
-local block_dist_fmt = "distance (%s,%s) 8x8 chunks away at %.1f°"
-
-local function log_block_distance(v) core.log("action", block_dist_fmt:format(v.pos.x, v.pos.y, v.deg)) end
-
 local floor_filler = require("mods.vein_miner.floor_filler")
 
 ---@type table<string, FloorScanState>
