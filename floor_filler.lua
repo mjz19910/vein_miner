@@ -211,11 +211,6 @@ function FloorScanState:_maybe_log_block_distance()
 	end
 end
 
----@param self FloorScanState
-function FloorScanState:_mark_active()
-	-- Mark scan state as active
-	self.active = true
-end
 local deactivate_fmt = "finished placing floor %d blocks placed from center %s"
 ---@param self FloorScanState
 function FloorScanState:deactivate_tool()
@@ -308,7 +303,7 @@ function FloorScanState:run()
 		self.player_start_yaw = yaw
 	end
 
-	self:_mark_active()
+	self.active = true
 
 	-- Positioning and direction
 	local look_dir = player:get_look_dir()
