@@ -371,7 +371,7 @@ function FloorScanState:run()
 			return false
 		end
 		local dist = (forward_dir * i):length()
-		if self.max_dist and dist > self.max_dist + 2 then
+		if self.max_dist and dist > self.max_dist + 2 * 8 then
 			break
 		end
 		local target_pos = round(line_start + forward_dir * i)
