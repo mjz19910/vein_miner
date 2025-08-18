@@ -266,7 +266,7 @@ function floor_filler.new()
 		for i = 1, LINE_LENGTH do
 			local target_offset = forward_dir * i
 			local target_len = target_offset:length()
-			if min_block_distance ~= nil and target_len > min_block_distance + 3 * 8 then
+			if min_block_distance ~= nil and target_len > min_block_distance then
 				break
 			end
 			local target_pos = round(line_start + forward_dir * i)
@@ -354,10 +354,10 @@ function floor_filler.new()
 		if j <= 1 and not is_yaw_update_per_player_disabled[plr_name] then
 			local yaw_div
 			local log_base = 1 + 0.7 * math.pow(0.95, 1)
-			if max_block_distance ~= nil then
-				yaw_div = (max_block_distance + 1) * 8 / math.log(self.count + log_base, log_base)
+			if min_block_distance ~= nil then
+				yaw_div = (min_block_distance + 1) * 8 / math.log(self.count + log_base, log_base)
 			else
-				yaw_div = LINE_LENGTH * 8 / math.log(self.count + log_base, log_base)
+				yaw_div = (LINE_LENGTH + 1) * 8 / math.log(self.count + log_base, log_base)
 			end
 			local yaw_speed = self.yaw_max / yaw_div
 			local s_yaw = self.scan_radians
