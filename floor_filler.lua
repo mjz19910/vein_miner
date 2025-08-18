@@ -206,35 +206,32 @@ function FloorScanState:run(player)
 	-- Mark scan state as active
 	self.fresh = false
 
-	-- Get player info
-	local player_name = player:get_player_name()
-	local yaw = player:get_look_horizontal()
-
-	-- Reset invalid yaw (NaN)
-	if yaw ~= yaw then
-		player:set_look_horizontal(0)
-		yaw = 0
-	end
-
-	-- Initialize player yaw tracking
+	-- Initialize player yaw if not already set
 	if self.player_start_yaw == nil then
+		local yaw = player:get_look_horizontal()
+		-- protect against NaN
+		if yaw ~= yaw then
+			yaw = 0
+		end
 		self.player_start_yaw = yaw
 	end
+
+	-- Get player info
+	local yaw = player:get_look_horizontal()
 
 	-- Positioning and direction
 	local pos = player:get_pos()
 	local look_dir = player:get_look_dir()
 	local forward_dir = normalize(vector.new(look_dir.x, 0, look_dir.z))
-
-	-- Start position for the block line
 	local line_start = round(pos + down + up / 2)
 
 	-- Player config + controls
+	local plr_name = player:get_player_name()
 	local ctrl = player:get_player_control()
-	local config = player_config_mgr.data[player_name]
+	local config = player_config_mgr.data[plr_name]
 
 	-- Sound state
-	local sound_info = sound_info_per_player[player_name] or {}
+	local sound_info = sound_info_per_player[plr_name] or {}
 	sound_info.playing_sounds = {}
 
 	-- Inventory scan: find a valid node to place
@@ -251,43 +248,23 @@ function FloorScanState:run(player)
 		end
 	end
 
-	local max_blocks = config.blocks_per_tick
+	-- Place blocks, update min/max distances, maybe log
 	local blocks_this_tick = 0
-
+	local max_blocks = config.blocks_per_tick
 	for i = 1, LINE_LENGTH do
-		local line_end = forward_dir * i
-		local line_length = line_end:length()
-
-		-- stop if too far
-		if self.min_dist and line_length > self.min_dist + 8 then
-			break
-		end
-
 		local target_pos = round(line_start + forward_dir * i)
 		local node_below = get_node(target_pos)
-
 		if is_passable(node_below) and is_supported(target_pos, placeable_node_name) then
 			if blocks_this_tick >= max_blocks then
 				break
 			end
-
-			-- Try to place
 			if try_place_block_from_inventory(player, sound_info, target_pos, LINE_LENGTH) then
-				-- update min/max placement distances for logging
-				local dist = line_length - line_length % 8 + 8
+				local dist = (forward_dir * i):length()
 				self:_update_min_dist(dist)
 				self:_update_max_dist(dist)
-
-				-- maybe log distance interval (only if changed)
 				if self.show_log then
 					self:_maybe_log_block_distance()
 				end
-
-				-- Log first block placed
-				if blocks_this_tick == 0 and self.blocks_placed == 0 then
-					self:_log_first_block_placed(target_pos)
-				end
-
 				blocks_this_tick = blocks_this_tick + 1
 				self.blocks_placed = self.blocks_placed + 1
 			end
@@ -298,7 +275,7 @@ function FloorScanState:run(player)
 	self:_maybe_update_yaw(player, yaw, ctrl, blocks_this_tick)
 
 	-- Handle timers + counters
-	self:_update_counters(blocks_this_tick, player_name, yaw)
+	self:_update_counters(blocks_this_tick, plr_name, yaw)
 end
 
 --- Update counters and timers after a tick
