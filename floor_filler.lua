@@ -280,7 +280,7 @@ function FloorScanState:iterate_line_block(target_pos, dist, placeable_node_name
 	end
 end
 
-local DISTANCE_INCREASE = 2 * 8
+local DISTANCE_INCREASE = 1 * 8 / 2
 
 ---@param self FloorScanState
 function FloorScanState:run()
@@ -373,7 +373,7 @@ function FloorScanState:run()
 			return false
 		end
 		local dist = (forward_dir * i):length()
-		if dist > (self.max_dist or LINE_LENGTH) + DISTANCE_INCREASE then
+		if dist > (self.min_dist or LINE_LENGTH) + DISTANCE_INCREASE then
 			break
 		end
 		local target_pos = round(line_start + forward_dir * i)
@@ -419,7 +419,7 @@ function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 	end
 	local yaw_speed
 	if self.max_dist then
-		yaw_speed = yaw_for_arc(self.max_dist + 4) / 2
+		yaw_speed = yaw_for_arc(self.min_dist + 4) / 2
 	else
 		yaw_speed = yaw_for_arc(LINE_LENGTH + 4) / 2
 	end
