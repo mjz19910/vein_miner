@@ -519,37 +519,6 @@ for k, _ in pairs(wanted_groups) do
 	table.insert_all(wanted_list, mining_groups[k])
 end
 
-local cobble_target_list = {}
-local cobble_target_groups = {
-	cobble = true,
-	stem = true,
-	tree_trunk = true,
-	surface = true,
-	snow = true,
-	desert_sand = true,
-	cotton = true,
-	dry_grass = true,
-	fern = true,
-	flower = true,
-	grass = true,
-	jungle_grass = true,
-	clay = true,
-	ore = true,
-	stone = true,
-	dirt = true,
-	butterfly = true,
-	firefly = true,
-	papyrus = true,
-	blueberry = true,
-	mushroom = true,
-	marram_grass = true,
-	coral = true,
-}
-
-for k, _ in pairs(cobble_target_groups) do
-	table.insert_all(cobble_target_list, mining_groups[k])
-end
-
 ---@class VeinMinerState
 ---@field pos Vector
 ---@field queue Deque<ScanItem>
