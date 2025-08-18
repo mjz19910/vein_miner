@@ -126,7 +126,6 @@ local mg_tree_trunk = {
 	[def_tree] = true,
 	[acacia] = true,
 	[pine] = true,
-	[cobble] = true,
 	[sand] = true,
 }
 

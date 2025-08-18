@@ -221,6 +221,8 @@ local liquid_set = {
 }
 
 local light_scan_boost = 0
+---@type table<string, VeinMinerState>
+local vein_miner_current_state = {}
 
 local function is_node_vein_diggable(nodeName, wieldedName)
 	local nodeCheck = nodeBlacklist and true or false
@@ -585,20 +587,6 @@ function VeinMinerState:do_update_pos()
 	end
 end
 
----@type table<string, VeinMinerState>
-local vein_miner_current_state = {}
-local function load_cobble_list(target_nodes, target_falling_nodes)
-	for i, v in ipairs(cobble_target_list) do
-		if table.contains(falling_list_all, v) then
-			if not table.contains(target_falling_nodes, v) then
-				table.insert(target_falling_nodes, v)
-			end
-		elseif not table.contains(target_nodes, v) then
-			table.insert(target_nodes, v)
-		end
-	end
-end
-
 ---@param self VeinMinerState
 ---@param item ScanItem
 ---@param player_name string
@@ -681,8 +669,7 @@ function VeinMinerState:process_queue_item(item, player_name)
 	elseif scan_mode == "exclusive" then
 		target_nodes = {node_name}
 	elseif scan_mode == "append" then
-		target_nodes = {}
-		load_cobble_list(target_nodes, target_falling_nodes)
+		target_nodes = table.copy(wanted_list)
 		if table.contains(falling_list_all, node_name) then
 			if not table.contains(target_falling_nodes, node_name) then
 				table.insert(target_falling_nodes, node_name)
@@ -714,11 +701,7 @@ function VeinMinerState:process_queue_item(item, player_name)
 		return
 	end
 	if group_target then
-		if group_target == "cobble" then
-			target_nodes = {}
-			load_cobble_list(target_nodes, target_falling_nodes)
-			target_flags.falling = true
-		elseif falling_groups[group_target] then
+		if falling_groups[group_target] then
 			target_nodes = table.copy(wanted_list)
 			target_flags.falling = true
 		elseif wanted_groups[group_target] then
