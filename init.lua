@@ -221,8 +221,6 @@ local liquid_set = {
 }
 
 local light_scan_boost = 0
----@type table<string, VeinMinerState>
-local vein_miner_current_state = {}
 
 local function is_node_vein_diggable(nodeName, wieldedName)
 	local nodeCheck = nodeBlacklist and true or false
@@ -519,6 +517,37 @@ for k, _ in pairs(wanted_groups) do
 	table.insert_all(wanted_list, mining_groups[k])
 end
 
+local cobble_target_list = {}
+local cobble_target_groups = {
+	cobble = true,
+	stem = true,
+	tree_trunk = true,
+	surface = true,
+	snow = true,
+	desert_sand = true,
+	cotton = true,
+	dry_grass = true,
+	fern = true,
+	flower = true,
+	grass = true,
+	jungle_grass = true,
+	clay = true,
+	ore = true,
+	stone = true,
+	dirt = true,
+	butterfly = true,
+	firefly = true,
+	papyrus = true,
+	blueberry = true,
+	mushroom = true,
+	marram_grass = true,
+	coral = true,
+}
+
+for k, _ in pairs(cobble_target_groups) do
+	table.insert_all(cobble_target_list, mining_groups[k])
+end
+
 ---@class VeinMinerState
 ---@field pos Vector
 ---@field queue Deque<ScanItem>
@@ -553,6 +582,20 @@ function VeinMinerState:do_update_pos()
 		-- end
 		self.teleport_queue.head = 0
 		self.teleport_queue.tail = 0
+	end
+end
+
+---@type table<string, VeinMinerState>
+local vein_miner_current_state = {}
+local function load_cobble_list(target_nodes, target_falling_nodes)
+	for i, v in ipairs(cobble_target_list) do
+		if table.contains(falling_list_all, v) then
+			if not table.contains(target_falling_nodes, v) then
+				table.insert(target_falling_nodes, v)
+			end
+		elseif not table.contains(target_nodes, v) then
+			table.insert(target_nodes, v)
+		end
 	end
 end
 
@@ -638,7 +681,8 @@ function VeinMinerState:process_queue_item(item, player_name)
 	elseif scan_mode == "exclusive" then
 		target_nodes = {node_name}
 	elseif scan_mode == "append" then
-		target_nodes = table.copy(wanted_list)
+		target_nodes = {}
+		load_cobble_list(target_nodes, target_falling_nodes)
 		if table.contains(falling_list_all, node_name) then
 			if not table.contains(target_falling_nodes, node_name) then
 				table.insert(target_falling_nodes, node_name)
@@ -670,7 +714,11 @@ function VeinMinerState:process_queue_item(item, player_name)
 		return
 	end
 	if group_target then
-		if falling_groups[group_target] then
+		if group_target == "cobble" then
+			target_nodes = {}
+			load_cobble_list(target_nodes, target_falling_nodes)
+			target_flags.falling = true
+		elseif falling_groups[group_target] then
 			target_nodes = table.copy(wanted_list)
 			target_flags.falling = true
 		elseif wanted_groups[group_target] then
