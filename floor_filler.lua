@@ -142,9 +142,11 @@ end
 ---@field min_dist number|nil
 ---@field max_dist number|nil
 ---@field blocks_this_tick integer Number of blocks placed this tick
-
----@type FloorScanState
-local FloorScanState = {}
+local FloorScanState = {
+	-- player yaw constants
+	yaw_max = math.rad(6),
+	target_rad = math.rad(180),
+}
 
 ---@param self FloorScanState
 function FloorScanState:reset()
@@ -462,9 +464,6 @@ function floor_filler.new(player)
 		-- generic
 		fresh = true,
 		count = 0,
-		-- player yaw constants
-		yaw_max = math.rad(6),
-		target_rad = math.rad(360),
 		-- player yaw vars
 		player_start_yaw = nil,
 		scan_radians = 0,
