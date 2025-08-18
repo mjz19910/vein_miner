@@ -207,6 +207,7 @@ local floor_filler = {}
 ---@return FloorScanState
 function floor_filler.new()
 	---@class FloorScanState
+	---@field player_start_yaw number | nil
 	local ret = {
 		-- generic
 		fresh = true,
@@ -215,16 +216,16 @@ function floor_filler.new()
 		yaw_max = math.rad(6),
 		target_rad = math.rad(360),
 		-- player yaw vars
-		player_start_yaw = 0,
+		player_start_yaw = nil,
 		scan_radians = 0,
 		req_next_reset_scan_radians = 0,
 		-- min and max display
-		show_log_min = false,
-		show_log_max = false,
-		log_min_block_distance = 0,
-		log_max_block_distance = 1,
-		min_block_distance = 0,
-		max_block_distance = 8,
+		show_log = false,
+		log_min_block_distance = LINE_LENGTH / 8 + 1,
+		log_max_block_distance = -1,
+		min_block_distance = LINE_LENGTH + 8,
+		max_block_distance = -8,
+		last_pos = vector.zero(),
 	}
 	---@param self FloorScanState
 	function ret:reset()
@@ -236,10 +237,11 @@ function floor_filler.new()
 		self.scan_radians = 0
 		self.req_next_reset_scan_radians = 0
 		-- min and max display
-		self.log_min_block_distance = 0
-		self.log_max_block_distance = 1
-		self.min_block_distance = 0
-		self.max_block_distance = 8
+		self.show_log = false
+		self.log_min_block_distance = LINE_LENGTH / 8 + 1
+		self.log_max_block_distance = -1
+		self.min_block_distance = LINE_LENGTH + 8
+		self.max_block_distance = -8
 		self.last_pos = vector.new(0, -1, 0)
 	end
 	ret:reset()
@@ -360,12 +362,10 @@ function floor_filler.new()
 				end
 			end
 		end
-		self.min_block_distance = self.min_block_distance
-		self.max_block_distance = self.max_block_distance
 		if j <= 1 and not is_yaw_update_per_player_disabled[plr_name] then
 			local yaw_div
 			local log_base = 1 + 0.7 * math.pow(0.95, 1)
-			if self.min_block_distance >= 8 then
+			if self.min_block_distance > 0 then
 				yaw_div = (self.min_block_distance + 1) * 8 / math.log(self.count + log_base, log_base)
 			else
 				yaw_div = (LINE_LENGTH + 1) * 8 / math.log(self.count + log_base, log_base)
@@ -444,6 +444,7 @@ core.register_globalstep(function(dtime)
 
 		if scan_state.player_start_yaw == nil then
 			scan_state.player_start_yaw = yaw
+			scan_state.has_player_yaw = true
 		end
 
 		scan_state:run(player, plr_name, yaw)
