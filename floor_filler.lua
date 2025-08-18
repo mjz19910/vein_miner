@@ -49,16 +49,16 @@ local vertical_offsets = vein_miner.CFG.VERTICAL_OFFSETS
 local sound_info_per_player = {}
 
 ---@param player Player
----@param playing_sounds SoundInfo
+---@param playing_sounds table<string, boolean>
 ---@param target_pos Vector
 ---@param max_hear_distance number
-local function try_place_block_from_inventory(skip, player, playing_sounds, target_pos, max_hear_distance)
+local function try_place_block_from_inventory(player, playing_sounds, target_pos, max_hear_distance)
 	local inv = player:get_inventory()
 	for i = 1, inv:get_size("main") do
 		local stack = inv:get_stack("main", i)
 		local name = stack:get_name()
 		local def = registered_nodes[name]
-		if not skip[name] and def and name ~= "air" and not def.groups.falling_node then
+		if not placeable_nodes_to_skip[name] and def and name ~= "air" and not def.groups.falling_node then
 			local cur_node = core.get_node(target_pos)
 			if cur_node and cur_node.name ~= "air" then
 				if cur_node.name == "ignore" then
@@ -300,6 +300,82 @@ function FloorScanState:run(player)
 	-- Handle timers + counters
 	self:_update_counters(blocks_this_tick, player_name, yaw)
 end
+
+--- Update counters and timers after a tick
+---@param blocks_this_tick integer Number of blocks placed this tick
+---@param player_name string
+function FloorScanState:_update_counters(blocks_this_tick, player_name)
+	-- Few or no blocks placed: increment timer
+	if blocks_this_tick <= 1 then
+		time_until_block_place = time_until_block_place + 1
+	else
+		-- Log group2 events if in the configured range
+		local a, b = time_until_block_place, self.count
+		if a >= t.min and a < t.max and b >= t.min and b < t.max then
+			core.log("action", "group2 time_until_block_place " .. a .. " count " .. b)
+		end
+
+		-- Reset timers and counts
+		time_until_block_place = 0
+		self.count = math.floor(self.count / 2)
+
+		-- Update total blocks placed
+		self.all_blocks_placed = self.all_blocks_placed + self.blocks_placed
+		self.blocks_placed = 0
+	end
+
+	-- Record last yaw for this player
+	self.last_yaw = self.player_start_yaw
+end
+
+--- Adjust player yaw if few blocks were placed
+---@param player Player
+---@param yaw number Current yaw
+---@param ctrl table Player control state
+---@param blocks_this_tick integer Number of blocks placed this tick
+function FloorScanState:_maybe_update_yaw(player, yaw, ctrl, blocks_this_tick)
+	if blocks_this_tick > 1 or self.yaw_update_disabled then
+		return
+	end
+
+	local log_base = 1 + 0.7 * math.pow(0.95, 11)
+	local yaw_div
+	if self.min_dist then
+		yaw_div = (self.min_dist + 1) * 8 / math.log(self.count + log_base, log_base)
+	else
+		yaw_div = (LINE_LENGTH + 1) * 8 / math.log(self.count + log_base, log_base)
+	end
+
+	local yaw_speed = self.yaw_max / yaw_div
+	local new_yaw
+	if ctrl.sneak then
+		new_yaw = self.scan_radians - yaw_speed
+	else
+		new_yaw = self.scan_radians + yaw_speed
+	end
+
+	self.scan_radians = new_yaw
+	self.count = self.count + 1
+
+	-- Reset if scan exceeds full rotation
+	if math.abs(self.scan_radians) > self.target_rad then
+		player:set_look_horizontal(self.target_rad + (self.player_start_yaw or 0))
+		self.yaw_update_disabled = true
+		self.scan_radians = 0
+		self.count = 0
+		return
+	end
+
+	-- Update player's horizontal look
+	player:set_look_horizontal(self.scan_radians + (self.player_start_yaw or 0))
+
+	-- Disable yaw updates if player is moving
+	if vector.length(player:get_velocity()) > 0.05 then
+		self.yaw_update_disabled = true
+		self.count = 0
+	end
+end
+
 ---@return FloorScanState
 function floor_filler.new()
 	---@class FloorScanState

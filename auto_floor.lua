@@ -61,9 +61,19 @@ core.register_globalstep(function(dtime)
 	for _, player in ipairs(get_connected_players()) do
 		local plr_name = player:get_player_name()
 		local scan_state = scan_state_map[plr_name]
-		if scan_state then
-			scan_state:run(player)
+
+		-- Skip if player is not holding the auto-floor tool
+		local wielded = player:get_wielded_item():get_name()
+		if wielded ~= "vein_miner:auto_floor" then
+			if not scan_state.fresh then
+				-- Reset scan state when stopping
+				scan_state:leave(player:get_pos())
+				scan_state:reset()
+			end
+			goto continue
 		end
+
+		scan_state:run(player)
 	end
 
 	core.is_async = nil
