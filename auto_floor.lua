@@ -74,6 +74,8 @@ core.register_globalstep(function(dtime)
 		end
 
 		scan_state:run(player)
+
+		::continue::
 	end
 
 	core.is_async = nil
