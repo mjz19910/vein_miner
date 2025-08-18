@@ -270,15 +270,14 @@ function FloorScanState:on_node_placed(target_pos, dist)
 end
 function FloorScanState:iterate_line_block(target_pos, dist, placeable_node_name, sound_info)
 	local node_below = get_node(target_pos)
-	if is_passable(node_below) and (target_pos.y == -1 or is_supported(target_pos, placeable_node_name)) then
-		if self.blocks_this_tick >= self.max_blocks then
-			return false
-		end
+	if not is_passable(node_below) then
+		return
+	end
+	if target_pos.y == -1 or is_supported(target_pos, placeable_node_name) then
 		if try_place_block_from_inventory(self.player, sound_info, target_pos, LINE_LENGTH) then
 			self:on_node_placed(target_pos, dist)
 		end
 	end
-	return true
 end
 ---@param self FloorScanState
 function FloorScanState:run()
@@ -367,14 +366,15 @@ function FloorScanState:run()
 	self.blocks_this_tick = 0
 	self.max_blocks = config.blocks_per_tick
 	for i = 1, LINE_LENGTH do
+		if self.blocks_this_tick >= self.max_blocks then
+			return false
+		end
 		local dist = (forward_dir * i):length()
 		if self.min_dist and dist > self.min_dist + 8 then
 			break
 		end
 		local target_pos = round(line_start + forward_dir * i)
-		if not self:iterate_line_block(target_pos, dist, placeable_node_name, sound_info) then
-			break
-		end
+		self:iterate_line_block(target_pos, dist, placeable_node_name, sound_info)
 	end
 
 	-- Handle yaw rotation if few blocks placed
