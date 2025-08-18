@@ -285,12 +285,16 @@ function floor_filler.new()
 							if cur_dist <= prev_dist and cur_dist >= prev_dist - 1 then
 								goto skip1
 							end
-							if self.log_max_block_distance == nil or self.log_min_block_distance < self.log_max_block_distance then
-								self.log_max_block_distance = log_min_block_distance
+							local max = self.log_max_block_distance
+							local min = self.log_min_block_distance
+							min = log_min_block_distance
+							if max == nil or min > max then
+								max = min
 								self.show_log_max = true
 							end
-							self.log_min_block_distance = log_min_block_distance
 							self.show_log_min = true
+							self.log_max_block_distance = max
+							self.log_min_block_distance = min
 							core.log("action", fmt_place_distance_vec2:format("min ", self.log_min_block_distance, self.log_max_block_distance))
 							::skip1::
 						end
