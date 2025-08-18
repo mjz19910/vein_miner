@@ -370,8 +370,9 @@ function floor_filler.new()
 							self.last_pos = cur_pos
 						end
 					end
-					if time_until_block_place > 50 and self.count > 50 and j == 0 and self.blocks_placed == 0 then
+					if time_until_block_place > 500 and self.count > 500 and j == 0 and self.blocks_placed == 0 then
 						core.log("action", "started placing floor " .. core.pos_to_string(target_pos))
+						core.log("action", "start_place_floor time_until_block_place " .. time_until_block_place .. " count " .. self.count)
 					end
 					j = j + 1
 					self.blocks_placed = self.blocks_placed + 1
@@ -380,7 +381,7 @@ function floor_filler.new()
 		end
 		if j <= 1 and not is_yaw_update_per_player_disabled[plr_name] then
 			local yaw_div
-			local log_base = 1 + 0.7 * math.pow(0.95, 10)
+			local log_base = 1 + 0.7 * math.pow(0.95, 11)
 			if self.min_dist then
 				yaw_div = (self.min_dist + 1) * 8 / math.log(self.count + log_base, log_base)
 			else
@@ -415,8 +416,9 @@ function floor_filler.new()
 		if j <= 1 then
 			time_until_block_place = time_until_block_place + 1
 		else
-			if time_until_block_place > 50 and self.count > 50 and debug_log then
+			if time_until_block_place > 500 and self.count > 500 and debug_log then
 				core.log("action", ("more than 1 block placed after %d steps"):format(time_until_block_place))
+				core.log("action", "more_floor_placed time_until_block_place " .. time_until_block_place .. " count " .. self.count)
 			end
 			time_until_block_place = 0
 			-- if self.count > 30 and self.scan_radians > self.req_next_reset_scan_radians then
