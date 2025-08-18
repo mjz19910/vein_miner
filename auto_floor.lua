@@ -199,25 +199,22 @@ local floor_filler = {}
 ---@return FloorScanState
 function floor_filler.new()
 	---@class FloorScanState
-	---@field player_start_yaw number | nil
-	---@field max_place_distance number | nil
-	---@field min_block_distance number | nil
 	local ret = {
 		fresh = true,
 		count = 0,
 		-- player yaw related
+		player_start_yaw = 0,
 		yaw_max = math.rad(6),
 		target_rad = math.rad(360),
 		scan_radians = 0,
 		req_next_reset_scan_radians = 0,
-		player_start_yaw = nil,
 		-- min and max display
 		show_log_min = false,
 		show_log_max = false,
 		log_min_block_distance = 0,
 		log_max_block_distance = 0,
-		max_place_distance = nil,
-		min_block_distance = nil,
+		min_block_distance = 0,
+		max_place_distance = 8,
 	}
 	---@param self FloorScanState
 	---@param player Player
@@ -262,12 +259,12 @@ function floor_filler.new()
 			end
 		end
 		local min_block_distance = self.min_block_distance
-		local max_block_distance = self.max_place_distance
-		local prev_max_place_distance = max_block_distance
+		local max_block_distance = self.max_block_distance
+		local prev_max_block_distance = max_block_distance
 		for i = 1, LINE_LENGTH do
 			local target_offset = forward_dir * i
 			local target_len = target_offset:length()
-			if max_block_distance ~= nil and target_len > max_block_distance + 8 then
+			if max_block_distance ~= nil and target_len > max_block_distance - 8 then
 				break
 			end
 			local target_pos = round(line_start + forward_dir * i)
@@ -366,7 +363,7 @@ function floor_filler.new()
 			end
 		end
 		self.min_block_distance = min_block_distance
-		self.max_place_distance = max_block_distance
+		self.max_block_distance = max_block_distance
 		if j <= 1 and not is_yaw_update_per_player_disabled[plr_name] then
 			local yaw_div
 			local log_base = 1 + 0.7 * math.pow(0.95, 1)
@@ -421,7 +418,7 @@ function floor_filler.new()
 		self.scan_radians = 0
 		self.log_min_block_distance = 0
 		self.count = 0
-		self.max_place_distance = nil
+		self.max_block_distance = nil
 		self.min_block_distance = nil
 		self.req_next_reset_scan_radians = 0
 	end
