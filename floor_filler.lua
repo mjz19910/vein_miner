@@ -115,7 +115,7 @@ local function is_supported(pos, invalid_support_name)
 	return false
 end
 
-local DISTANCE_INCREASE = 1 * 8 / 2
+local DISTANCE_INCREASE = 1 * 8
 
 ---@class FloorScanState
 ---@field playing_sounds table<string, boolean>
@@ -339,7 +339,7 @@ function FloorScanState:run()
 	for i = 1, LINE_LENGTH do
 		if self.blocks_this_tick >= self.max_blocks then return false end
 		local dist = (forward_dir * i):length()
-		if dist > (self.min_dist or LINE_LENGTH) + DISTANCE_INCREASE then break end
+		if dist > (self.max_dist or LINE_LENGTH) + DISTANCE_INCREASE then break end
 		local target_pos = round(line_start + forward_dir * i)
 		self:iterate_line_block(target_pos, dist, placeable_node_name, sound_info)
 	end
