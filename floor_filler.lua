@@ -252,11 +252,6 @@ end
 ---@param target_pos Vector
 ---@param dist number
 function FloorScanState:on_node_placed(target_pos, dist)
-	self:_update_min_dist(dist)
-	self:_update_max_dist(dist)
-	if self.show_log then
-		self:_maybe_log_block_distance()
-	end
 	if self.blocks_this_tick == 0 and self.blocks_placed == 0 then
 		local t = self.log_range
 		if self.count >= t.min and self.count < t.max then
@@ -265,6 +260,11 @@ function FloorScanState:on_node_placed(target_pos, dist)
 		if self.count >= 400 then
 			core.log("action", ("started placing floor after %d steps at %s"):format(self.count, core.pos_to_string(target_pos)))
 		end
+	end
+	self:_update_min_dist(dist)
+	self:_update_max_dist(dist)
+	if self.show_log then
+		self:_maybe_log_block_distance()
 	end
 	self.blocks_this_tick = self.blocks_this_tick + 1
 	self.blocks_placed = self.blocks_placed + 1
