@@ -168,18 +168,7 @@ end
 
 ---@param self FloorScanState
 ---@param pos Vector
-function FloorScanState:leave_floor_scan(pos)
-	if self.blocks_placed > 0 then
-		self.all_blocks_placed = self.all_blocks_placed + self.blocks_placed
-	end
-	if self.all_blocks_placed > 0 then
-		core.log("action", "finished placing floor " .. self.all_blocks_placed .. " blocks placed from center " .. core.pos_to_string(pos))
-	end
-	self.should_leave = false
-	if self.all_blocks_placed > 0 then
-		self.all_blocks_placed = 0
-	end
-end
+function FloorScanState:leave_floor_scan(pos) end
 
 local time_until_block_place = 0
 
@@ -242,11 +231,20 @@ function FloorScanState:_mark_active()
 	-- Mark scan state as active
 	self.active = true
 end
+local deactivate_fmt = "finished placing floor %d blocks placed from center %s"
 ---@param self FloorScanState
 function FloorScanState:deactivate_tool()
-	if not self.should_leave then
-		-- Reset scan state when stopping
-		self:leave_floor_scan(round(self.player:get_pos()))
+	self.scan_radians = 0
+	self.count = 0
+	if self.blocks_placed > 0 then
+		self.all_blocks_placed = self.all_blocks_placed + self.blocks_placed
+	end
+	if self.all_blocks_placed > 0 then
+		local player_pos = round(self.player:get_pos())
+		core.log("action", deactivate_fmt:format(self.all_blocks_placed, core.pos_to_string(player_pos)))
+	end
+	if self.all_blocks_placed > 0 then
+		self.all_blocks_placed = 0
 	end
 end
 
@@ -254,7 +252,6 @@ end
 ---@param target_pos Vector
 ---@param dist number
 function FloorScanState:on_node_placed(target_pos, dist)
-	self.should_leave = true
 	self:_update_min_dist(dist)
 	self:_update_max_dist(dist)
 	if self.show_log then
@@ -419,8 +416,7 @@ function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 	if math.abs(self.scan_radians) > self.target_rad then
 		player:set_look_horizontal(self.target_rad + (self.player_start_yaw or 0))
 		self.yaw_update_disabled = true
-		self.scan_radians = 0
-		self.count = 0
+		self:deactivate_tool()
 		return
 	end
 
@@ -430,7 +426,6 @@ function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 	-- Disable yaw updates if player is moving
 	if vector.length(player:get_velocity()) > 0.05 then
 		self.yaw_update_disabled = true
-		self.count = 0
 		self:deactivate_tool()
 	end
 end
