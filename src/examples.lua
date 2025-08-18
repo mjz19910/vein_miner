@@ -46,11 +46,12 @@ local function example_gen_distances()
 	local offsets3d = voxel_util.gen_euclidean_offsets_3d(5)
 	local dist_gen = gen_distances(offsets3d)
 	local count = 0
+	local dist_limit = 3.32
 	for dist, pos in dist_gen do
-		if dist > 3.2 then
-			print("Next distance > 3.2:", floor(dist * 1000) / 1000, dist, pos)
+		if dist > dist_limit then
+			print(("Next distance > %.2f:"):format(dist_limit), floor(dist * 1000) / 1000, dist, pos)
 			count = count + 1
-			if count >= 5 then
+			if count > 1 and dist % 1 == 0 then
 				break
 			end
 		end
