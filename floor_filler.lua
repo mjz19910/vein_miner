@@ -410,24 +410,20 @@ function FloorScanState:_update_counters(player_name)
 	self.last_yaw = self.player_start_yaw
 end
 
+local function yaw_for_arc(distance)
+	local theta_rad = 1 / distance
+	return theta_rad
+end
+
 --- Adjust player yaw if few blocks were placed
 ---@param player Player
 ---@param yaw number Current yaw
 ---@param ctrl table Player control state
 function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
-	if self.blocks_this_tick > 1 or self.yaw_update_disabled then
+	if self.blocks_this_tick ~= 0 or self.yaw_update_disabled then
 		return
 	end
-
-	local log_base = 1 + 0.7 * math.pow(1.08, 3)
-	local yaw_div
-	if self.min_dist then
-		yaw_div = self.min_dist * 7 / math.log(self.count + log_base, log_base)
-	else
-		yaw_div = LINE_LENGTH * 7 / math.log(self.count + log_base, log_base)
-	end
-
-	local yaw_speed = self.yaw_max / yaw_div
+	local yaw_speed = yaw_for_arc(self.min_dist or LINE_LENGTH)
 	local new_yaw
 	if ctrl.sneak then
 		new_yaw = self.scan_radians - yaw_speed
