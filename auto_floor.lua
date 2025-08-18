@@ -226,6 +226,8 @@ function floor_filler.new()
 		min_dist = nil,
 		max_dist = nil,
 		last_pos = vector.zero(),
+		blocks_placed = 0,
+		all_blocks_placed = 0,
 	}
 	---@param self FloorScanState
 	function ret:reset()
@@ -243,6 +245,17 @@ function floor_filler.new()
 		self.min_dist = nil
 		self.max_dist = nil
 		self.last_pos = vector.new(0, -1, 0)
+		self.blocks_placed = 0
+		self.all_blocks_placed = 0
+	end
+	---@param pos Vector
+	function ret:leave(pos)
+		if self.blocks_placed > 0 then
+			self.all_blocks_placed = self.all_blocks_placed + self.blocks_placed
+		end
+		if self.all_blocks_placed > 0 then
+			core.log("action", "finished placing floor " .. self.all_blocks_placed .. " blocks placed from center " .. core.pos_to_string(pos))
+		end
 	end
 	ret:reset()
 	---@param self FloorScanState
@@ -300,8 +313,8 @@ function floor_filler.new()
 				if j >= max_blocks then
 					break
 				end
-				if j == 0 and time_until_block_place == 0 then
-					core.log("action", "start placing line " .. target_pos)
+				if j < 1 and self.blocks_placed == 0 then
+					core.log("action", "start placing line " .. core.pos_to_string(target_pos))
 				end
 				if try_place_block_from_inventory(player, sound_info, target_pos, LINE_LENGTH) then
 					local dist = len - len % 8 + 8
@@ -361,6 +374,7 @@ function floor_filler.new()
 						end
 					end
 					j = j + 1
+					self.blocks_placed = self.blocks_placed + 1
 				end
 			end
 		end
@@ -410,6 +424,8 @@ function floor_filler.new()
 			-- 	self.scan_radians = self.scan_radians - self.yaw_max / 4
 			-- end
 			self.count = math.floor(self.count / 2)
+			self.all_blocks_placed = self.all_blocks_placed + self.blocks_placed
+			self.blocks_placed = 0
 		end
 	end
 	return ret
@@ -439,6 +455,7 @@ core.register_globalstep(function(dtime)
 			if not scan_state.fresh then
 				last_yaw_per_player[plr_name] = nil
 				is_yaw_update_per_player_disabled[plr_name] = false
+				scan_state:leave(player:get_pos())
 				scan_state:reset()
 			end
 			goto continue
