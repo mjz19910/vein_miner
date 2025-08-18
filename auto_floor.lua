@@ -267,7 +267,7 @@ function floor_filler.new()
 		for i = 1, LINE_LENGTH do
 			local target_offset = forward_dir * i
 			local target_len = target_offset:length()
-			if min_block_distance ~= nil and target_len > min_block_distance then
+			if max_block_distance ~= nil and target_len > max_block_distance + 8 then
 				break
 			end
 			local target_pos = round(line_start + forward_dir * i)
