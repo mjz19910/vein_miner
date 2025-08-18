@@ -203,17 +203,21 @@ function floor_filler.new()
 	---@field min_block_distance number | nil
 	local self = {
 		fresh = true,
+		count = 0,
+		-- player yaw related
 		yaw_max = math.rad(6),
 		target_rad = math.rad(360),
-		count = 0,
 		scan_radians = 0,
+		req_next_reset_scan_radians = 0,
+		player_start_yaw = nil,
+		-- min and max display
+		show_log_min = false,
+		show_log_max = false,
 		log_min_block_distance = 0,
 		log_max_block_distance = 0,
-		player_start_yaw = nil,
 		max_place_distance = nil,
 		min_block_distance = nil,
 	}
-	self.req_next_reset_scan_radians = 0
 	---@param self FloorScanState
 	---@param player Player
 	---@param player_name string
@@ -257,8 +261,8 @@ function floor_filler.new()
 			end
 		end
 		local min_block_distance = self.min_block_distance
-		local max_place_distance = self.max_place_distance
-		local prev_max_place_distance = max_place_distance
+		local max_block_distance = self.max_place_distance
+		local prev_max_place_distance = max_block_distance
 		for i = 1, LINE_LENGTH do
 			local target_offset = forward_dir * i
 			local target_len = target_offset:length()
@@ -273,12 +277,16 @@ function floor_filler.new()
 					break
 				end
 				if try_place_block_from_inventory(player, sound_info, target_pos, LINE_LENGTH) then
-					if min_block_distance == nil or target_len < min_block_distance then
-						min_block_distance = target_len - target_len % 8
+					local block_distance = target_len - target_len % 8 + 8
+					if min_block_distance == nil or block_distance < min_block_distance then
+						min_block_distance = block_distance
 						local log_min_block_distance = min_block_distance / 8
 						if log_min_block_distance ~= self.log_min_block_distance then
 							local prev_dist = self.log_min_block_distance
 							local cur_dist = log_min_block_distance
+							if not prev_dist then
+								goto skip1
+							end
 							if cur_dist >= prev_dist and cur_dist <= prev_dist + 1 then
 								goto skip1
 							end
@@ -299,22 +307,31 @@ function floor_filler.new()
 							::skip1::
 						end
 					end
-					if max_place_distance == nil or target_len > max_place_distance then
-						local next_place_nearest = target_len - target_len % 8 + 8
-						if max_place_distance ~= next_place_nearest then
-							local prev_dist
-							local cur_dist
-							prev_dist = max_place_distance
+					if max_block_distance == nil or block_distance > max_block_distance then
+						max_block_distance = block_distance
+						local log_max_block_distance = max_block_distance / 8
+						if max_block_distance ~= self.log_max_block_distance then
+							local prev_dist = self.log_max_block_distance
+							local cur_dist = log_max_block_distance
+							prev_dist = max_block_distance
 							cur_dist = next_place_nearest
 							if not prev_dist then
 								goto skip2
 							end
-							if cur_dist >= prev_dist and cur_dist <= prev_dist + 8 then
+							if cur_dist >= prev_dist and cur_dist <= prev_dist + 1 then
 								goto skip2
 							end
-							if cur_dist <= prev_dist and cur_dist >= prev_dist - 8 then
+							if cur_dist <= prev_dist and cur_dist >= prev_dist - 1 then
 								goto skip2
 							end
+							local max = self.log_max_block_distance
+							local min = self.log_min_block_distance
+							max = log_max_block_distance
+							if min == nil or max < min then
+								min = max
+								self.show_log_min = true
+							end
+							self.show_log_max = true
 							do
 								local log_max_block_dist = cur_dist / 8
 								if self.log_min_block_distance == nil or self.log_min_block_distance > log_max_block_dist then
@@ -326,7 +343,6 @@ function floor_filler.new()
 								core.log("action", fmt_place_distance_vec2:format("max ", self.log_min_block_distance, self.log_max_block_distance))
 							end
 							::skip2::
-							max_place_distance = next_place_nearest
 						end
 					end
 					if self.show_log_min and self.show_log_max then
@@ -343,12 +359,12 @@ function floor_filler.new()
 			end
 		end
 		self.min_block_distance = min_block_distance
-		self.max_place_distance = max_place_distance
+		self.max_place_distance = max_block_distance
 		if j <= 1 and not is_yaw_update_per_player_disabled[plr_name] then
 			local yaw_div
 			local log_base = 1 + 0.7 * math.pow(0.95, 1)
-			if max_place_distance ~= nil then
-				yaw_div = (max_place_distance + 1) * 8 / math.log(self.count + log_base, log_base)
+			if max_block_distance ~= nil then
+				yaw_div = (max_block_distance + 1) * 8 / math.log(self.count + log_base, log_base)
 			else
 				yaw_div = LINE_LENGTH * 8 / math.log(self.count + log_base, log_base)
 			end
