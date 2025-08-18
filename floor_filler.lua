@@ -404,7 +404,7 @@ function FloorScanState:_update_counters(player_name)
 
 		-- Reset timers and counts
 		time_until_block_place = 0
-		self.count = math.floor(self.count / 2)
+		self.count = 0
 
 		-- Update total blocks placed
 		self.all_blocks_placed = self.all_blocks_placed + self.blocks_placed
