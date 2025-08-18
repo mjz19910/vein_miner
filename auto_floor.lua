@@ -415,7 +415,7 @@ function floor_filler.new()
 		if j <= 1 then
 			time_until_block_place = time_until_block_place + 1
 		else
-			if debug_log then
+			if self.count > 30 and debug_log then
 				core.log("action", ("more than 1 block placed after %d steps"):format(time_until_block_place))
 			end
 			time_until_block_place = 0
