@@ -350,7 +350,12 @@ function floor_filler.new()
 			end
 			local yaw_speed = self.yaw_max / yaw_div
 			local s_yaw = self.scan_radians
-			local new_yaw = s_yaw + yaw_speed
+			local new_yaw
+			if ctrl.sneak then
+				new_yaw = s_yaw - yaw_speed
+			else
+				new_yaw = s_yaw + yaw_speed
+			end
 			self.scan_radians = new_yaw
 			self.count = self.count + 1
 			if self.scan_radians > self.target_rad then
