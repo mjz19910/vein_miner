@@ -284,5 +284,27 @@ function voxel_util.find_logs_keeping_leaves(pos)
 	return found_logs
 end
 
+
+--- Generate integer offsets in a 3D sphere, sorted optionally later
+---@param radius integer
+---@return Vector[] Array of {x, y, z}
+function voxel_util.gen_euclidean_offsets_3d(radius)
+	local offsets = {}
+	local radius_sq = radius * radius
+
+	for x = -radius, radius do
+		for y = -radius, radius do
+			for z = -radius, radius do
+				local dist2 = x * x + y * y + z * z
+				if dist2 <= radius_sq then
+					table.insert(offsets, vector.new(x, y, z))
+				end
+			end
+		end
+	end
+
+	return offsets
+end
+
 return voxel_util
 

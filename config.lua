@@ -236,77 +236,6 @@ local sticky_nodes = {
 CFG.sticky_nodes = sticky_nodes
 CFG.MAX_MINED_NODES = 188
 
---- Generate integer offsets in a 3D sphere, sorted optionally later
----@param radius integer
----@return Vector[] Array of {x, y, z}
-local function gen_euclidean_offsets_3d(radius)
-	local offsets = {}
-	local radius_sq = radius * radius
-
-	for x = -radius, radius do
-		for y = -radius, radius do
-			for z = -radius, radius do
-				local dist2 = x * x + y * y + z * z
-				if dist2 <= radius_sq then
-					table.insert(offsets, vector.new(x, y, z))
-				end
-			end
-		end
-	end
-
-	return offsets
-end
-
---- Returns an iterator that yields all distinct 3D distances in ascending order
----@param offsets Vector[] Array of {x,y,z}
----@return fun(): number|nil
-local function gen_distances(offsets)
-	-- copy and sort offsets by full Euclidean distance
-	local sorted = {unpack(offsets)}
-	table.sort(sorted, function(a, b)
-		local da = a.x * a.x + a.y * a.y + a.z * a.z
-		local db = b.x * b.x + b.y * b.y + b.z * b.z
-		return da < db
-	end)
-
-	local seen = {}
-	local i = 0
-	local n = #sorted
-
-	return function()
-		while true do
-			i = i + 1
-			if i > n then
-				return nil
-			end
-			local off = sorted[i]
-			local d = math.sqrt(off.x * off.x + off.y * off.y + off.z * off.z)
-			d = math.floor(d * 1000 + 0.5) / 1000
-			if not seen[d] then
-				seen[d] = true
-				return d, off
-			end
-		end
-	end
-end
-
-local function example_gen_distances()
-	-- Example usage with the generator
-	local offsets3d = gen_euclidean_offsets_3d(5)
-	local dist_gen = gen_distances(offsets3d)
-	local count = 0
-	for dist, pos in dist_gen do
-		if dist > 3.2 then
-			print("Next distance > 3.2:", dist, pos)
-			count = count + 1
-			if count >= 5 then
-				break
-			end
-		end
-	end
-end
-example_gen_distances()
-
 table.insert_all(CFG.target_list, {cobble[1], cobble.mossy, cobble.stair})
 
 table.insert(CFG.ignored_nodes, mese_post_light[1])
@@ -418,7 +347,7 @@ add_light_node("default:dirt_with_rainforest_litter")
 local vec_dirs = {}
 table.insert(vec_dirs, new_vec(0, 0, 0))
 -- distance limited to 3.1622776601684, ie 3.32
-table.insert_all(vec_dirs, gen_euclidean_offsets_3d(3.32))
+table.insert_all(vec_dirs, voxel_util.gen_euclidean_offsets_3d(3.32))
 CFG.VEC_DIRS = vec_dirs
 ---@type Vector[]
 local FLOATING_DIRS = {new_vec(1, 0, 0), new_vec(-1, 0, 0), new_vec(0, 1, 0), new_vec(0, -1, 0), new_vec(0, 0, 1), new_vec(0, 0, -1)}
