@@ -48,7 +48,7 @@ local function example_gen_distances()
 	local count = 0
 	for dist, pos in dist_gen do
 		if dist > 3.2 then
-			print("Next distance > 3.2:", dist, pos)
+			print("Next distance > 3.2:", floor(dist * 1000) / 1000, dist, pos)
 			count = count + 1
 			if count >= 5 then
 				break
