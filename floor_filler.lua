@@ -172,9 +172,9 @@ function FloorScanState:leave_floor_scan(pos) end
 
 local time_until_block_place = 0
 
-local block_dist_fmt = "distance (%s,%s) 8x8 chunks away at %.1f°"
+local block_dist_fmt = "place range at %.1f° (%s,%s)"
 
-local function log_block_distance(v) core.log("action", block_dist_fmt:format(v.pos.x, v.pos.y, v.deg)) end
+local function log_block_distance(v) core.log("action", block_dist_fmt:format(v.deg, v.min, v.max)) end
 
 ---@param rad number
 local function rad_to_deg_wrap360(rad)
@@ -213,12 +213,13 @@ end
 --- Log the current min/max block distance if needed
 ---@param self FloorScanState
 function FloorScanState:_maybe_log_block_distance()
-	local cur_pos = vector.new(math.floor(self.log_min / 8), math.ceil(self.log_max / 8), 0)
+	local cur_pos = vector.new(self.log_min, self.log_max, 0)
 
 	-- Only log if the position changed
 	if cur_pos ~= self.last_pos then
 		log_block_distance({
-			pos = cur_pos,
+			min = self.log_min,
+			max = self.log_max,
 			deg = rad_to_deg_wrap360((self.scan_radians or 0) + (self.player_start_yaw or 0)),
 		})
 		self.show_log = false
@@ -370,7 +371,7 @@ function FloorScanState:run()
 			return false
 		end
 		local dist = (forward_dir * i):length()
-		if self.min_dist and dist > self.min_dist + 8 then
+		if self.max_dist and dist > self.max_dist + 2 then
 			break
 		end
 		local target_pos = round(line_start + forward_dir * i)
