@@ -72,9 +72,6 @@ function BlockDigger.should_dig(node, pos)
 	if node.name == "air" then
 		return false
 	end
-	if light_nodes_set[node.name] then
-		return true
-	end
 	if not is_sticky_node(node.name) and is_stuck_to_sticky(pos) then
 		return false
 	end
