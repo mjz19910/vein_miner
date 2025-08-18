@@ -292,24 +292,50 @@ function FloorScanState:run()
 		return
 	end
 
-	self:_mark_active()
+	-- Get player info
+	local player = self.player
+	local yaw = player:get_look_horizontal()
+	local pos = player:get_pos()
+
+	local has_floor = false
+
+	-- check a 3x3 area under player
+	for dx = -1, 1 do
+		for dz = -1, 1 do
+			local check_pos = vector.add(pos, {
+				x = dx,
+				y = -1,
+				z = dz,
+			})
+			local node = get_node_or_nil(check_pos)
+			if node and not is_passable(node) then
+				has_floor = true
+				break
+			end
+		end
+		if has_floor then
+			break
+		end
+	end
+
+	if not has_floor then
+		-- skip this tick: no floor below player
+		return
+	end
 
 	-- Initialize player yaw if not already set
 	if self.player_start_yaw == nil then
-		local yaw = self.player:get_look_horizontal()
 		-- protect against NaN
 		if yaw ~= yaw then
+			player:set_look_horizontal(0)
 			yaw = 0
 		end
 		self.player_start_yaw = yaw
 	end
 
-	-- Get player info
-	local player = self.player
-	local yaw = player:get_look_horizontal()
+	self:_mark_active()
 
 	-- Positioning and direction
-	local pos = player:get_pos()
 	local look_dir = player:get_look_dir()
 	local forward_dir = normalize(vector.new(look_dir.x, 0, look_dir.z))
 	local line_start = round(pos + down + up / 2)
