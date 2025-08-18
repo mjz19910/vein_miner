@@ -153,7 +153,7 @@ function FloorScanState:reset()
 end
 
 ---@param pos Vector
-function FloorScanState:leave(pos)
+function FloorScanState:leave_floor_scan(pos)
 	if self.blocks_placed > 0 then
 		self.all_blocks_placed = self.all_blocks_placed + self.blocks_placed
 	end

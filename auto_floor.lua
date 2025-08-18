@@ -67,7 +67,7 @@ core.register_globalstep(function(dtime)
 		if wielded ~= "vein_miner:auto_floor" then
 			if not scan_state.fresh then
 				-- Reset scan state when stopping
-				scan_state:leave(player:get_pos())
+				scan_state:leave_floor_scan(round(player:get_pos()))
 				scan_state:reset()
 			end
 			goto continue
