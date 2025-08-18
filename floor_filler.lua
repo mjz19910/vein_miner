@@ -92,40 +92,38 @@ local function try_place_block_from_inventory(player, playing_sounds, target_pos
 	return false
 end
 
----@param pos Vector
-local function is_supported(pos, invalid_support_name)
-	local below_pos = pos + new_vec(0, -1, 0)
-	local below_node = get_node_or_nil(below_pos)
-	if not below_node then
-		return false
-	end
-	for _, dir in ipairs(support_dirs) do
-		for _, vert in ipairs(vertical_offsets) do
-			local sup_pos = pos + dir + vert
-			if sup_pos ~= pos then
-				local node = get_node_or_nil(sup_pos)
-				if is_node_supporting(node, invalid_support_name) then
-					return true
-				end
+-- Precompute neighbor offsets for support checks
+---@type Vector[]
+local neighbor_offsets = {}
+for _, dir in ipairs(support_dirs) do
+	for _, vert in ipairs(vertical_offsets) do
+		local offset = dir + vert
+		if offset ~= vector.zero() then
+			if table.contains(neighbor_offsets, offset) then
+				core.log("error", "duplicate offset " .. core.pos_to_string(offset))
 			end
+			table.insert(neighbor_offsets, offset)
 		end
 	end
-	local npos = pos + new_vec(1, 0, 0)
-	local node1 = get_node_or_nil(npos)
-	local npos = pos + new_vec(-1, 0, 0)
-	local node2 = get_node_or_nil(npos)
-	local east_support = is_node_supporting(node1, invalid_support_name)
-	local west_support = is_node_supporting(node2, invalid_support_name)
-	if east_support and west_support then
-		return true
+end
+
+---@param pos Vector
+local function is_supported(pos, invalid_support_name)
+	for _, offset in ipairs(neighbor_offsets) do
+		local node = get_node_or_nil(pos + offset)
+		if not node then
+			return false
+		end
+		if is_node_supporting(node, invalid_support_name) then
+			return true
+		end
 	end
-	local npos = pos + new_vec(0, 0, 1)
-	local node1 = get_node_or_nil(npos)
-	local npos = pos + new_vec(0, 0, -1)
-	local node2 = get_node_or_nil(npos)
-	local north_support = is_node_supporting(node1, invalid_support_name)
-	local south_support = is_node_supporting(node2, invalid_support_name)
-	if north_support and south_support then
+	local function check_axis(dx, dz)
+		local node1 = get_node_or_nil(pos + new_vec(dx, 0, dz))
+		local node2 = get_node_or_nil(pos + new_vec(-dx, 0, -dz))
+		return is_node_supporting(node1, invalid_support_name) and is_node_supporting(node2, invalid_support_name)
+	end
+	if check_axis(1, 0) or check_axis(0, 1) then
 		return true
 	end
 	return false
