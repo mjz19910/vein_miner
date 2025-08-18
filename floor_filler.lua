@@ -131,6 +131,18 @@ local function is_supported(pos, invalid_support_name)
 	return false
 end
 
+---@class FloorScanState
+---@field playing_sounds table<string, boolean>
+--- player yaw vars
+---@field player_start_yaw number|nil
+---@field last_yaw number|nil
+--- min and max display
+---@field log_min number|nil
+---@field log_max number|nil
+---@field min_dist number|nil
+---@field max_dist number|nil
+---@field blocks_this_tick integer Number of blocks placed this tick
+
 ---@type FloorScanState
 local FloorScanState = {}
 
@@ -151,6 +163,7 @@ function FloorScanState:reset()
 	self.last_pos = vector.new(0, -1, 0)
 	self.blocks_placed = 0
 	self.all_blocks_placed = 0
+	self.blocks_this_tick = 0
 end
 
 ---@param self FloorScanState
@@ -233,6 +246,36 @@ function FloorScanState:deactivate_tool()
 		self:leave_floor_scan(round(self.player:get_pos()))
 	end
 end
+function FloorScanState:on_node_placed(target_pos, dist)
+	self.should_leave = true
+	self:_update_min_dist(dist)
+	self:_update_max_dist(dist)
+	if self.show_log then
+		self:_maybe_log_block_distance()
+	end
+	if self.blocks_this_tick == 0 and self.blocks_placed == 0 then
+		local a, b = time_until_block_place, self.count
+		if a >= self.log_range.max and b >= self.log_range.max then
+			core.log("action", ("started placing floor after %d steps at %s"):format(a, core.pos_to_string(target_pos)))
+		elseif a >= self.log_range.min and a < self.log_range.max and b >= self.log_range.min and b < self.log_range.max then
+			core.log("action", "group1 time_until_block_place " .. a .. " count " .. b)
+		end
+	end
+	self.blocks_this_tick = self.blocks_this_tick + 1
+	self.blocks_placed = self.blocks_placed + 1
+end
+function FloorScanState:iterate_line_block(target_pos, dist, placeable_node_name, sound_info)
+	local node_below = get_node(target_pos)
+	if is_passable(node_below) and is_supported(target_pos, placeable_node_name) then
+		if self.blocks_this_tick >= self.max_blocks then
+			return false
+		end
+		if try_place_block_from_inventory(self.player, sound_info, target_pos, LINE_LENGTH) then
+			self:on_node_placed(target_pos, dist)
+		end
+	end
+	return true
+end
 ---@param self FloorScanState
 function FloorScanState:run()
 	-- Skip if player is not holding the auto-floor tool
@@ -291,45 +334,31 @@ function FloorScanState:run()
 	end
 
 	-- Place blocks, update min/max distances, maybe log
-	local blocks_this_tick = 0
-	local max_blocks = config.blocks_per_tick
+	self.blocks_this_tick = 0
+	self.max_blocks = config.blocks_per_tick
 	for i = 1, LINE_LENGTH do
 		local dist = (forward_dir * i):length()
 		if self.min_dist and dist > self.min_dist + 8 then
 			break
 		end
 		local target_pos = round(line_start + forward_dir * i)
-		local node_below = get_node(target_pos)
-		if is_passable(node_below) and is_supported(target_pos, placeable_node_name) then
-			if blocks_this_tick >= max_blocks then
-				break
-			end
-			if try_place_block_from_inventory(player, sound_info, target_pos, LINE_LENGTH) then
-				self.should_leave = true
-				self:_update_min_dist(dist)
-				self:_update_max_dist(dist)
-				if self.show_log then
-					self:_maybe_log_block_distance()
-				end
-				blocks_this_tick = blocks_this_tick + 1
-				self.blocks_placed = self.blocks_placed + 1
-			end
+		if not self:iterate_line_block(target_pos, dist, placeable_node_name, sound_info) then
+			break
 		end
 	end
 
 	-- Handle yaw rotation if few blocks placed
-	self:_maybe_update_yaw(player, yaw, ctrl, blocks_this_tick)
+	self:_maybe_update_yaw(player, yaw, ctrl)
 
 	-- Handle timers + counters
-	self:_update_counters(blocks_this_tick, plr_name, yaw)
+	self:_update_counters(plr_name, yaw)
 end
 
 --- Update counters and timers after a tick
----@param blocks_this_tick integer Number of blocks placed this tick
 ---@param player_name string
-function FloorScanState:_update_counters(blocks_this_tick, player_name)
+function FloorScanState:_update_counters(player_name)
 	-- Few or no blocks placed: increment timer
-	if blocks_this_tick <= 1 then
+	if self.blocks_this_tick <= 1 then
 		time_until_block_place = time_until_block_place + 1
 	else
 		-- Log group2 events if in the configured range
@@ -355,9 +384,8 @@ end
 ---@param player Player
 ---@param yaw number Current yaw
 ---@param ctrl table Player control state
----@param blocks_this_tick integer Number of blocks placed this tick
-function FloorScanState:_maybe_update_yaw(player, yaw, ctrl, blocks_this_tick)
-	if blocks_this_tick > 1 or self.yaw_update_disabled then
+function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
+	if self.blocks_this_tick > 1 or self.yaw_update_disabled then
 		return
 	end
 
@@ -403,16 +431,7 @@ end
 ---@param player Player
 ---@return FloorScanState
 function floor_filler.new(player)
-	---@class FloorScanState
-	---@field playing_sounds table<string, boolean>
-	--- player yaw vars
-	---@field player_start_yaw number|nil
-	---@field last_yaw number|nil
-	--- min and max display
-	---@field log_min number|nil
-	---@field log_max number|nil
-	---@field min_dist number|nil
-	---@field max_dist number|nil
+	---@type FloorScanState
 	local self = {
 		player = player,
 		playing_sounds = {},
