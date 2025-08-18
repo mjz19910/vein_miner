@@ -129,6 +129,8 @@ local function is_supported(pos, invalid_support_name)
 	return false
 end
 
+local DISTANCE_INCREASE = 1 * 8 / 2
+
 ---@class FloorScanState
 ---@field playing_sounds table<string, boolean>
 --- player yaw vars
@@ -142,7 +144,7 @@ end
 ---@field blocks_this_tick integer Number of blocks placed this tick
 local FloorScanState = {
 	-- player yaw constants
-	target_rad = math.rad(360) * 2,
+	target_rad = math.rad(360),
 }
 
 ---@param self FloorScanState
@@ -279,8 +281,6 @@ function FloorScanState:iterate_line_block(target_pos, dist, placeable_node_name
 		end
 	end
 end
-
-local DISTANCE_INCREASE = 1 * 8 / 2
 
 ---@param self FloorScanState
 function FloorScanState:run()
