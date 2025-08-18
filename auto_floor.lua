@@ -346,11 +346,11 @@ function floor_filler.new()
 		self.max_place_distance = max_place_distance
 		if j <= 1 and not is_yaw_update_per_player_disabled[plr_name] then
 			local yaw_div
+			local log_base = 1 + 0.7 * math.pow(0.95, 1)
 			if max_place_distance ~= nil then
-				local log_base = 1 + 0.7 * math.pow(0.95, 1)
 				yaw_div = (max_place_distance + 1) * 8 / math.log(self.count + log_base, log_base)
 			else
-				yaw_div = LINE_LENGTH / 2
+				yaw_div = LINE_LENGTH * 8 / math.log(self.count + log_base, log_base)
 			end
 			local yaw_speed = self.yaw_max / yaw_div
 			local s_yaw = self.scan_radians
