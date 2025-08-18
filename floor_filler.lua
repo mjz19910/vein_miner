@@ -270,6 +270,8 @@ function FloorScanState:run(player)
 	local blocks_this_tick = 0
 	local max_blocks = config.blocks_per_tick
 	for i = 1, LINE_LENGTH do
+		local dist = (forward_dir * i):length()
+		if self.min_dist and dist > self.min_dist + 8 then break end
 		local target_pos = round(line_start + forward_dir * i)
 		local node_below = get_node(target_pos)
 		if is_passable(node_below) and is_supported(target_pos, placeable_node_name) then
@@ -277,7 +279,6 @@ function FloorScanState:run(player)
 				break
 			end
 			if try_place_block_from_inventory(player, sound_info, target_pos, LINE_LENGTH) then
-				local dist = (forward_dir * i):length()
 				self:_update_min_dist(dist)
 				self:_update_max_dist(dist)
 				if self.show_log then
