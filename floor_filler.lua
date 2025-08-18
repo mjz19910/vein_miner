@@ -184,7 +184,7 @@ end
 ---@param dist number
 function FloorScanState:_update_min_dist(dist)
 	if not self.min_dist or dist < self.min_dist then
-		if self.min_dist and self.log_min ~= dist then
+		if self.log_min ~= dist then
 			self.log_min = dist
 			self.show_log = true
 		end
@@ -197,7 +197,7 @@ end
 ---@param dist number
 function FloorScanState:_update_max_dist(dist)
 	if not self.max_dist or dist > self.max_dist then
-		if self.max_dist and self.log_max ~= dist then
+		if self.log_max ~= dist then
 			self.log_max = dist
 			self.show_log = true
 		end
@@ -208,9 +208,6 @@ end
 --- Log the current min/max block distance if needed
 ---@param self FloorScanState
 function FloorScanState:_maybe_log_block_distance()
-	if not self.log_min or not self.log_max then
-		return
-	end
 	local cur_pos = vector.new(math.floor(self.log_min / 8), math.ceil(self.log_max / 8), 0)
 
 	-- Only log if the position changed
