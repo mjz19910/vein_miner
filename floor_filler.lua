@@ -246,6 +246,10 @@ function FloorScanState:deactivate_tool()
 		self:leave_floor_scan(round(self.player:get_pos()))
 	end
 end
+
+---@param self FloorScanState
+---@param target_pos Vector
+---@param dist number
 function FloorScanState:on_node_placed(target_pos, dist)
 	self.should_leave = true
 	self:_update_min_dist(dist)
