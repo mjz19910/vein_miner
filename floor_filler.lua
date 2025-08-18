@@ -392,8 +392,8 @@ end
 --- Update counters and timers after a tick
 ---@param player_name string
 function FloorScanState:_update_counters(player_name)
-	-- Few or no blocks placed: increment timer
-	if self.blocks_this_tick <= 1 then
+	-- no blocks placed: increment timer
+	if self.blocks_this_tick == 0 then
 		time_until_block_place = time_until_block_place + 1
 	else
 		-- Log group2 events if in the configured range
