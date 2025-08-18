@@ -39,19 +39,6 @@ core.register_tool("vein_miner:auto_floor", {
 	inventory_image = "default_wood.png",
 })
 
-local up = new_vec(0, 1, 0)
-local down = new_vec(0, -1, 0)
-local p = new_vec
-
----@class SoundInfo
----@field playing_sounds table<string, boolean>
-
-local time_until_block_place = 0
----@type table<string, SoundInfo>
-local sound_info_per_player = {}
-
-local FloorScanState_mt = {}
-
 ---@param rad number
 local function rad_to_deg_wrap360(rad)
 	local deg = math.deg(rad) % 360
@@ -78,7 +65,6 @@ end)
 core.register_on_leaveplayer(function(player)
 	local player_name = player:get_player_name()
 	scan_state_map[player_name] = nil
-	sound_info_per_player[player_name] = nil
 end)
 
 -- globalstep for vein_miner:auto_floor tool
