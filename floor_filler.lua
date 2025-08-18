@@ -130,7 +130,7 @@ local DISTANCE_INCREASE = 1 * 8
 ---@field blocks_this_tick integer Number of blocks placed this tick
 local FloorScanState = {
 	-- player yaw constants
-	target_rad = math.rad(360) * 3,
+	target_rad = math.rad(360),
 }
 
 ---@param self FloorScanState
