@@ -218,8 +218,8 @@ function FloorScanState:_maybe_log_block_distance()
 	-- Only log if the position changed
 	if cur_pos ~= self.last_pos then
 		log_block_distance({
-			min = self.log_min,
-			max = self.log_max,
+			min = cur_pos.x * 4,
+			max = cur_pos.y * 4,
 			deg = rad_to_deg_wrap360((self.scan_radians or 0) + (self.player_start_yaw or 0)),
 		})
 		self.show_log = false
