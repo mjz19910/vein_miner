@@ -370,7 +370,7 @@ function floor_filler.new()
 							self.last_pos = cur_pos
 						end
 					end
-					if j == 0 and self.blocks_placed == 0 then
+					if self.count > 30 and j == 0 and self.blocks_placed == 0 then
 						core.log("action", "started placing floor " .. core.pos_to_string(target_pos))
 					end
 					j = j + 1
