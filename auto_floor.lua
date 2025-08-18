@@ -201,7 +201,7 @@ function floor_filler.new()
 	---@field player_start_yaw number | nil
 	---@field max_place_distance number | nil
 	---@field min_block_distance number | nil
-	local self = {
+	local ret = {
 		fresh = true,
 		count = 0,
 		-- player yaw related
@@ -222,7 +222,7 @@ function floor_filler.new()
 	---@param player Player
 	---@param player_name string
 	---@param yaw number
-	function self:run(player, player_name, yaw)
+	function ret:run(player, player_name, yaw)
 		self.fresh = false
 
 		local plr_name = player_name
@@ -313,8 +313,6 @@ function floor_filler.new()
 						if max_block_distance ~= self.log_max_block_distance then
 							local prev_dist = self.log_max_block_distance
 							local cur_dist = log_max_block_distance
-							prev_dist = max_block_distance
-							cur_dist = next_place_nearest
 							if not prev_dist then
 								goto skip2
 							end
@@ -332,16 +330,9 @@ function floor_filler.new()
 								self.show_log_min = true
 							end
 							self.show_log_max = true
-							do
-								local log_max_block_dist = cur_dist / 8
-								if self.log_min_block_distance == nil or self.log_min_block_distance > log_max_block_dist then
-									self.log_min_block_distance = log_max_block_dist
-									self.show_log_min = true
-								end
-								self.log_max_block_distance = log_max_block_dist
-								self.show_log_max = true
-								core.log("action", fmt_place_distance_vec2:format("max ", self.log_min_block_distance, self.log_max_block_distance))
-							end
+							self.log_max_block_distance = max
+							self.log_min_block_distance = min
+							core.log("action", fmt_place_distance_vec2:format("max ", self.log_min_block_distance, self.log_max_block_distance))
 							::skip2::
 						end
 					end
@@ -405,10 +396,10 @@ function floor_filler.new()
 			-- 	self.req_next_reset_scan_radians = self.scan_radians + 0.01 * 3
 			-- 	self.scan_radians = self.scan_radians - self.yaw_max / 4
 			-- end
-			self.count = math.floor(self.count / 3)
+			self.count = math.floor(self.count / 2)
 		end
 	end
-	function self:reset()
+	function ret:reset()
 		self.fresh = true
 		self.player_start_yaw = nil
 		self.scan_radians = 0
@@ -418,7 +409,7 @@ function floor_filler.new()
 		self.min_block_distance = nil
 		self.req_next_reset_scan_radians = 0
 	end
-	return self
+	return ret
 end
 
 ---@type table<string, FloorScanState>
