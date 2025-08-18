@@ -363,7 +363,7 @@ function floor_filler.new()
 		end
 		if j <= 1 and not is_yaw_update_per_player_disabled[plr_name] then
 			local yaw_div
-			local log_base = 1 + 0.7 * math.pow(0.95, 1)
+			local log_base = 1 + 0.7 * math.pow(0.95, 10)
 			if self.min_dist then
 				yaw_div = (self.min_dist + 1) * 8 / math.log(self.count + log_base, log_base)
 			else
