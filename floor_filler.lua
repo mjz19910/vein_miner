@@ -270,7 +270,7 @@ function FloorScanState:on_node_placed(target_pos, dist)
 end
 function FloorScanState:iterate_line_block(target_pos, dist, placeable_node_name, sound_info)
 	local node_below = get_node(target_pos)
-	if is_passable(node_below) and is_supported(target_pos, placeable_node_name) then
+	if is_passable(node_below) and (target_pos.y == -1 or is_supported(target_pos, placeable_node_name)) then
 		if self.blocks_this_tick >= self.max_blocks then
 			return false
 		end
