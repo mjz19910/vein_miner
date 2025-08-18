@@ -26,7 +26,7 @@ local vec_unit = vector.new(1, 1, 1)
 
 ---@param pos Vector
 ---@param mod_size Vector
-function h.mod_pos(pos, mod_size) return vec_floor(pos / mod_size) * mod_size end
+function h.mod_pos(pos, mod_size) return vector.multiply(vec_floor(vector.divide(pos, mod_size)), mod_size) end
 
 function h.is_liquid(node_name, liquid_type)
 	return node_name == "default:" .. liquid_type .. "_source" or node_name == "default:" .. liquid_type .. "_flowing"

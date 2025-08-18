@@ -201,6 +201,21 @@ function FloorScanState:_update_max_dist(dist)
 	end
 end
 
+--- Log the current min/max block distance if needed
+function FloorScanState:_maybe_log_block_distance()
+	local cur_pos = vector.new(self.log_min, self.log_max, 0)
+
+	-- Only log if the position changed
+	if cur_pos ~= self.last_pos then
+		log_block_distance({
+			pos = cur_pos,
+			deg = rad_to_deg_wrap360((self.scan_radians or 0) + (self.player_start_yaw or 0)),
+		})
+		self.show_log = false
+		self.last_pos = cur_pos
+	end
+end
+
 ---@param self FloorScanState
 function FloorScanState:run(player)
 	-- Mark scan state as active
