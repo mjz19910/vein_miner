@@ -363,9 +363,9 @@ local diagonal_dirs = {new_vec(1, 0, 1), new_vec(-1, 0, 1), new_vec(1, 0, -1), n
 
 ---@type Vector[]
 local support_dirs = {new_vec(0, 0, 0), new_vec(1, 0, 0), new_vec(-1, 0, 0), new_vec(0, 0, 1), new_vec(0, 0, -1)}
--- table.insert_all(support_dirs, diagonal_dirs)
+table.insert_all(support_dirs, diagonal_dirs)
 CFG.SUPPORT_DIRS = support_dirs
 ---@type Vector[]
-local vertical_offsets = {down, new_vec(0, 0, 0), up}
+local vertical_offsets = {down * 2, down, new_vec(0, 0, 0), up, up * 2}
 CFG.VERTICAL_OFFSETS = vertical_offsets
 return CFG
