@@ -189,9 +189,19 @@ local debug_log = false
 
 local FloorScanState_mt = {}
 
-local function log_place_distance(params)
-	local fmt = "place distance %s (%s,%s) 8x8 chunks away deg=%.1f"
-	core.log("action", fmt:format(params.tag, params.min, params.max, params.deg))
+---@param f number
+local function wrap_degrees_yaw(f)
+	local value = f % 360;
+	if value < 0 then
+		return value + 360
+	else
+		return value
+	end
+end
+
+local function log_block_distance(params)
+	local fmt = "distance of %s (%s,%s) 8x8 chunks away at %.1f°"
+	core.log("action", fmt:format(params.tag, params.min, params.max, wrap_degrees_yaw(params.deg)))
 end
 
 local floor_filler = {}
@@ -214,7 +224,7 @@ function floor_filler.new()
 		log_min_block_distance = 0,
 		log_max_block_distance = 0,
 		min_block_distance = 0,
-		max_place_distance = 8,
+		max_block_distance = 8,
 	}
 	---@param self FloorScanState
 	---@param player Player
@@ -301,7 +311,7 @@ function floor_filler.new()
 							self.show_log_min = true
 							self.log_max_block_distance = max
 							self.log_min_block_distance = min
-							log_place_distance({
+							log_block_distance({
 								tag = "min ",
 								min = min,
 								max = max,
@@ -335,7 +345,7 @@ function floor_filler.new()
 							self.show_log_max = true
 							self.log_max_block_distance = max
 							self.log_min_block_distance = min
-							log_place_distance({
+							log_block_distance({
 								tag = "max ",
 								min = min,
 								max = max,
@@ -347,7 +357,7 @@ function floor_filler.new()
 					if self.show_log_min and self.show_log_max then
 						local cur_pos = vector.new(self.log_min_block_distance, self.log_max_block_distance, 0)
 						if self.last_pos == nil or cur_pos ~= self.last_pos then
-							log_place_distance({
+							log_block_distance({
 								tag = "both",
 								min = self.log_min_block_distance,
 								max = self.log_max_block_distance,
