@@ -170,8 +170,6 @@ end
 ---@param pos Vector
 function FloorScanState:leave_floor_scan(pos) end
 
-local time_until_block_place = 0
-
 local block_dist_fmt = "place range at %.1f° min %s max %s, size %s"
 
 local function log_block_distance(v) core.log("action", block_dist_fmt:format(v.deg, v.min, v.max, v.size)) end
@@ -260,11 +258,8 @@ function FloorScanState:on_node_placed(target_pos, dist)
 		self:_maybe_log_block_distance()
 	end
 	if self.blocks_this_tick == 0 and self.blocks_placed == 0 then
-		local a, b, v = time_until_block_place, self.count, self.log_range
-		if a >= v.max and b >= v.max then
-			core.log("action", ("started placing floor after %d steps at %s"):format(a, core.pos_to_string(target_pos)))
-		elseif a >= v.min and a < v.max and b >= v.min and b < v.max then
-			core.log("action", "group1 time_until_block_place " .. a .. " count " .. b)
+		if self.count >= 400 then
+			core.log("action", ("started placing floor after %d steps at %s"):format(self.count, core.pos_to_string(target_pos)))
 		end
 	end
 	self.blocks_this_tick = self.blocks_this_tick + 1
@@ -393,17 +388,13 @@ end
 ---@param player_name string
 function FloorScanState:_update_counters(player_name)
 	-- no blocks placed: increment timer
-	if self.blocks_this_tick == 0 then
-		time_until_block_place = time_until_block_place + 1
-	else
-		-- Log group2 events if in the configured range
-		local a, b, t = time_until_block_place, self.count, self.log_range
-		if a >= t.min and a < t.max and b >= t.min and b < t.max then
-			core.log("action", "group2 time_until_block_place " .. a .. " count " .. b)
+	if self.blocks_this_tick > 0 then
+		local t = self.log_range
+		if self.count >= t.min and self.count < t.max then
+			core.log("action", "count " .. self.count)
 		end
 
-		-- Reset timers and counts
-		time_until_block_place = 0
+		-- Reset count
 		self.count = 0
 
 		-- Update total blocks placed
