@@ -422,7 +422,7 @@ function floor_filler.new()
 			if a > 500 and b > 500 then
 				core.log("action", ("more than 1 block placed after %d steps"):format(a))
 			elseif a > 400 and a < 500 and b > 400 and b < 500 then
-				core.log("action", "group1 time_until_block_place " .. a .. " count " .. b)
+				core.log("action", "group2 time_until_block_place " .. a .. " count " .. b)
 			end
 			time_until_block_place = 0
 			if false and self.count > 30 and self.scan_radians > self.req_next_reset_scan_radians then
