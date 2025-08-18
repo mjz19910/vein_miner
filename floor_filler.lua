@@ -252,8 +252,8 @@ end
 ---@param target_pos Vector
 ---@param dist number
 function FloorScanState:on_node_placed(target_pos, dist)
-	self:_update_min_dist(dist)
-	self:_update_max_dist(dist)
+	self:_update_min_dist(dist - dist % 8 + 8)
+	self:_update_max_dist(dist - dist % 8 + 8)
 	if self.show_log then
 		self:_maybe_log_block_distance()
 	end
