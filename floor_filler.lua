@@ -419,12 +419,12 @@ function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 		return
 	end
 
-	local log_base = 1 + 0.7 * math.pow(0.95, 11)
+	local log_base = 1 + 0.7 * math.pow(1.08, 3)
 	local yaw_div
 	if self.min_dist then
-		yaw_div = (self.min_dist + 9) * 8 / math.log(self.count + log_base, log_base)
+		yaw_div = self.min_dist * 7 / math.log(self.count + log_base, log_base)
 	else
-		yaw_div = (LINE_LENGTH + 9) * 8 / math.log(self.count + log_base, log_base)
+		yaw_div = LINE_LENGTH * 7 / math.log(self.count + log_base, log_base)
 	end
 
 	local yaw_speed = self.yaw_max / yaw_div
