@@ -300,6 +300,9 @@ function floor_filler.new()
 				if j >= max_blocks then
 					break
 				end
+				if j == 0 and time_until_block_place == 0 then
+					core.log("action", "start placing line " .. target_pos)
+				end
 				if try_place_block_from_inventory(player, sound_info, target_pos, LINE_LENGTH) then
 					local dist = len - len % 8 + 8
 					if not self.min_dist or dist < self.min_dist then
