@@ -379,7 +379,12 @@ end
 ---@param ctrl table Player control state
 function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 	if self.blocks_this_tick ~= 0 or self.yaw_update_disabled then return end
-	local yaw_speed = yaw_for_arc(self.max_dist * 2 ^ 0.5 + 4) / 2
+	local yaw_speed
+	if self.min_dist and self.max_dist then
+		yaw_speed = yaw_for_arc(self.max_dist * (2 ^ 0.5) + 4) / 2
+	else
+		yaw_speed = yaw_for_arc(LINE_LENGTH * (2 ^ 0.5) + 4) / 2
+	end
 	if ctrl.sneak then yaw_speed = -yaw_speed end
 	self.scan_radians = self.scan_radians + yaw_speed
 	self.count = self.count + 1
