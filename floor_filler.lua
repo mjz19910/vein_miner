@@ -62,16 +62,10 @@ local function try_place_block_from_inventory(player, playing_sounds, target_pos
 		if not placeable_nodes_to_skip[name] and def and name ~= "air" and not def.groups.falling_node then
 			local cur_node = core.get_node(target_pos)
 			if cur_node and cur_node.name ~= "air" then
-				if cur_node.name == "ignore" then
-					return false
-				end
+				if cur_node.name == "ignore" then return false end
 				local def2 = registered_nodes[cur_node.name]
-				if def2.liquidtype == "source" then
-					return false
-				end
-				if def2.walkable then
-					return false
-				end
+				if def2.liquidtype == "source" then return false end
+				if def2.walkable then return false end
 				core.node_dig(target_pos, cur_node, player)
 			end
 			set_node(target_pos, {
@@ -99,9 +93,7 @@ for _, dir in ipairs(support_dirs) do
 	for _, vert in ipairs(vertical_offsets) do
 		local offset = dir + vert
 		if offset ~= vector.zero() then
-			if table.contains(neighbor_offsets, offset) then
-				core.log("error", "duplicate offset " .. core.pos_to_string(offset))
-			end
+			if table.contains(neighbor_offsets, offset) then core.log("error", "duplicate offset " .. core.pos_to_string(offset)) end
 			table.insert(neighbor_offsets, offset)
 		end
 	end
@@ -111,21 +103,15 @@ end
 local function is_supported(pos, invalid_support_name)
 	for _, offset in ipairs(neighbor_offsets) do
 		local node = get_node_or_nil(pos + offset)
-		if not node then
-			return false
-		end
-		if is_node_supporting(node, invalid_support_name) then
-			return true
-		end
+		if not node then return false end
+		if is_node_supporting(node, invalid_support_name) then return true end
 	end
 	local function check_axis(dx, dz)
 		local node1 = get_node_or_nil(pos + new_vec(dx, 0, dz))
 		local node2 = get_node_or_nil(pos + new_vec(-dx, 0, -dz))
 		return is_node_supporting(node1, invalid_support_name) and is_node_supporting(node2, invalid_support_name)
 	end
-	if check_axis(1, 0) or check_axis(0, 1) then
-		return true
-	end
+	if check_axis(1, 0) or check_axis(0, 1) then return true end
 	return false
 end
 
@@ -178,9 +164,7 @@ local function log_block_distance(v) core.log("action", block_dist_fmt:format(v.
 ---@param rad number
 local function rad_to_deg_wrap360(rad)
 	local deg = math.deg(rad) % 360
-	if deg < 0 then
-		deg = deg + 360
-	end
+	if deg < 0 then deg = deg + 360 end
 	return deg
 end
 --- Update the minimum placement distance and maybe schedule a log
@@ -237,16 +221,12 @@ local deactivate_fmt = "finished placing floor %d blocks placed from center %s"
 function FloorScanState:deactivate_tool()
 	self.scan_radians = 0
 	self.count = 0
-	if self.blocks_placed > 0 then
-		self.all_blocks_placed = self.all_blocks_placed + self.blocks_placed
-	end
+	if self.blocks_placed > 0 then self.all_blocks_placed = self.all_blocks_placed + self.blocks_placed end
 	if self.all_blocks_placed > 0 then
 		local player_pos = round(self.player:get_pos())
 		core.log("action", deactivate_fmt:format(self.all_blocks_placed, core.pos_to_string(player_pos)))
 	end
-	if self.all_blocks_placed > 0 then
-		self.all_blocks_placed = 0
-	end
+	if self.all_blocks_placed > 0 then self.all_blocks_placed = 0 end
 end
 
 ---@param self FloorScanState
@@ -255,30 +235,22 @@ end
 function FloorScanState:on_node_placed(target_pos, dist)
 	if self.blocks_this_tick == 0 and self.blocks_placed == 0 then
 		local t = self.log_range
-		if self.count >= t.min and self.count < t.max then
-			core.log("action", "count " .. self.count)
-		end
+		if self.count >= t.min and self.count < t.max then core.log("action", "count " .. self.count) end
 		if self.count >= 400 then
 			core.log("action", ("started placing floor after %d steps at %s"):format(self.count, core.pos_to_string(target_pos)))
 		end
 	end
 	self:_update_min_dist(dist)
 	self:_update_max_dist(dist)
-	if self.show_log then
-		self:_maybe_log_block_distance()
-	end
+	if self.show_log then self:_maybe_log_block_distance() end
 	self.blocks_this_tick = self.blocks_this_tick + 1
 	self.blocks_placed = self.blocks_placed + 1
 end
 function FloorScanState:iterate_line_block(target_pos, dist, placeable_node_name, sound_info)
 	local node_below = get_node(target_pos)
-	if not is_passable(node_below) then
-		return
-	end
+	if not is_passable(node_below) then return end
 	if target_pos.y == -1 or is_supported(target_pos, placeable_node_name) then
-		if try_place_block_from_inventory(self.player, sound_info, target_pos, LINE_LENGTH) then
-			self:on_node_placed(target_pos, dist)
-		end
+		if try_place_block_from_inventory(self.player, sound_info, target_pos, LINE_LENGTH) then self:on_node_placed(target_pos, dist) end
 	end
 end
 
@@ -288,9 +260,7 @@ function FloorScanState:run()
 	local wielded = self.player:get_wielded_item():get_name()
 	if wielded ~= "vein_miner:auto_floor" then
 		self:deactivate_tool()
-		if self.active then
-			self:reset()
-		end
+		if self.active then self:reset() end
 		return
 	end
 
@@ -315,9 +285,7 @@ function FloorScanState:run()
 				break
 			end
 		end
-		if has_floor then
-			break
-		end
+		if has_floor then break end
 	end
 
 	if not has_floor then
@@ -369,13 +337,9 @@ function FloorScanState:run()
 	self.blocks_this_tick = 0
 	self.max_blocks = config.blocks_per_tick
 	for i = 1, LINE_LENGTH do
-		if self.blocks_this_tick >= self.max_blocks then
-			return false
-		end
+		if self.blocks_this_tick >= self.max_blocks then return false end
 		local dist = (forward_dir * i):length()
-		if dist > (self.max_dist or LINE_LENGTH) + DISTANCE_INCREASE then
-			break
-		end
+		if dist > (self.max_dist or LINE_LENGTH) + DISTANCE_INCREASE then break end
 		local target_pos = round(line_start + forward_dir * i)
 		self:iterate_line_block(target_pos, dist, placeable_node_name, sound_info)
 	end
@@ -414,15 +378,10 @@ end
 ---@param yaw number Current yaw
 ---@param ctrl table Player control state
 function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
-	if self.blocks_this_tick ~= 0 or self.yaw_update_disabled then
-		return
-	end
+	if self.blocks_this_tick ~= 0 or self.yaw_update_disabled then return end
 	local yaw_speed = yaw_for_arc(self.max_dist + 4) / 2
-	if ctrl.sneak then
-		self.scan_radians = self.scan_radians - yaw_speed
-	else
-		self.scan_radians = self.scan_radians + yaw_speed
-	end
+	if ctrl.sneak then yaw_speed = -yaw_speed end
+	self.scan_radians = self.scan_radians + yaw_speed
 	self.count = self.count + 1
 
 	-- Reset if scan exceeds full rotation
