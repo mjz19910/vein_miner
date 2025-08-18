@@ -57,4 +57,4 @@ local function example_gen_distances()
 		end
 	end
 end
-example_gen_distances()
+-- example_gen_distances()
