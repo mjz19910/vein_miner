@@ -254,10 +254,10 @@ function FloorScanState:on_node_placed(target_pos, dist)
 		self:_maybe_log_block_distance()
 	end
 	if self.blocks_this_tick == 0 and self.blocks_placed == 0 then
-		local a, b = time_until_block_place, self.count
-		if a >= self.log_range.max and b >= self.log_range.max then
+		local a, b, v = time_until_block_place, self.count, self.log_range
+		if a >= v.max and b >= v.max then
 			core.log("action", ("started placing floor after %d steps at %s"):format(a, core.pos_to_string(target_pos)))
-		elseif a >= self.log_range.min and a < self.log_range.max and b >= self.log_range.min and b < self.log_range.max then
+		elseif a >= v.min and a < v.max and b >= v.min and b < v.max then
 			core.log("action", "group1 time_until_block_place " .. a .. " count " .. b)
 		end
 	end
