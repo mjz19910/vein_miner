@@ -33,7 +33,6 @@ local function gen_distances(offsets)
 			end
 			local off = sorted[i]
 			local d = sqrt(off.x * off.x + off.y * off.y + off.z * off.z)
-			d = floor(d * 1000 + 0.5) / 1000
 			if not seen[d] then
 				seen[d] = true
 				return d, off
