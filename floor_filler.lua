@@ -335,9 +335,9 @@ function FloorScanState:run()
 
 	-- Place blocks, update min/max distances, maybe log
 	self.blocks_this_tick = 0
-	self.max_blocks = config.blocks_per_tick
+	local max_blocks = config.blocks_per_tick
 	for i = 1, LINE_LENGTH do
-		if self.blocks_this_tick >= self.max_blocks then break end
+		if self.blocks_this_tick >= max_blocks then break end
 		local is_done = self:iterate_offset(line_start, forward_dir * i, sound_info, placeable_node_name)
 		if is_done then break end
 	end
