@@ -373,7 +373,7 @@ function FloorScanState:run()
 			return false
 		end
 		local dist = (forward_dir * i):length()
-		if dist > (self.min_dist or LINE_LENGTH) + DISTANCE_INCREASE then
+		if dist > (self.max_dist or LINE_LENGTH) + DISTANCE_INCREASE then
 			break
 		end
 		local target_pos = round(line_start + forward_dir * i)
@@ -417,20 +417,12 @@ function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 	if self.blocks_this_tick ~= 0 or self.yaw_update_disabled then
 		return
 	end
-	local yaw_speed
-	if self.max_dist then
-		yaw_speed = yaw_for_arc(self.min_dist + 4) / 2
-	else
-		yaw_speed = yaw_for_arc(LINE_LENGTH + 4) / 2
-	end
-	local new_yaw
+	local yaw_speed = yaw_for_arc(self.max_dist + 4) / 2
 	if ctrl.sneak then
-		new_yaw = self.scan_radians - yaw_speed
+		self.scan_radians = self.scan_radians - yaw_speed
 	else
-		new_yaw = self.scan_radians + yaw_speed
+		self.scan_radians = self.scan_radians + yaw_speed
 	end
-
-	self.scan_radians = new_yaw
 	self.count = self.count + 1
 
 	-- Reset if scan exceeds full rotation
