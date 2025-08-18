@@ -189,20 +189,18 @@ local debug_log = false
 
 local FloorScanState_mt = {}
 
----@param f number
-local function wrap_degrees_yaw(f)
-	local value = f % 360;
-	if value < 0 then
-		return value + 360
-	else
-		return value
+---@param rad number
+local function rad_to_deg_wrap360(rad)
+	local deg = math.deg(rad) % 360
+	if deg < 0 then
+		deg = deg + 360
 	end
+	return deg
 end
 
-local function log_block_distance(params)
-	local fmt = "distance of %s (%s,%s) 8x8 chunks away at %.1f°"
-	core.log("action", fmt:format(params.tag, params.min, params.max, wrap_degrees_yaw(params.deg)))
-end
+local block_dist_fmt = "distance (%s,%s) 8x8 chunks away at %.1f°"
+
+local function log_block_distance(v) core.log("action", block_dist_fmt:format(v.pos.x, v.pos.y, v.deg)) end
 
 local floor_filler = {}
 
@@ -210,22 +208,41 @@ local floor_filler = {}
 function floor_filler.new()
 	---@class FloorScanState
 	local ret = {
+		-- generic
 		fresh = true,
 		count = 0,
-		-- player yaw related
-		player_start_yaw = 0,
+		-- player yaw constants
 		yaw_max = math.rad(6),
 		target_rad = math.rad(360),
+		-- player yaw vars
+		player_start_yaw = 0,
 		scan_radians = 0,
 		req_next_reset_scan_radians = 0,
 		-- min and max display
 		show_log_min = false,
 		show_log_max = false,
 		log_min_block_distance = 0,
-		log_max_block_distance = 0,
+		log_max_block_distance = 1,
 		min_block_distance = 0,
 		max_block_distance = 8,
 	}
+	---@param self FloorScanState
+	function ret:reset()
+		-- generic
+		self.fresh = true
+		self.count = 0
+		-- player yaw vars
+		self.player_start_yaw = nil
+		self.scan_radians = 0
+		self.req_next_reset_scan_radians = 0
+		-- min and max display
+		self.log_min_block_distance = 0
+		self.log_max_block_distance = 1
+		self.min_block_distance = 0
+		self.max_block_distance = 8
+		self.last_pos = vector.new(0, -1, 0)
+	end
+	ret:reset()
 	---@param self FloorScanState
 	---@param player Player
 	---@param player_name string
@@ -268,13 +285,11 @@ function floor_filler.new()
 				break
 			end
 		end
-		local min_block_distance = self.min_block_distance
-		local max_block_distance = self.max_block_distance
-		local prev_max_block_distance = max_block_distance
+		local prev_max_block_distance = self.max_block_distance
 		for i = 1, LINE_LENGTH do
 			local target_offset = forward_dir * i
 			local target_len = target_offset:length()
-			if max_block_distance ~= nil and target_len > max_block_distance - 8 then
+			if self.max_block_distance ~= nil and target_len > self.max_block_distance - 8 then
 				break
 			end
 			local target_pos = round(line_start + forward_dir * i)
@@ -286,85 +301,58 @@ function floor_filler.new()
 				end
 				if try_place_block_from_inventory(player, sound_info, target_pos, LINE_LENGTH) then
 					local block_distance = target_len - target_len % 8 + 8
-					if min_block_distance == nil or block_distance < min_block_distance then
-						min_block_distance = block_distance
-						local log_min_block_distance = min_block_distance / 8
-						if log_min_block_distance ~= self.log_min_block_distance then
-							local prev_dist = self.log_min_block_distance
-							local cur_dist = log_min_block_distance
-							if not prev_dist then
+					if block_distance < self.min_block_distance then
+						self.min_block_distance = block_distance
+						local min = self.log_min_block_distance
+						local max = self.log_max_block_distance
+						local new_min = self.min_block_distance / 8
+						if new_min ~= min then
+							if new_min >= min and new_min <= min + 1 then
 								goto skip1
 							end
-							if cur_dist >= prev_dist and cur_dist <= prev_dist + 1 then
+							if new_min <= min and new_min >= min - 1 then
 								goto skip1
 							end
-							if cur_dist <= prev_dist and cur_dist >= prev_dist - 1 then
-								goto skip1
-							end
-							local max = self.log_max_block_distance
-							local min = self.log_min_block_distance
-							min = log_min_block_distance
-							if max == nil or min > max then
+							min = new_min
+							if min > max then
 								max = min
-								self.show_log_max = true
 							end
-							self.show_log_min = true
+							self.show_log = true
 							self.log_max_block_distance = max
 							self.log_min_block_distance = min
-							log_block_distance({
-								tag = "min ",
-								min = min,
-								max = max,
-								deg = math.deg(self.scan_radians + self.player_start_yaw),
-							})
 							::skip1::
 						end
 					end
-					if max_block_distance == nil or block_distance > max_block_distance then
-						max_block_distance = block_distance
-						local log_max_block_distance = max_block_distance / 8
-						if max_block_distance ~= self.log_max_block_distance then
-							local prev_dist = self.log_max_block_distance
-							local cur_dist = log_max_block_distance
-							if not prev_dist then
+					if block_distance > self.max_block_distance then
+						self.max_block_distance = block_distance
+						local min = self.log_min_block_distance
+						local max = self.log_max_block_distance
+						local new_max = self.max_block_distance / 8
+						if new_max ~= max then
+							if new_max >= max and new_max <= max + 1 then
 								goto skip2
 							end
-							if cur_dist >= prev_dist and cur_dist <= prev_dist + 1 then
+							if new_max <= max and new_max >= max - 1 then
 								goto skip2
 							end
-							if cur_dist <= prev_dist and cur_dist >= prev_dist - 1 then
-								goto skip2
-							end
-							local max = self.log_max_block_distance
-							local min = self.log_min_block_distance
-							max = log_max_block_distance
-							if min == nil or max < min then
+							max = new_max
+							if max < min then
 								min = max
-								self.show_log_min = true
 							end
-							self.show_log_max = true
+							self.show_log = true
 							self.log_max_block_distance = max
 							self.log_min_block_distance = min
-							log_block_distance({
-								tag = "max ",
-								min = min,
-								max = max,
-								deg = math.deg(self.scan_radians + self.player_start_yaw),
-							})
 							::skip2::
 						end
 					end
-					if self.show_log_min and self.show_log_max then
+					if self.show_log then
 						local cur_pos = vector.new(self.log_min_block_distance, self.log_max_block_distance, 0)
-						if self.last_pos == nil or cur_pos ~= self.last_pos then
+						if cur_pos ~= self.last_pos then
 							log_block_distance({
-								tag = "both",
-								min = self.log_min_block_distance,
-								max = self.log_max_block_distance,
-								deg = math.deg(self.scan_radians + self.player_start_yaw),
+								pos = cur_pos,
+								deg = rad_to_deg_wrap360(self.scan_radians + self.player_start_yaw),
 							})
-							self.show_log_min = false
-							self.show_log_max = false
+							self.show_log = false
 							self.last_pos = cur_pos
 						end
 					end
@@ -372,13 +360,13 @@ function floor_filler.new()
 				end
 			end
 		end
-		self.min_block_distance = min_block_distance
-		self.max_block_distance = max_block_distance
+		self.min_block_distance = self.min_block_distance
+		self.max_block_distance = self.max_block_distance
 		if j <= 1 and not is_yaw_update_per_player_disabled[plr_name] then
 			local yaw_div
 			local log_base = 1 + 0.7 * math.pow(0.95, 1)
-			if min_block_distance ~= nil then
-				yaw_div = (min_block_distance + 1) * 8 / math.log(self.count + log_base, log_base)
+			if self.min_block_distance >= 8 then
+				yaw_div = (self.min_block_distance + 1) * 8 / math.log(self.count + log_base, log_base)
 			else
 				yaw_div = (LINE_LENGTH + 1) * 8 / math.log(self.count + log_base, log_base)
 			end
@@ -421,16 +409,6 @@ function floor_filler.new()
 			-- end
 			self.count = math.floor(self.count / 2)
 		end
-	end
-	function ret:reset()
-		self.fresh = true
-		self.player_start_yaw = nil
-		self.scan_radians = 0
-		self.log_min_block_distance = 0
-		self.count = 0
-		self.max_block_distance = nil
-		self.min_block_distance = nil
-		self.req_next_reset_scan_radians = 0
 	end
 	return ret
 end
