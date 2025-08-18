@@ -144,7 +144,7 @@ end
 ---@field blocks_this_tick integer Number of blocks placed this tick
 local FloorScanState = {
 	-- player yaw constants
-	target_rad = math.rad(90),
+	target_rad = math.rad(360),
 }
 
 ---@param self FloorScanState
