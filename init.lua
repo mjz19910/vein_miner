@@ -33,6 +33,7 @@ vein_miner = {}
 local vein_miner = vein_miner
 local utils = require("mods.vein_miner.utils")
 local require = utils.require
+_G.require = require
 vein_miner.utils = utils
 
 ---@type table<string, boolean>
@@ -41,6 +42,7 @@ vein_miner.light_region_debug = {}
 vein_miner.deque = require("mods.vein_miner.deque")
 vein_miner.voxel_util = require("mods.vein_miner.voxel_util")
 local h = require("mods.vein_miner.helpers")
+---@type VeinMinerHelpers
 vein_miner.h = h
 local is_liquid = h.is_liquid
 ---@type VeinMinerConfig

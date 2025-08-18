@@ -53,7 +53,7 @@ local new_region = aabb.region
 local log_action = helpers.log_action
 
 -- constants
-local cardinal_dirs = vein_miner.CFG.cardinal_dirs
+local cardinal_dirs = vein_miner.CFG.CARDINAL_DIRS
 local liquid_set = {
 	["default:water_source"] = true,
 	["default:water_flowing"] = true,

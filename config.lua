@@ -1,12 +1,17 @@
 ---@type VectorModule
 local vector = vector
 local table = table
-local pairs = pairs
 local math = math
+
+local ipairs = ipairs
+local pairs = pairs
+
+local new_vec = vector.new
+
 ---@type VeinMinerGlobal
 local vein_miner = vein_miner
+
 local voxel_util = vein_miner.voxel_util
-local p = vector.new
 
 local dirt = {
 	"default:dirt",
@@ -206,16 +211,11 @@ local mg = {
 	apple = {apple},
 	butterfly = {butterfly.white, butterfly.red, butterfly.violet},
 	papyrus = {papyrus},
-	firefly = {"fireflies:firefly"}
+	firefly = {"fireflies:firefly"},
 }
 ---@type MiningGroups
 CFG.mining_groups = mg
----@type Vector[]
-local VEC_DIRS = {}
-CFG.VEC_DIRS = VEC_DIRS
----@type Vector[]
-local FLOATING_DIRS = {p(1, 0, 0), p(-1, 0, 0), p(0, 1, 0), p(0, -1, 0), p(0, 0, 1), p(0, 0, -1)}
-CFG.FLOATING_DIRS = FLOATING_DIRS
+
 ---@type string[]
 local COLOR_PALETTE = {"#ff0000", "#ff3300", "#ff6600", "#ff3333", "#cc0000", "#cc3333", "#990000", "#990033", "#660000", "#660033",
 	"#ff0033", "#ff3366", "#ff6666", "#ff9999", "#ffcccc", "#ff6600", "#ff9900", "#ffcc00", "#ffff00", "#ffcc33", "#ffff33", "#cccc00",
@@ -234,9 +234,6 @@ local sticky_nodes = {
 	["mesecons_stickyblocks:sticky_block_all"] = true,
 }
 CFG.sticky_nodes = sticky_nodes
----@type Vector[]
-local cardinal_dirs = {p(1, 0, 0), p(-1, 0, 0), p(0, 1, 0), p(0, -1, 0), p(0, 0, 1), p(0, 0, -1)}
-CFG.cardinal_dirs = cardinal_dirs
 CFG.MAX_MINED_NODES = 188
 
 ---@param radius number
@@ -250,7 +247,7 @@ local function gen_euclidean_offsets(radius)
 				if not (x == 0 and y == 0 and z == 0) then
 					local dist2 = x * x + y * y + z * z
 					if dist2 <= r2 then
-						dirs[#dirs + 1] = p(x, y, z)
+						dirs[#dirs + 1] = new_vec(x, y, z)
 					end
 				end
 			end
@@ -259,7 +256,7 @@ local function gen_euclidean_offsets(radius)
 	return dirs
 end
 
-table.insert(CFG.VEC_DIRS, p(0, 0, 0))
+table.insert(CFG.VEC_DIRS, new_vec(0, 0, 0))
 -- distance limited to 3.1622776601684, ie 3.2
 table.insert_all(CFG.VEC_DIRS, gen_euclidean_offsets(64 / 20))
 
@@ -370,4 +367,29 @@ light_nodes_set["default:cobble"] = true
 add_light_node("default:jungletree")
 add_light_node("default:junglegrass")
 add_light_node("default:dirt_with_rainforest_litter")
+---@type Vector[]
+local VEC_DIRS = {}
+CFG.VEC_DIRS = VEC_DIRS
+---@type Vector[]
+local FLOATING_DIRS = {new_vec(1, 0, 0), new_vec(-1, 0, 0), new_vec(0, 1, 0), new_vec(0, -1, 0), new_vec(0, 0, 1), new_vec(0, 0, -1)}
+CFG.FLOATING_DIRS = FLOATING_DIRS
+---@type Vector[]
+local cardinal_dirs = {new_vec(1, 0, 0), new_vec(-1, 0, 0), new_vec(0, 1, 0), new_vec(0, -1, 0), new_vec(0, 0, 1), new_vec(0, 0, -1)}
+CFG.CARDINAL_DIRS = cardinal_dirs
+
+local up = new_vec(0, 1, 0)
+local down = new_vec(0, -1, 0)
+
+---@type Vector[]
+local diagonal_dirs = {new_vec(1, 0, 1), new_vec(-1, 0, 1), new_vec(1, 0, -1), new_vec(-1, 0, -1)}
+
+---@type Vector[]
+local support_dirs = {new_vec(0, 0, 0), new_vec(1, 0, 0), new_vec(-1, 0, 0), new_vec(0, 0, 1), new_vec(0, 0, -1)}
+table.insert_all(support_dirs, diagonal_dirs)
+CFG.SUPPORT_DIRS = support_dirs
+---@type Vector[]
+local vertical_offsets = {down, new_vec(0, 0, 0), up, up * 2}
+CFG.VERTICAL_OFFSETS = vertical_offsets
+
 return CFG
+

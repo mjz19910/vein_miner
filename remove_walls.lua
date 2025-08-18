@@ -16,7 +16,7 @@ local MAX_CHUNK_SIZE = 48
 local MAP_BLOCKSIZE = 8
 local MAX_EXPAND = 14 -- nodes to expand by when out of bounds neighbor found
 
-local cardinal_dirs = CFG.cardinal_dirs
+local cardinal_dirs = CFG.CARDINAL_DIRS
 
 ---@type fun(pos: Vector): string
 local pos_str = core.pos_to_string

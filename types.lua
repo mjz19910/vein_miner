@@ -65,8 +65,6 @@ local inv = {}
 ---@field peek_item fun(self: ItemStack, count: integer|nil): ItemStack
 local stack = {}
 
----@alias Node MapNode
-
 ---@class ItemDefinition
 ---@field name string
 ---@field description string
@@ -88,7 +86,7 @@ local stack = {}
 ---@field on_drop OnDropCallback|nil
 ---@field node_placement_prediction string|nil
 
----@alias AfterUseCallback fun(itemstack: ItemStack, user: ObjectRef, node: Node): ItemStack|nil
+---@alias AfterUseCallback fun(itemstack: ItemStack, user: ObjectRef, node: MapNode): ItemStack|nil
 ---@alias OnUseCallback fun(itemstack: ItemStack, user: ObjectRef, pointed_thing: PointedThing): ItemStack|nil
 ---@alias OnPlaceCallback fun(itemstack: ItemStack, placer: ObjectRef, pointed_thing: PointedThing): ItemStack|nil
 ---@alias OnDropCallback fun(itemstack: ItemStack, dropper: ObjectRef, pos: Vector): ItemStack|nil
@@ -252,6 +250,7 @@ local sound_params = {
 ---@field walkable boolean
 ---@field buildable_to boolean
 ---@field floodable boolean
+---@field air_equivalent boolean
 ---@field liquidtype '"source"' | '"flowing"'
 ---@type RegNode
 local reg_node = {}
