@@ -358,7 +358,7 @@ function floor_filler.new()
 			end
 			self.scan_radians = new_yaw
 			self.count = self.count + 1
-			if self.scan_radians > self.target_rad then
+			if math.abs(self.scan_radians) > self.target_rad then
 				player:set_look_horizontal(self.target_rad + self.player_start_yaw)
 				is_yaw_update_per_player_disabled[plr_name] = true
 				self.scan_radians = 0
