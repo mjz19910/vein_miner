@@ -247,7 +247,7 @@ function FloorScanState:on_node_placed(target_pos, dist)
 	self.blocks_placed = self.blocks_placed + 1
 end
 
-function FloorScanState:iterate_line_block(pos, offset, sound_info, placeable_node_name)
+function FloorScanState:iterate_offset(pos, offset, sound_info, placeable_node_name)
 	local dist = offset:length()
 	if dist > (self.max_dist or LINE_LENGTH) + DISTANCE_INCREASE then return true end
 	local target_pos = round(pos + offset)
@@ -343,7 +343,7 @@ function FloorScanState:run()
 	self.max_blocks = config.blocks_per_tick
 	for i = 1, LINE_LENGTH do
 		if self.blocks_this_tick >= self.max_blocks then break end
-		local is_done = self:iterate_line_block(line_start, forward_dir * i, sound_info, placeable_node_name)
+		local is_done = self:iterate_offset(line_start, forward_dir * i, sound_info, placeable_node_name)
 		if is_done then break end
 	end
 
