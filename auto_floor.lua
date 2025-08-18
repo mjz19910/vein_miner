@@ -185,7 +185,7 @@ local function is_passable(node)
 	return def and def.walkable == false
 end
 
-local debug_log = false
+local debug_log = true
 
 local FloorScanState_mt = {}
 
