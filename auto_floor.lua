@@ -370,7 +370,7 @@ function floor_filler.new()
 							self.last_pos = cur_pos
 						end
 					end
-					if self.count > 30 and j == 0 and self.blocks_placed == 0 then
+					if time_until_block_place > 50 and self.count > 50 and j == 0 and self.blocks_placed == 0 then
 						core.log("action", "started placing floor " .. core.pos_to_string(target_pos))
 					end
 					j = j + 1
@@ -415,7 +415,7 @@ function floor_filler.new()
 		if j <= 1 then
 			time_until_block_place = time_until_block_place + 1
 		else
-			if self.count > 30 and debug_log then
+			if time_until_block_place > 50 and self.count > 50 and debug_log then
 				core.log("action", ("more than 1 block placed after %d steps"):format(time_until_block_place))
 			end
 			time_until_block_place = 0
