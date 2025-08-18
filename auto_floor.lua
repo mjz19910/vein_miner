@@ -198,7 +198,7 @@ local function rad_to_deg_wrap360(rad)
 	return deg
 end
 
-local block_dist_fmt = "distance (%s,%s) 8x8 chunks away at %.1f\xb0"
+local block_dist_fmt = "distance (%s,%s) 8x8 chunks away at %.1f°"
 
 local function log_block_distance(v) core.log("action", block_dist_fmt:format(v.pos.x, v.pos.y, v.deg)) end
 
