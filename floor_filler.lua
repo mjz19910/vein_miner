@@ -213,6 +213,10 @@ end
 --- Log the current min/max block distance if needed
 ---@param self FloorScanState
 function FloorScanState:_maybe_log_block_distance()
+	if self.count <= 40 then
+		return
+	end
+
 	local cur_pos = vector.new(self.log_min, self.log_max, 0)
 
 	-- Only log if the position changed
