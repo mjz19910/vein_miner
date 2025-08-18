@@ -132,42 +132,26 @@ minetest.register_on_mods_loaded(function()
 	MAX_MINED_NODES = tonumber(minetest.settings:get("vein_miner_max_nodes"))
 
 	-- Set MAX_MINED_NODES to default value in case getting the setting doesn't work
-	if MAX_MINED_NODES == nil then
-		MAX_MINED_NODES = 188
-	end
+	if MAX_MINED_NODES == nil then MAX_MINED_NODES = 188 end
 
 	CFG.MAX_MINED_NODES = MAX_MINED_NODES
 
 	-- Use namespaces settings if legacy settings are unset
-	if allow_ores == nil then
-		allow_ores = minetest.settings:get_bool("vein_miner_allow_ores", true)
-	end
+	if allow_ores == nil then allow_ores = minetest.settings:get_bool("vein_miner_allow_ores", true) end
 
-	if allow_trees == nil then
-		allow_trees = minetest.settings:get_bool("vein_miner_allow_trees", false)
-	end
+	if allow_trees == nil then allow_trees = minetest.settings:get_bool("vein_miner_allow_trees", false) end
 
-	if allow_all == nil then
-		allow_all = minetest.settings:get_bool("vein_miner_allow_all", false)
-	end
+	if allow_all == nil then allow_all = minetest.settings:get_bool("vein_miner_allow_all", false) end
 
 	-- Initialize tool whitelist with registered tools
-	for name, def in pairs(minetest.registered_tools) do
-		rTools[def.name] = true
-	end
+	for name, def in pairs(minetest.registered_tools) do rTools[def.name] = true end
 
 	-- Initialize whitelist for registered nodes
 	if allow_all then
 		-- wipe rNodes just in case
-		for k, v in pairs(rNodes) do
-			rNodes[k] = nil
-		end
+		for k, v in pairs(rNodes) do rNodes[k] = nil end
 		nodeBlacklist = true
-		for name, def in pairs(core.registered_nodes) do
-			if def.groups.xray_node then
-				rNodes[name] = true
-			end
-		end
+		for name, def in pairs(core.registered_nodes) do if def.groups.xray_node then rNodes[name] = true end end
 	else
 		if allow_ores then
 			local ore_patterns = {":stone_with_", ":mineral_", "_ore$"}
@@ -247,18 +231,10 @@ local light_nodes_set = CFG.light_nodes_set
 local target_set = CFG.target_set
 
 local function get_scan_mode(node_name)
-	if ignored_nodes_set[node_name] then
-		return "ignore"
-	end
-	if light_nodes_set[node_name] then
-		return "append"
-	end
-	if exclusive_node_set[node_name] then
-		return "exclusive"
-	end
-	if target_set[node_name] then
-		return "by_group"
-	end
+	if ignored_nodes_set[node_name] then return "ignore" end
+	if light_nodes_set[node_name] then return "append" end
+	if exclusive_node_set[node_name] then return "exclusive" end
+	if target_set[node_name] then return "by_group" end
 	return "error"
 end
 
@@ -279,9 +255,7 @@ local function on_found_empty_space(dir)
 	local hash = core.hash_node_position(dir)
 	if not seen_dir_set[hash] then
 		seen_dir_set[hash] = true
-		if distance < 3 then
-			log_action("teleport location " .. core.pos_to_string(dir) .. " distance " .. distance)
-		end
+		if distance < 3 then log_action("teleport location " .. core.pos_to_string(dir) .. " distance " .. distance) end
 	end
 end
 
@@ -289,9 +263,7 @@ local function on_light_source(pos)
 	local res = {}
 	for i, v in pairs(vec_dirs) do
 		local next_pos = utils.check_pos(pos + v)
-		if next_pos then
-			return next_pos
-		end
+		if next_pos then return next_pos end
 	end
 	for i, dir in pairs(joined_dirs) do
 		local distance = vector.distance(vector.new(0, 0, 0), dir)
@@ -317,9 +289,7 @@ local function on_light_source(pos)
 			end
 		end
 	end
-	if #res > 0 then
-		return res[1]
-	end
+	if #res > 0 then return res[1] end
 	log_error("missing air at pos " .. core.pos_to_string(pos))
 	return nil
 end
@@ -342,12 +312,8 @@ local function add_light_to_teleport_queue(state, v)
 		state.teleport_skip_set[h] = true
 		local update_pos = on_light_source(pos)
 		local below_pos = vector.offset(pos, 0, -1, 0)
-		if update_pos == nil then
-			update_pos = below_pos
-		end
-		if add_to_teleport_queue then
-			state.teleport_queue:push_right(update_pos)
-		end
+		if update_pos == nil then update_pos = below_pos end
+		if add_to_teleport_queue then state.teleport_queue:push_right(update_pos) end
 		local tp_diff = core.pos_to_string(vector.subtract(update_pos, pos))
 		local target = core.pos_to_string(below_pos)
 		log_action("teleport left " .. v.queue_left .. " diff " .. tp_diff .. " trg " .. target)
@@ -361,13 +327,9 @@ local function iter_node_groups(state, iter_nodes)
 	::again::
 	for node_name, node in pairs(iter_nodes) do
 		local dug_nodes, next_group = BlockDigger.dig_node_list(state, node_name, node, i)
-		if next_group then
-			goto continue
-		end
+		if next_group then goto continue end
 		local player = state.player
-		if player then
-			player_hud.update_nodes_mined(player, state.mined_nodes + state.cur_mined_nodes)
-		end
+		if player then player_hud.update_nodes_mined(player, state.mined_nodes + state.cur_mined_nodes) end
 		if dug_nodes > 0 and i < 32 then
 			i = i + 1
 			goto again
@@ -382,9 +344,7 @@ local function try_place_node_from_inventory(player, pos, name)
 	if inv:contains_item("main", name) then
 		local node = core.get_node_or_nil(pos)
 		if node then
-			if node.name ~= "air" then
-				core.node_dig(pos, node, player)
-			end
+			if node.name ~= "air" then core.node_dig(pos, node, player) end
 			core.set_node(pos, {
 				name = name,
 			})
@@ -407,22 +367,12 @@ local function is_passable(node)
 end
 local function notify_missing_light(player, pos, attach_dir, expire_time)
 	local attach_node = core.get_node_or_nil(pos + attach_dir)
-	if attach_node == nil or attach_node.name == "air" then
-		return
-	end
-	if attach_node.name == "default:water_flowing" then
-		return
-	end
-	if attach_node.name == "default:water_source" then
-		return
-	end
-	if light_nodes_set[attach_node.name] then
-		return
-	end
+	if attach_node == nil or attach_node.name == "air" then return end
+	if attach_node.name == "default:water_flowing" then return end
+	if attach_node.name == "default:water_source" then return end
+	if light_nodes_set[attach_node.name] then return end
 	local nat_light = core.get_natural_light(pos, 0.5)
-	if nat_light ~= nil and nat_light >= 5 then
-		return
-	end
+	if nat_light ~= nil and nat_light >= 5 then return end
 	local node = core.get_node_or_nil(pos)
 	if node == nil or node.name == "air" then
 		if not try_place_node_from_inventory(player, pos, "default:mese_post_light_pine_wood") then
@@ -446,9 +396,7 @@ local function is_valid_pos_to_iter(pos, player_name)
 	local config = player_config_mgr.data[player_name]
 	local maxy = config.maxy
 	local miny = config.miny
-	if pos.y >= miny and pos.y < maxy then
-		return true
-	end
+	if pos.y >= miny and pos.y < maxy then return true end
 	return false
 end
 vein_miner.is_valid_pos_to_iter = is_valid_pos_to_iter
@@ -504,18 +452,10 @@ local green_list = {}
 local wanted_list = {}
 local falling_list = {}
 local falling_list_all = {}
-for k, _ in pairs(falling_groups) do
-	table.insert_all(falling_list, mining_groups[k])
-end
-for k, _ in pairs(falling_groups_all) do
-	table.insert_all(falling_list_all, mining_groups[k])
-end
-for k, _ in pairs(green_groups) do
-	table.insert_all(green_list, mining_groups[k])
-end
-for k, _ in pairs(wanted_groups) do
-	table.insert_all(wanted_list, mining_groups[k])
-end
+for k, _ in pairs(falling_groups) do table.insert_all(falling_list, mining_groups[k]) end
+for k, _ in pairs(falling_groups_all) do table.insert_all(falling_list_all, mining_groups[k]) end
+for k, _ in pairs(green_groups) do table.insert_all(green_list, mining_groups[k]) end
+for k, _ in pairs(wanted_groups) do table.insert_all(wanted_list, mining_groups[k]) end
 
 local cobble_target_list = {}
 local cobble_target_groups = {
@@ -544,9 +484,7 @@ local cobble_target_groups = {
 	coral = true,
 }
 
-for k, _ in pairs(cobble_target_groups) do
-	table.insert_all(cobble_target_list, mining_groups[k])
-end
+for k, _ in pairs(cobble_target_groups) do table.insert_all(cobble_target_list, mining_groups[k]) end
 
 ---@class VeinMinerState
 ---@field pos Vector
@@ -590,9 +528,7 @@ local vein_miner_current_state = {}
 local function load_cobble_list(target_nodes, target_falling_nodes)
 	for i, v in ipairs(cobble_target_list) do
 		if table.contains(falling_list_all, v) then
-			if not table.contains(target_falling_nodes, v) then
-				table.insert(target_falling_nodes, v)
-			end
+			if not table.contains(target_falling_nodes, v) then table.insert(target_falling_nodes, v) end
 		elseif not table.contains(target_nodes, v) then
 			table.insert(target_nodes, v)
 		end
@@ -610,9 +546,7 @@ function VeinMinerState:process_queue_item(item, player_name)
 	local node_name = item.node_name
 	local options = item.options
 
-	if item.oldnode then
-		BlockDigger.notify_dig(self, pos, item.oldnode)
-	end
+	if item.oldnode then BlockDigger.notify_dig(self, pos, item.oldnode) end
 
 	local xz_len = 8
 	local y_len = 8
@@ -623,9 +557,7 @@ function VeinMinerState:process_queue_item(item, player_name)
 			options.large = true
 		end
 	end
-	if not options.large then
-		options.small = true
-	end
+	if not options.large then options.small = true end
 
 	local vec_size = vector.new(xz_len, y_len, xz_len);
 
@@ -635,14 +567,10 @@ function VeinMinerState:process_queue_item(item, player_name)
 	local maxvec = vector.add(minvec, vector.subtract(vec_size, 1))
 	maxvec = scanner.clamp_vec_to_player_bounds(maxvec, config)
 
-	if self.pos_mod_seen[chunk_hash] then
-		return
-	end
+	if self.pos_mod_seen[chunk_hash] then return end
 
 	-- Position check
-	if not scanner.is_pos_in_player_bounds(pos, config) then
-		return
-	end
+	if not scanner.is_pos_in_player_bounds(pos, config) then return end
 
 	if is_liquid(node_name, "water") or is_liquid(node_name, "lava") then
 		fill_liquid_at_pos(self, pos, l_utils.handle_pos_notify)
@@ -656,9 +584,7 @@ function VeinMinerState:process_queue_item(item, player_name)
 	-- end
 
 	local center = vector.floor(vector.divide(vector.add(minvec, maxvec), 2))
-	if vector.distance(player:get_pos(), center) > 150 then
-		return
-	end
+	if vector.distance(player:get_pos(), center) > 150 then return end
 
 	self.wait_for_player_near_pos(player, center)
 
@@ -684,9 +610,7 @@ function VeinMinerState:process_queue_item(item, player_name)
 		target_nodes = {}
 		load_cobble_list(target_nodes, target_falling_nodes)
 		if table.contains(falling_list_all, node_name) then
-			if not table.contains(target_falling_nodes, node_name) then
-				table.insert(target_falling_nodes, node_name)
-			end
+			if not table.contains(target_falling_nodes, node_name) then table.insert(target_falling_nodes, node_name) end
 		elseif not table.contains(target_nodes, node_name) then
 			table.insert(target_nodes, node_name)
 		end
@@ -731,22 +655,12 @@ function VeinMinerState:process_queue_item(item, player_name)
 		end
 	end
 
-	if options.user and options.light then
-		self.found_light_count = self.found_light_count + 1
-	end
+	if options.user and options.light then self.found_light_count = self.found_light_count + 1 end
 
-	if not utils.has_empty_main_inv_slot(player) then
-		core.chat_send_player(player_name, "Waiting for empty inventory slot for digging")
-	end
-	while not utils.has_empty_main_inv_slot(player) do
-		utils.async_wait(1)
-	end
-	if target_flags.liquid then
-		iter_node_groups(self, core.find_nodes_in_area(minvec, maxvec, water_targets, true))
-	end
-	if target_flags.falling then
-		iter_node_groups(self, core.find_nodes_in_area(minvec, maxvec, target_falling_nodes, true))
-	end
+	if not utils.has_empty_main_inv_slot(player) then core.chat_send_player(player_name, "Waiting for empty inventory slot for digging") end
+	while not utils.has_empty_main_inv_slot(player) do utils.async_wait(1) end
+	if target_flags.liquid then iter_node_groups(self, core.find_nodes_in_area(minvec, maxvec, water_targets, true)) end
+	if target_flags.falling then iter_node_groups(self, core.find_nodes_in_area(minvec, maxvec, target_falling_nodes, true)) end
 	iter_node_groups(self, core.find_nodes_in_area(minvec, maxvec, target_nodes, true))
 
 	core.fix_light(minvec, maxvec)
@@ -797,15 +711,11 @@ function VeinMinerState:dig_pos()
 	local player_name = self.player_name
 	while not queue:is_empty() do
 		local item = self:pop_queue()
-		if log_work_start then
-			log_warning("start work on item at " .. core.pos_to_string(item.pos) .. " " .. item.node_name)
-		end
+		if log_work_start then log_warning("start work on item at " .. core.pos_to_string(item.pos) .. " " .. item.node_name) end
 		self:process_queue_item(item, player_name)
 		self.mined_nodes = self.mined_nodes + self.cur_mined_nodes
 		self.co_cur_max_nodes = self.co_cur_max_nodes - self.cur_mined_nodes
-		if self.cur_mined_nodes > 0 then
-			coroutine.yield(self.cur_mined_nodes)
-		end
+		if self.cur_mined_nodes > 0 then coroutine.yield(self.cur_mined_nodes) end
 		self.cur_mined_nodes = 0
 		self:do_update_pos()
 	end
@@ -829,9 +739,7 @@ local function dig_finish(state)
 	end
 	local player = state.player
 
-	if player then
-		clear_mined_nodes_job = core.after(2.5, function() player_hud.update_nodes_mined(player, 0) end)
-	end
+	if player then clear_mined_nodes_job = core.after(2.5, function() player_hud.update_nodes_mined(player, 0) end) end
 end
 
 local next_loop_action_divisor = 4000 * math.pow(0.95, 1);
@@ -842,9 +750,7 @@ local function after_delay(data, fn, state)
 		return
 	end
 	if type(data) == "table" then
-		if data.wait then
-			core.after(data.time, fn, state)
-		end
+		if data.wait then core.after(data.time, fn, state) end
 		return
 	end
 	local mined_nodes = data
@@ -875,9 +781,7 @@ local function run_to_completion(co, on_complete)
 
 		end
 	elseif status == "dead" then
-		if on_complete ~= nil then
-			on_complete()
-		end
+		if on_complete ~= nil then on_complete() end
 	else
 		log_error("unexpected coroutine status in run_to_completion " .. status)
 	end
@@ -891,9 +795,7 @@ end
 ---@param state VeinMinerState
 local function vein_miner_step(state)
 	::start::
-	if state.thread == nil then
-		state.thread = coroutine.create(function() return state:dig_pos() end)
-	end
+	if state.thread == nil then state.thread = coroutine.create(function() return state:dig_pos() end) end
 	local co = state.thread
 	local co_status = coroutine.status(co)
 	if co_status == "suspended" then
@@ -912,24 +814,15 @@ local function vein_miner_step(state)
 			goto start
 		else
 			local function on_complete()
-				if not state.queue:is_empty() then
-					vein_miner_step(state)
-					return
-				end
+				if not state.queue:is_empty() then return vein_miner_step(state) end
+				dig_finish(state)
+				vein_miner_current_state[state.player_name] = nil
 			end
 			run_to_completion(coroutine.create(function()
 				---@type LightScanParams
-				for v in state.pending_light_scan:iter_right() do
-					scanner.scan_nearby_lights(state, v.pos, v.name, v.options, true)
-				end
+				for v in state.pending_light_scan:iter_right() do scanner.scan_nearby_lights(state, v.pos, v.name, v.options, true) end
 				state.pending_light_scan.head = 0
 				state.pending_light_scan.tail = 0
-				if not state.queue:is_empty() then
-					vein_miner_step(state)
-					return
-				end
-				dig_finish(state)
-				vein_miner_current_state[state.player_name] = nil
 			end), on_complete)
 		end
 	else
@@ -964,9 +857,7 @@ function VeinMinerState.wait_for_player_near_pos(player, target_pos)
 		player:set_look_vertical(pitch)
 		utils.async_wait(0.2)
 	end
-	if out_of_range then
-		utils.async_wait(0.6)
-	end
+	if out_of_range then utils.async_wait(0.6) end
 end
 
 -- Update wielded item
@@ -974,9 +865,7 @@ function VeinMinerState.update_wielded_item(player, wielded)
 	local tool = player:get_wielded_item()
 	if tool:get_name() == wielded:get_name() then
 		local wear_amount = 1 - (wielded:get_wear() / 65535)
-		if wear_amount < 0.85 then
-			log_action("high wear action " .. wear_amount)
-		end
+		if wear_amount < 0.85 then log_action("high wear action " .. wear_amount) end
 		wielded:set_wear(0)
 		player:set_wielded_item(wielded)
 	end
@@ -1032,36 +921,20 @@ end
 ---@param oldnode MapNode
 ---@param player Player|nil
 core.register_on_dignode(function(pos, oldnode, player)
-	if core.is_async then
-		return
-	end
-	if player == nil then
-		return
-	end
-	if oldnode == nil then
-		return
-	end
+	if core.is_async then return end
+	if player == nil then return end
+	if oldnode == nil then return end
 	local node_name = oldnode.name
-	if pos == nil then
-		return
-	end
-	if player:get_player_control().sneak then
-		return
-	end
+	if pos == nil then return end
+	if player:get_player_control().sneak then return end
 	local wielded = player:get_wielded_item()
-	if not is_node_vein_diggable(node_name, wielded:get_name()) then
-		return
-	end
+	if not is_node_vein_diggable(node_name, wielded:get_name()) then return end
 
 	-- start vein mining
 	local player_name = player:get_player_name()
-	if player_config_mgr.data[player_name] == nil then
-		player_config_mgr.data[player_name] = {}
-	end
+	if player_config_mgr.data[player_name] == nil then player_config_mgr.data[player_name] = {} end
 	local config = player_config_mgr.data[player_name]
-	if config.mode == nil then
-		config.mode = "small"
-	end
+	if config.mode == nil then config.mode = "small" end
 	local state = vein_miner_current_state[player_name]
 	if state == nil then
 		state = VeinMinerState.new(pos, player, player_name, wielded)
@@ -1070,12 +943,8 @@ core.register_on_dignode(function(pos, oldnode, player)
 	local q_item = l_utils.add_pos_to_queue(state, node_name, pos, {
 		user = true,
 	})
-	if q_item then
-		q_item.oldnode = oldnode
-	end
-	if not state.running then
-		vein_miner_step(state)
-	end
+	if q_item then q_item.oldnode = oldnode end
+	if not state.running then vein_miner_step(state) end
 end)
 require("mods.vein_miner.hand_override")
 -- a tool not in the tools module
