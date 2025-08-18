@@ -834,7 +834,7 @@ local function dig_finish(state)
 	end
 end
 
-local next_loop_action_divisor = --[[2000]] 4000;
+local next_loop_action_divisor = 4000 * math.pow(0.95, 1);
 
 local function after_delay(data, fn, state)
 	if data == nil then
