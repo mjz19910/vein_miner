@@ -203,7 +203,10 @@ end
 
 --- Log the current min/max block distance if needed
 function FloorScanState:_maybe_log_block_distance()
-	local cur_pos = vector.new(self.log_min, self.log_max, 0)
+	if not self.log_min or not self.log_max then
+		return
+	end
+	local cur_pos = vector.new(math.floor(self.log_min / 8), math.ceil(self.log_max / 8), 0)
 
 	-- Only log if the position changed
 	if cur_pos ~= self.last_pos then
@@ -302,7 +305,7 @@ function FloorScanState:_update_counters(blocks_this_tick, player_name)
 		time_until_block_place = time_until_block_place + 1
 	else
 		-- Log group2 events if in the configured range
-		local a, b = time_until_block_place, self.count
+		local a, b, t = time_until_block_place, self.count, self.log_range
 		if a >= t.min and a < t.max and b >= t.min and b < t.max then
 			core.log("action", "group2 time_until_block_place " .. a .. " count " .. b)
 		end
@@ -380,7 +383,7 @@ function floor_filler.new()
 	---@field log_max number|nil
 	---@field min_dist number|nil
 	---@field max_dist number|nil
-	local ret = {
+	local self = {
 		playing_sounds = {},
 		-- generic
 		fresh = true,
@@ -405,13 +408,23 @@ function floor_filler.new()
 		all_blocks_placed = 0,
 	}
 
-	setmetatable(ret, {
+	---@class NumRange
+	---@field min number
+	---@field max number
+
+	---@type NumRange
+	self.log_range = {
+		min = 200,
+		max = 500,
+	}
+
+	setmetatable(self, {
 		__index = FloorScanState,
 	})
 
 	-- initialize state
-	ret:reset()
-	return ret
+	self:reset()
+	return self
 end
 
 return floor_filler
