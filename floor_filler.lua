@@ -115,7 +115,7 @@ local function is_supported(pos, invalid_support_name)
 	return false
 end
 
-local DISTANCE_INCREASE = 1 * 8
+local DISTANCE_INCREASE = 5 * 8
 
 ---@class FloorScanState
 ---@field playing_sounds table<string, boolean>
@@ -204,7 +204,7 @@ function FloorScanState:_maybe_log_block_distance()
 			min = cur_pos.x,
 			max = cur_pos.y,
 			size = 8,
-			deg = math.deg((self.scan_radians or 0) + (self.player_start_yaw or 0)),
+			deg = rad_to_deg_wrap360((self.scan_radians or 0) + (self.player_start_yaw or 0)),
 		})
 		self.show_log = false
 		self.last_pos = cur_pos
@@ -224,15 +224,22 @@ function FloorScanState:deactivate_tool()
 	if self.all_blocks_placed > 0 then self.all_blocks_placed = 0 end
 end
 
+local floor_place_fmt = "started placing floor after %d steps at %s"
+local log_action_fmt = "count %d pos %s"
+
 ---@param self FloorScanState
 ---@param target_pos Vector
 ---@param dist number
-function FloorScanState:on_node_placed(target_pos, dist)
+function FloorScanState:on_node_placed(pos, dist)
 	if self.blocks_this_tick == 0 and self.blocks_placed == 0 then
-		local t = self.log_range
-		if self.count >= t.min and self.count < t.max then core.log("action", "count " .. self.count) end
-		if self.count >= 400 then
-			core.log("action", ("started placing floor after %d steps at %s"):format(self.count, core.pos_to_string(target_pos)))
+		local a, b = self.count, self.log_range
+		if a >= b.min then
+			local c = core.pos_to_string(pos)
+			if a < b.max then
+				core.log("action", log_action_fmt:format(a, c))
+			else
+				core.log("action", floor_place_fmt:format(a, c))
+			end
 		end
 	end
 	self:_update_min_dist(dist)
@@ -244,7 +251,7 @@ end
 
 function FloorScanState:iterate_offset(pos, offset, sound_info, placeable_node_name)
 	local dist = offset:length()
-	if dist > (self.max_dist or LINE_LENGTH) + DISTANCE_INCREASE then return true end
+	if dist > (self.min_dist or LINE_LENGTH) + DISTANCE_INCREASE then return true end
 	local target_pos = round(pos + offset)
 	local node_below = get_node(target_pos)
 	if not is_passable(node_below) then return false end
@@ -355,9 +362,9 @@ function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 	if self.blocks_this_tick ~= 0 or self.yaw_update_disabled then return end
 	local yaw_speed
 	if self.min_dist and self.max_dist then
-		yaw_speed = yaw_for_arc(self.max_dist * (2 ^ 0.5) + 4) / 2
+		yaw_speed = yaw_for_arc((self.min_dist + DISTANCE_INCREASE) * (2 ^ 0.5) + 4) / 2
 	else
-		yaw_speed = yaw_for_arc(LINE_LENGTH * (2 ^ 0.5) + 4) / 2
+		yaw_speed = yaw_for_arc((LINE_LENGTH + DISTANCE_INCREASE) * (2 ^ 0.5) + 4) / 2
 	end
 	if ctrl.sneak then yaw_speed = -yaw_speed end
 	self.scan_radians = self.scan_radians + yaw_speed
@@ -414,8 +421,8 @@ function floor_filler.new(player)
 
 	---@type NumRange
 	self.log_range = {
-		min = 200,
-		max = 500,
+		min = 150,
+		max = 350,
 	}
 
 	setmetatable(self, {
