@@ -144,7 +144,6 @@ end
 ---@field blocks_this_tick integer Number of blocks placed this tick
 local FloorScanState = {
 	-- player yaw constants
-	yaw_max = math.rad(6),
 	target_rad = math.rad(90),
 }
 
@@ -422,9 +421,9 @@ function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 	end
 	local yaw_speed
 	if self.max_dist then
-		yaw_speed = yaw_for_arc(self.max_dist) / 2
+		yaw_speed = yaw_for_arc(self.max_dist + DISTANCE_INCREASE) / 2
 	else
-		yaw_speed = yaw_for_arc(LINE_LENGTH) / 2
+		yaw_speed = yaw_for_arc(LINE_LENGTH + DISTANCE_INCREASE) / 2
 	end
 	local new_yaw
 	if ctrl.sneak then
