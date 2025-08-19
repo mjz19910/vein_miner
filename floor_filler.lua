@@ -254,7 +254,11 @@ function FloorScanState:leave_floor_scan(pos) end
 
 local block_dist_fmt = "place range at %.1f° min %s max %s, size %s"
 
-local function log_block_distance(v) core.log("action", block_dist_fmt:format(v.deg, v.min, v.max, v.size)) end
+---@param min integer
+---@param max integer
+---@param size integer
+---@param deg number
+local function log_block_distance(min, max, size, deg) core.log("action", block_dist_fmt:format(deg, min, max, size)) end
 
 ---@param rad number
 local function rad_to_deg_wrap360(rad)
@@ -295,12 +299,7 @@ function FloorScanState:_maybe_log_block_distance()
 
 	-- Only log if the position changed
 	if cur_pos ~= self.last_pos then
-		log_block_distance({
-			min = cur_pos.x,
-			max = cur_pos.y,
-			size = 8,
-			deg = rad_to_deg_wrap360((self.scan_radians or 0) + (self.player_start_yaw or 0)),
-		})
+		log_block_distance(cur_pos.x, cur_pos.y, 8, self:get_angle_deg())
 		self.show_log = false
 		self.last_pos = cur_pos
 	end
