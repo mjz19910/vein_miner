@@ -493,9 +493,9 @@ function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 	if self.yaw_update_disabled or self.blocks_this_tick ~= 0 then return end
 	local dist
 	if self.max_dist then dist = self.max_dist + 8 end
-	local yaw_speed = get_yaw_speed_for_distance(dist or self.place_limit) / 2
+	local yaw_speed = get_yaw_speed_for_distance(dist or self.place_limit) / 3
 	if ctrl.sneak then yaw_speed = -yaw_speed end
-	self.scan_radians = self.scan_radians + yaw_speed * math.log((self.count / 5) + 0.2, 3.5)
+	self.scan_radians = self.scan_radians + yaw_speed -- * math.log((self.count / 5) + 0.2, 3.5)
 	self.count = self.count + 1
 
 	-- Reset if scan exceeds full rotation
