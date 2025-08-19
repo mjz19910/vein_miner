@@ -363,6 +363,20 @@ function FloorScanState:iterate_offset(pos, offset, sound_info, placeable_node_n
 end
 
 ---@param self FloorScanState
+---@param place_limit integer
+function FloorScanState:min_based_limit(place_limit)
+	if self.max_dist then return self.max_dist + DISTANCE_INCREASE + 24 end
+	return place_limit + 24
+end
+
+---@param self FloorScanState
+---@param place_limit integer
+function FloorScanState:max_based_limit(place_limit)
+	if self.max_dist then return self.max_dist + DISTANCE_INCREASE + 8 end
+	return place_limit + 8
+end
+
+---@param self FloorScanState
 function FloorScanState:run()
 	-- Skip if player is not holding the auto-floor tool
 	local wielded = self.player:get_wielded_item():get_name()
@@ -424,7 +438,7 @@ function FloorScanState:run()
 	for i = 1, place_limit do
 		if self.blocks_this_tick >= max_blocks then break end
 		local offset = forward_dir * i
-		if offset:length() > (self.min_dist or place_limit) + DISTANCE_INCREASE + 16 then break end
+		if offset:length() > self:max_based_limit(place_limit) then break end
 		self:iterate_offset(line_start, offset, sound_info, placeable_node_name)
 	end
 
