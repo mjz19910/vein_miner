@@ -488,11 +488,12 @@ function FloorScanState:_update_counters(player_name)
 	self.last_yaw = self.player_start_yaw
 end
 
-local function yaw_for_arc(distance)
-	local theta_rad = 1 / distance
-	return theta_rad
+---@param dist number
+local function yaw_for_arc(dist)
+	return 1 / dist
 end
 
+---@param dist number
 local function get_yaw_speed_for_distance(dist)
 	local xz_offset = dist + 1
 	local max_dist = vector.new(xz_offset, 0, xz_offset):length()
@@ -513,9 +514,7 @@ function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 		player:set_fov(10, false, 0)
 		self.tool_active = true
 	end
-	local dist
-	if self.max_dist then dist = self.max_dist end
-	local yaw_speed = get_yaw_speed_for_distance(dist or self.place_limit) / 2
+	local yaw_speed = get_yaw_speed_for_distance(self.max_dist or self:get_place_limit()) / 2
 	if ctrl.sneak then yaw_speed = -yaw_speed end
 	self.scan_radians = self.scan_radians + yaw_speed -- * math.log((self.count / 5) + 0.2, 3.5)
 	self.count = self.count + 1
