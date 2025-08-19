@@ -133,6 +133,52 @@ local FloorScanState = {
 	target_rad = math.rad(360),
 }
 
+---@param player Player
+---@return FloorScanState
+function floor_filler.new(player)
+	---@type FloorScanState
+	local self = {
+		player = player,
+		playing_sounds = {},
+		-- generic
+		fresh = true,
+		count = 0,
+		-- player yaw vars
+		player_start_yaw = nil,
+		scan_radians = 0,
+		req_next_reset_scan_radians = 0,
+		yaw_update_disabled = false, -- replaces global table
+		last_yaw = nil, -- replaces global last_yaw_per_player
+		-- min and max display
+		show_log = false,
+		log_min = nil,
+		log_max = nil,
+		min_dist = nil,
+		max_dist = nil,
+		last_pos = vector.zero(),
+		blocks_placed = 0,
+		all_blocks_placed = 0,
+	}
+
+	---@class NumRange
+	---@field min number
+	---@field max number
+
+	---@type NumRange
+	self.log_range = {
+		min = 150,
+		max = 350,
+	}
+
+	setmetatable(self, {
+		__index = FloorScanState,
+	})
+
+	-- initialize state
+	self:reset()
+	return self
+end
+
 ---@param self FloorScanState
 function FloorScanState:reset()
 	self.active = false
@@ -394,52 +440,6 @@ function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 		self.yaw_update_disabled = true
 		self:deactivate_tool()
 	end
-end
-
----@param player Player
----@return FloorScanState
-function floor_filler.new(player)
-	---@type FloorScanState
-	local self = {
-		player = player,
-		playing_sounds = {},
-		-- generic
-		fresh = true,
-		count = 0,
-		-- player yaw vars
-		player_start_yaw = nil,
-		scan_radians = 0,
-		req_next_reset_scan_radians = 0,
-		yaw_update_disabled = false, -- replaces global table
-		last_yaw = nil, -- replaces global last_yaw_per_player
-		-- min and max display
-		show_log = false,
-		log_min = nil,
-		log_max = nil,
-		min_dist = nil,
-		max_dist = nil,
-		last_pos = vector.zero(),
-		blocks_placed = 0,
-		all_blocks_placed = 0,
-	}
-
-	---@class NumRange
-	---@field min number
-	---@field max number
-
-	---@type NumRange
-	self.log_range = {
-		min = 150,
-		max = 350,
-	}
-
-	setmetatable(self, {
-		__index = FloorScanState,
-	})
-
-	-- initialize state
-	self:reset()
-	return self
 end
 
 return floor_filler
