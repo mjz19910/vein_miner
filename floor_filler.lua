@@ -494,11 +494,11 @@ function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 	if self.undo_last_yaw_step and self.blocks_this_tick > 0 then
 		local dist
 		if self.max_dist then dist = self.max_dist + 8 end
-		local yaw_speed = get_yaw_speed_for_distance(dist or self.place_limit) / 2
-		self.scan_radians = self.scan_radians - yaw_speed - yaw_speed * math.log(self.count + 1, 1.9) / 1.5
+		local yaw_speed = get_yaw_speed_for_distance(dist or self.place_limit)
+		self.scan_radians = self.scan_radians - yaw_speed - yaw_speed * math.log(self.count + 1, 1.8)
 		self.undo_last_yaw_step = false;
 		-- Update player's horizontal look
-		player:set_look_horizontal(self.scan_radians + (self.player_start_yaw or 0))
+		player:set_look_horizontal(self.scan_radians + self.player_start_yaw)
 	end
 	if self.blocks_this_tick ~= 0 then return end
 	local dist
@@ -510,14 +510,14 @@ function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 
 	-- Reset if scan exceeds full rotation
 	if math.abs(self.scan_radians) > self.target_rad then
-		player:set_look_horizontal(self.target_rad + (self.player_start_yaw or 0))
+		player:set_look_horizontal(self.target_rad + self.player_start_yaw)
 		self.yaw_update_disabled = true
 		self:deactivate_tool()
 		return
 	end
 
 	-- Update player's horizontal look
-	player:set_look_horizontal(self.scan_radians + (self.player_start_yaw or 0))
+	player:set_look_horizontal(self.scan_radians + self.player_start_yaw)
 
 	-- Disable yaw updates if player is moving
 	if vector.length(player:get_velocity()) > 0.05 then
