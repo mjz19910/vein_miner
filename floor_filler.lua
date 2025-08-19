@@ -254,6 +254,7 @@ function FloorScanState:reset()
 	self.blocks_placed = 0
 	self.all_blocks_placed = 0
 	self.blocks_this_tick = 0
+	self.undo_last_yaw_step = false;
 end
 
 ---@param self FloorScanState
@@ -463,6 +464,8 @@ function FloorScanState:_update_counters(player_name)
 		self.blocks_placed = 0
 	end
 
+	if self.count > 150 then self.undo_last_yaw_step = true; end
+
 	-- Record last yaw for this player
 	self.last_yaw = self.player_start_yaw
 end
@@ -492,7 +495,12 @@ function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 	if self.max_dist then dist = self.max_dist + 8 end
 	local yaw_speed = get_yaw_speed_for_distance(dist or self.place_limit) / 2.5
 	if ctrl.sneak then yaw_speed = -yaw_speed end
-	self.scan_radians = self.scan_radians + yaw_speed -- + yaw_speed * math.log(self.count + 1, 2) / 2
+	if self.undo_last_yaw_step then
+		self.scan_radians = self.scan_radians - yaw_speed - yaw_speed * math.log(self.count + 1, 1.9) / 1.5
+		self.undo_last_yaw_step = false;
+	else
+		self.scan_radians = self.scan_radians + yaw_speed + yaw_speed * math.log(self.count + 1, 1.9) / 2.2
+	end
 	self.count = self.count + 1
 
 	-- Reset if scan exceeds full rotation
