@@ -115,7 +115,7 @@ local function is_supported(pos, invalid_support_name)
 	return false
 end
 
-local DISTANCE_INCREASE = 2 * 8
+local DISTANCE_INCREASE = 8
 
 ---@class FloorScanState
 ---@field playing_sounds table<string, boolean>
