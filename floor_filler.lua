@@ -396,8 +396,6 @@ function FloorScanState:run()
 	local player = self.player
 	local yaw = player:get_look_horizontal()
 	local player_pos = player:get_pos()
-	local pos = h.mod_pos(player:get_pos(), vector.new(1, 4, 1))
-	if pos.y ~= 0 then pos = player_pos end
 
 	-- Initialize player yaw if not already set
 	if self.player_start_yaw == nil then
@@ -413,7 +411,7 @@ function FloorScanState:run()
 	-- Positioning and direction
 	local look_dir = player:get_look_dir()
 	local forward_dir = normalize(vector.new(look_dir.x, 0, look_dir.z))
-	local line_start = round(pos + down + up / 2 - forward_dir)
+	local line_start = round(player_pos + down + up / 2 - forward_dir)
 
 	-- Player config + controls
 	local plr_name = player:get_player_name()
