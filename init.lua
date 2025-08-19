@@ -501,6 +501,7 @@ local VeinMinerState = {}
 VeinMinerState.__index = VeinMinerState
 vein_miner.mt = VeinMinerState
 
+---@param self VeinMinerState
 function VeinMinerState:do_update_pos()
 	if not self.teleport_queue:is_empty() then
 		for cur_pos in self.teleport_queue:iter_right() do
@@ -742,7 +743,7 @@ local function dig_finish(state)
 	if player then clear_mined_nodes_job = core.after(2.5, function() player_hud.update_nodes_mined(player, 0) end) end
 end
 
-local next_loop_action_divisor = 8000;
+local next_loop_action_divisor = 7000;
 
 local function after_delay(data, fn, state)
 	if data == nil then
