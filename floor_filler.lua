@@ -326,6 +326,10 @@ function FloorScanState:deactivate_tool()
 		core.log("action", deactivate_fmt:format(self.all_blocks_placed, core.pos_to_string(player_pos)))
 	end
 	if self.all_blocks_placed > 0 then self.all_blocks_placed = 0 end
+	if self.tool_active then
+		self.player:set_fov(0, false, 0)
+		self.tool_active = false
+	end
 end
 
 local floor_place_fmt = "started placing floor after %d steps at %s with yaw=%.1f"
@@ -384,10 +388,7 @@ function FloorScanState:run()
 	local wielded = self.player:get_wielded_item():get_name()
 	if wielded ~= "vein_miner:auto_floor" then
 		self:deactivate_tool()
-		if self.active then
-			self:reset()
-			self.player:set_fov(0, false, 0)
-		end
+		if self.active then self:reset() end
 		return
 	end
 
@@ -408,8 +409,8 @@ function FloorScanState:run()
 		self.player_start_yaw = yaw
 	end
 
-	if not self.active then player:set_fov(10, false, 0) end
-
+	if not self.tool_active then player:set_fov(10, false, 0) end
+	self.tool_active = true
 	self.active = true
 
 	-- Positioning and direction
