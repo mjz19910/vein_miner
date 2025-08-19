@@ -78,10 +78,16 @@ end
 local p = vector.new
 
 ---@param state VeinMinerState
+---@param regions Region[]
+---@param pos Vector
+---@param node_name string
+---@param user_action boolean
+---@param show_log boolean
+---@param config PlayerConfig
 local function scan_region_for_node(state, regions, r, pos, node_name, user_action, show_log, config)
 	local center = (r.min + r.max) / 2
 	local scan_distance = vector.distance(state.player:get_pos(), center)
-	if scan_distance > 300 then
+	if false then
 		if not show_log then
 			return
 		end
@@ -96,7 +102,7 @@ local function scan_region_for_node(state, regions, r, pos, node_name, user_acti
 		end
 		return
 	end
-	state.wait_for_player_near_pos(state.player, center)
+	-- state.wait_for_player_near_pos(state.player, center)
 	local scan_nodes = core.find_nodes_in_area(r.min, r.max, node_name, false)
 	local count = count_found_nodes(state, scan_nodes, pos, config)
 	for _, p in pairs(scan_nodes) do
@@ -157,7 +163,11 @@ scanner.light_scan_data = {}
 
 function scanner.light_scan_reset(name) scanner.light_scan_data[name] = {} end
 
+---@param state VeinMinerState
 ---@param pos Vector
+---@param node_name string
+---@param options ScanOptions
+---@param show_log boolean
 function scanner.scan_nearby_lights(state, pos, node_name, options, show_log)
 	local player_name = state.player_name
 	local regions = scanner.light_scan_data[player_name]

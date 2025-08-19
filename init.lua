@@ -584,9 +584,9 @@ function VeinMinerState:process_queue_item(item, player_name)
 	-- end
 
 	local center = vector.floor(vector.divide(vector.add(minvec, maxvec), 2))
-	if vector.distance(player:get_pos(), center) > 150 then return end
+	if vector.distance(player:get_pos(), center) > 220 then return end
 
-	self.wait_for_player_near_pos(player, center)
+	-- self.wait_for_player_near_pos(player, center)
 
 	if options.large then
 		notify_pos(center, "#0000ffff", 7 * 4, 4 * 60)
