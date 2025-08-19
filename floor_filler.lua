@@ -161,6 +161,7 @@ end
 local DISTANCE_INCREASE = 8
 
 ---@class FloorScanState
+---@field player Player
 ---@field playing_sounds table<string, boolean>
 --- player yaw vars
 ---@field player_start_yaw number|nil
@@ -383,7 +384,10 @@ function FloorScanState:run()
 	local wielded = self.player:get_wielded_item():get_name()
 	if wielded ~= "vein_miner:auto_floor" then
 		self:deactivate_tool()
-		if self.active then self:reset() end
+		if self.active then
+			self:reset()
+			self.player:set_fov(0, false, 0)
+		end
 		return
 	end
 
@@ -403,6 +407,8 @@ function FloorScanState:run()
 		end
 		self.player_start_yaw = yaw
 	end
+
+	if not self.active then player:set_fov(10, false, 0) end
 
 	self.active = true
 

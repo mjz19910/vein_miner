@@ -419,7 +419,7 @@ local player_config_mgr = {}
 ---
 ---## Player Specific
 ---@field get_player_name fun(self:ObjectRef): string
----@field get_fov fun(self:ObjectRef): number
+---@field get_fov fun(self:ObjectRef): number, boolean|nil, number|nil
 ---@field set_fov fun(self:ObjectRef, degrees:number, is_multiplier?:boolean, transition_time?:number)
 ---@field get_look_dir fun(self:ObjectRef): Vector
 ---@field get_look_vertical fun(self:ObjectRef): number
