@@ -16,7 +16,6 @@ core.register_on_leaveplayer(function(player)
 	local player_name = player:get_player_name()
 	scan_state_map[player_name] = nil
 end)
--- globalstep for vein_miner:auto_floor tool
 core.register_globalstep(function(dtime)
 	core.is_async = true
 
@@ -27,7 +26,6 @@ core.register_globalstep(function(dtime)
 
 	core.is_async = nil
 end)
-
 core.register_tool("vein_miner:auto_floor", {
 	description = "Auto-Floor Builder",
 	inventory_image = "default_wood.png",
