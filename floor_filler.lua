@@ -8,6 +8,7 @@ local setmetatable = setmetatable
 local ipairs = ipairs
 
 local math = math
+---@type VectorModule
 local vector = vector
 
 local new_vec = vector.new
@@ -104,14 +105,56 @@ local function is_supported(pos, invalid_support_name)
 	for _, offset in ipairs(neighbor_offsets) do
 		local node = get_node_or_nil(pos + offset)
 		if not node then return false end
+	end
+
+	-- Check 5x5 floor (y = pos.y - 1)
+	local has_air = false
+	for dx = -3, 3 do
+		for dz = -3, 3 do
+			local check_pos = {
+				x = pos.x + dx,
+				y = pos.y - 1,
+				z = pos.z + dz,
+			}
+			local node = get_node_or_nil(check_pos)
+			if node and node.name == "air" then
+				has_air = true
+				break
+			end
+		end
+		if has_air then break end
+	end
+	if not has_air then
+		-- no air at all in the 5x5 floor
+		return false
+	end
+
+	-- Check 5x5 roof (y = pos.y + 3)
+	has_air = false
+	for dx = -3, 3 do
+		for dz = -3, 3 do
+			local check_pos = {
+				x = pos.x + dx,
+				y = pos.y + 3,
+				z = pos.z + dz,
+			}
+			local node = get_node_or_nil(check_pos)
+			if node and node.name == "air" then
+				has_air = true
+				break
+			end
+		end
+		if has_air then break end
+	end
+	if not has_air then
+		-- no air at all in the 5x5 roof
+		return false
+	end
+
+	for _, offset in ipairs(neighbor_offsets) do
+		local node = get_node(pos + offset)
 		if is_node_supporting(node, invalid_support_name) then return true end
 	end
-	local function check_axis(dx, dz)
-		local node1 = get_node_or_nil(pos + new_vec(dx, 0, dz))
-		local node2 = get_node_or_nil(pos + new_vec(-dx, 0, -dz))
-		return is_node_supporting(node1, invalid_support_name) and is_node_supporting(node2, invalid_support_name)
-	end
-	if check_axis(1, 0) or check_axis(0, 1) then return true end
 	return false
 end
 
@@ -128,6 +171,7 @@ local DISTANCE_INCREASE = 8
 ---@field min_dist number|nil
 ---@field max_dist number|nil
 ---@field blocks_this_tick integer Number of blocks placed this tick
+---@field place_limit integer
 local FloorScanState = {
 	-- player yaw constants
 	target_rad = math.rad(360),
@@ -158,6 +202,7 @@ function floor_filler.new(player)
 		last_pos = vector.zero(),
 		blocks_placed = 0,
 		all_blocks_placed = 0,
+		place_limit = LINE_LENGTH,
 	}
 
 	---@class NumRange
@@ -295,14 +340,14 @@ function FloorScanState:on_node_placed(pos, dist)
 	self.blocks_placed = self.blocks_placed + 1
 end
 
+---@param self FloorScanState
 function FloorScanState:iterate_offset(pos, offset, sound_info, placeable_node_name)
-	local dist = offset:length()
-	if dist > (self.max_dist or LINE_LENGTH) + DISTANCE_INCREASE then return true end
+	local place_limit = self.place_limit
 	local target_pos = round(pos + offset)
 	local node_below = get_node(target_pos)
 	if not is_passable(node_below) then return false end
 	if target_pos.y == -1 or is_supported(target_pos, placeable_node_name) then
-		if try_place_block_from_inventory(self.player, sound_info, target_pos, LINE_LENGTH) then self:on_node_placed(target_pos, dist) end
+		if try_place_block_from_inventory(self.player, sound_info, target_pos, place_limit) then self:on_node_placed(target_pos, offset:length()) end
 	end
 	return false
 end
@@ -365,10 +410,12 @@ function FloorScanState:run()
 	-- Place blocks, update min/max distances, maybe log
 	self.blocks_this_tick = 0
 	local max_blocks = config.blocks_per_tick
-	local iter_limit = LINE_LENGTH
-	for i = 1, iter_limit do
+	local place_limit = self.place_limit
+	for i = 1, place_limit do
 		if self.blocks_this_tick >= max_blocks then break end
-		local is_done = self:iterate_offset(line_start, forward_dir * i, sound_info, placeable_node_name)
+		local offset = forward_dir * i
+		if offset:length() > (self.max_dist or place_limit) + DISTANCE_INCREASE then return true end
+		local is_done = self:iterate_offset(line_start, offset, sound_info, placeable_node_name)
 		if is_done then break end
 	end
 
