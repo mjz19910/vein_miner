@@ -1,4 +1,4 @@
-local LINE_LENGTH = 24 * 16
+local LINE_LENGTH = 12 * 16
 
 local assert = assert
 
