@@ -103,12 +103,72 @@ end
 local offset = vector.offset
 
 ---@param pos Vector
+---@param invalid_support_name string
 local function is_supported(pos, invalid_support_name)
+	-- Ensure all immediate neighbors exist
+	for _, offset in ipairs(neighbor_offsets) do
+		local node = get_node_or_nil(pos + offset)
+		if not node then return false end
+	end
+
+	-- --- Floor check (3×3 at y-1) ---
+	local floor_all_solid = true
+	for dx = -2, 2 do
+		for dz = -2, 2 do
+			local check_pos = offset(pos, dx, -1, dz)
+			local node = get_node_or_nil(check_pos)
+			if not node or is_passable(node) then
+				floor_all_solid = false
+				break
+			end
+		end
+		if not floor_all_solid then break end
+	end
+	local has_floor = true -- we always "found" the floor layer
+	-- If all solid, then floor is blocking
+	-- If not all solid, floor is passable enough
+
+	-- --- Roof check (scan y+1..y+3 for closest solid layer) ---
+	local roof_all_solid = false
+	local has_roof = false
+	for dy = 1, 3 do
+		local all_solid = true
+		for dx = -2, 2 do
+			for dz = -2, 2 do
+				local check_pos = offset(pos, dx, dy, dz)
+				local node = get_node_or_nil(check_pos)
+				if not node or is_passable(node) then
+					all_solid = false
+					break
+				end
+			end
+			if not all_solid then break end
+		end
+		if all_solid then
+			roof_all_solid = true
+			has_roof = true
+			break -- closest roof layer found
+		else
+			-- found a layer but not all solid → roof is not fully blocking
+			has_roof = true
+			roof_all_solid = false
+			break
+		end
+	end
+
+	-- If we found neither floor nor roof → skip to neighbors
+	if not has_floor and not has_roof then goto check_neighbors end
+
+	-- If both floor and roof exist, require at least one to be NOT full solid
+	if floor_all_solid and roof_all_solid then return false end
+
+	::check_neighbors::
+	-- Neighbor support check
 	for _, offset in ipairs(neighbor_offsets) do
 		local node = get_node(pos + offset)
-		if not node then return false end
 		if is_node_supporting(node, invalid_support_name) then return true end
 	end
+
 	return false
 end
 
