@@ -226,6 +226,10 @@ end
 
 ---@param self FloorScanState
 function FloorScanState:reset()
+	if self.max_dist > self.place_limit then
+		self.place_limit = self.max_dist - self.max_dist % 8 + 8
+		core.log("increased place limit to " .. math.floor(self.place_limit / 8) .. " 8x8 chunks")
+	end
 	self.active = false
 	self.count = 0
 	self.player_start_yaw = nil
@@ -409,7 +413,7 @@ function FloorScanState:run()
 	-- Place blocks, update min/max distances, maybe log
 	self.blocks_this_tick = 0
 	local max_blocks = config.blocks_per_tick
-	local place_limit = self.place_limit
+	local place_limit = self.place_limit + DISTANCE_INCREASE
 	for i = 1, place_limit do
 		if self.blocks_this_tick >= max_blocks then break end
 		local offset = forward_dir * i
