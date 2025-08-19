@@ -319,8 +319,8 @@ function FloorScanState:deactivate_tool()
 	if self.all_blocks_placed > 0 then self.all_blocks_placed = 0 end
 end
 
-local floor_place_fmt = "started placing floor after %d steps at %s"
-local log_action_fmt = "count %d pos %s"
+local floor_place_fmt = "started placing floor after %d steps at %s with yaw=%.1f"
+local log_action_fmt = "count %d pos %s deg %.1f"
 
 ---@param self FloorScanState
 ---@param target_pos Vector
@@ -329,11 +329,11 @@ function FloorScanState:on_node_placed(pos, dist)
 	if self.blocks_this_tick == 0 and self.blocks_placed == 0 then
 		local a, b = self.count, self.log_range
 		if a >= b.min then
-			local c = core.pos_to_string(pos)
+			local c, d = core.pos_to_string(pos), self:get_angle_deg()
 			if a < b.max then
-				core.log("action", log_action_fmt:format(a, c))
+				core.log("action", log_action_fmt:format(a, c, d))
 			else
-				core.log("action", floor_place_fmt:format(a, c))
+				core.log("action", floor_place_fmt:format(a, c, d))
 			end
 		end
 	end
@@ -429,6 +429,7 @@ function FloorScanState:run()
 end
 
 --- Update counters and timers after a tick
+---@param self FloorScanState
 ---@param player_name string
 function FloorScanState:_update_counters(player_name)
 	-- no blocks placed: increment timer
@@ -456,7 +457,11 @@ local function get_yaw_speed_for_distance(dist)
 	return yaw_for_arc(math.ceil(max_dist))
 end
 
+---@param self FloorScanState
+function FloorScanState:get_angle_deg() return math.deg(self.target_rad + self.player_start_yaw) end
+
 --- Adjust player yaw if few blocks were placed
+---@param self FloorScanState
 ---@param player Player
 ---@param yaw number Current yaw
 ---@param ctrl table Player control state
