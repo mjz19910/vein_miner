@@ -417,7 +417,7 @@ function FloorScanState:run()
 	for i = 1, place_limit do
 		if self.blocks_this_tick >= max_blocks then break end
 		local offset = forward_dir * i
-		if offset:length() > (self.max_dist or place_limit) + DISTANCE_INCREASE then break end
+		if offset:length() > (self.min_dist or place_limit) + DISTANCE_INCREASE + 16 then break end
 		self:iterate_offset(line_start, offset, sound_info, placeable_node_name)
 	end
 
@@ -462,7 +462,7 @@ end
 ---@param ctrl table Player control state
 function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 	if self.blocks_this_tick ~= 0 or self.yaw_update_disabled then return end
-	local yaw_speed = get_yaw_speed_for_distance(self.max_dist or self.place_limit) / 2.2
+	local yaw_speed = get_yaw_speed_for_distance(self.min_dist or self.place_limit) / 2.2
 	if ctrl.sneak then yaw_speed = -yaw_speed end
 	self.scan_radians = self.scan_radians + yaw_speed -- + yaw_speed * math.log(self.count + 1, 2) / 2
 	self.count = self.count + 1
