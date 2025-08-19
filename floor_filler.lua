@@ -356,7 +356,7 @@ local function yaw_for_arc(distance)
 end
 
 local function get_yaw_speed_for_distance(dist)
-	local xz_offset = dist + DISTANCE_INCREASE / 2
+	local xz_offset = dist + 1
 	local max_dist = vector.new(xz_offset, 2.5, xz_offset):length()
 	return yaw_for_arc(math.ceil(max_dist))
 end
