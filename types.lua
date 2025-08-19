@@ -330,6 +330,7 @@ vector = {}
 ---@field maxy number
 ---@field last_maxy number|nil
 ---@field blocks_per_tick number
+---@field floor_place_limit integer|nil
 ---@type PlayerConfig
 local config_data = {}
 
