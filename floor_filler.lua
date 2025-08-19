@@ -157,10 +157,10 @@ local function is_supported(pos, invalid_support_name)
 	end
 
 	-- If we found neither floor nor roof → skip to neighbors
-	if not has_floor and not has_roof then goto check_neighbors end
+	-- if not has_floor and not has_roof then goto check_neighbors end
 
 	-- If both floor and roof exist, require at least one to be NOT full solid
-	if floor_all_solid and roof_all_solid then return false end
+	if floor_all_solid or roof_all_solid then return false end
 
 	::check_neighbors::
 	-- Neighbor support check
