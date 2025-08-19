@@ -189,7 +189,7 @@ local DISTANCE_INCREASE = 16
 ---@field place_limit integer
 local FloorScanState = {
 	-- player yaw constants
-	target_rad = math.rad(360) * 2,
+	target_rad = math.rad(360),
 }
 
 ---@param player Player
@@ -521,7 +521,7 @@ function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 		-- player:set_fov(10, false, 0)
 		self.tool_active = true
 	end
-	local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit()) / 2.1
+	local yaw_speed = get_yaw_speed_for_distance(self.min_dist or 6) / 2
 	if ctrl.sneak then yaw_speed = -yaw_speed end
 	self.scan_radians = self.scan_radians + yaw_speed -- * math.log((self.count / 5) + 0.2, 3.5)
 	self.count = self.count + 1
