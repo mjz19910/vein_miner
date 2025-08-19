@@ -408,9 +408,6 @@ function FloorScanState:run()
 		end
 		self.player_start_yaw = yaw
 	end
-
-	if not self.yaw_update_disabled and not self.tool_active then player:set_fov(10, false, 0) end
-	self.tool_active = true
 	self.active = true
 
 	-- Positioning and direction
@@ -500,6 +497,10 @@ function FloorScanState:get_angle_deg() return rad_to_deg_wrap360(self.scan_radi
 ---@param ctrl table Player control state
 function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 	if self.yaw_update_disabled or self.blocks_this_tick ~= 0 then return end
+	if not self.tool_active then
+		player:set_fov(10, false, 0)
+		self.tool_active = true
+	end
 	local dist
 	if self.max_dist then dist = self.max_dist end
 	local yaw_speed = get_yaw_speed_for_distance(dist or self.place_limit) / 1.6
