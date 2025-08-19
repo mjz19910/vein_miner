@@ -497,6 +497,8 @@ function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 		local yaw_speed = get_yaw_speed_for_distance(dist or self.place_limit) / 2
 		self.scan_radians = self.scan_radians - yaw_speed - yaw_speed * math.log(self.count + 1, 1.9) / 1.5
 		self.undo_last_yaw_step = false;
+		-- Update player's horizontal look
+		player:set_look_horizontal(self.scan_radians + (self.player_start_yaw or 0))
 	end
 	if self.blocks_this_tick ~= 0 then return end
 	local dist
