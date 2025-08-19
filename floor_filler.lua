@@ -172,7 +172,7 @@ local function is_supported(pos, invalid_support_name)
 	return false
 end
 
-local DISTANCE_INCREASE = 32
+local DISTANCE_INCREASE = 16
 
 ---@class FloorScanState
 ---@field player Player
@@ -404,7 +404,7 @@ function FloorScanState:max_based_limit()
 end
 
 ---@param self FloorScanState
-function FloorScanState:get_place_limit() return self:max_based_limit() end
+function FloorScanState:get_place_limit() return self:min_based_limit() end
 
 ---@param self FloorScanState
 function FloorScanState:run()
