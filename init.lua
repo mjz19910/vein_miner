@@ -742,7 +742,7 @@ local function dig_finish(state)
 	if player then clear_mined_nodes_job = core.after(2.5, function() player_hud.update_nodes_mined(player, 0) end) end
 end
 
-local next_loop_action_divisor = 4000 * math.pow(0.95, 1);
+local next_loop_action_divisor = 8000;
 
 local function after_delay(data, fn, state)
 	if data == nil then
