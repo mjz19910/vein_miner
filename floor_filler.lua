@@ -108,7 +108,7 @@ local function is_supported(pos, invalid_support_name)
 	end
 
 	-- Check 5x5 floor (y = pos.y - 1)
-	local has_air = false
+	local has_passable = false
 	for dx = -3, 3 do
 		for dz = -3, 3 do
 			local check_pos = {
@@ -117,20 +117,20 @@ local function is_supported(pos, invalid_support_name)
 				z = pos.z + dz,
 			}
 			local node = get_node_or_nil(check_pos)
-			if node and node.name == "air" then
-				has_air = true
+			if node and is_passable(node) then
+				has_passable = true
 				break
 			end
 		end
-		if has_air then break end
+		if has_passable then break end
 	end
-	if not has_air then
-		-- no air at all in the 5x5 floor
+	if not has_passable then
+		-- no passable nodes at all in the 5x5 floor
 		return false
 	end
 
 	-- Check 5x5 roof (y = pos.y + 3)
-	has_air = false
+	has_passable = false
 	for dx = -3, 3 do
 		for dz = -3, 3 do
 			local check_pos = {
@@ -139,15 +139,15 @@ local function is_supported(pos, invalid_support_name)
 				z = pos.z + dz,
 			}
 			local node = get_node_or_nil(check_pos)
-			if node and node.name == "air" then
-				has_air = true
+			if node and is_passable(node) then
+				has_passable = true
 				break
 			end
 		end
-		if has_air then break end
+		if has_passable then break end
 	end
-	if not has_air then
-		-- no air at all in the 5x5 roof
+	if not has_passable then
+		-- no passable nodes at all in the 5x5 roof
 		return false
 	end
 
