@@ -105,53 +105,8 @@ local offset = vector.offset
 ---@param pos Vector
 local function is_supported(pos, invalid_support_name)
 	for _, offset in ipairs(neighbor_offsets) do
-		local node = get_node_or_nil(pos + offset)
-		if not node then return false end
-	end
-
-	-- Check 3×3 floor (y = pos.y - 1) for at least one passable spot
-	local has_passable_floor = false
-	for dx = -2, 2 do
-		for dz = -2, 2 do
-			local check_pos = offset(pos, dx, -1, dz)
-			local node = get_node_or_nil(check_pos)
-			if node and is_passable(node) then
-				has_passable_floor = true
-				break
-			end
-		end
-		if has_passable_floor then break end
-	end
-	if not has_passable_floor then
-		return false -- no place to stand
-	end
-
-	-- Check the roof: find the first 3×3 layer that has *any* solid nodes
-	local roof_layer_y = nil
-	for dy = 1, 3 do
-		local all_solid = true
-		for dx = -2, 2 do
-			for dz = -2, 2 do
-				local check_pos = offset(pos, dx, dy, dz)
-				local node = get_node_or_nil(check_pos)
-				if not node or is_passable(node) then
-					all_solid = false
-					break
-				end
-			end
-			if not all_solid then break end
-		end
-		if all_solid then
-			roof_layer_y = pos.y + dy
-			break -- closest roof layer found
-		end
-	end
-
-	-- If no solid 3×3 roof was found → not supported
-	if not roof_layer_y then return false end
-
-	for _, offset in ipairs(neighbor_offsets) do
 		local node = get_node(pos + offset)
+		if not node then return false end
 		if is_node_supporting(node, invalid_support_name) then return true end
 	end
 	return false
