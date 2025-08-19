@@ -409,7 +409,7 @@ function FloorScanState:run()
 		self.player_start_yaw = yaw
 	end
 
-	if not self.tool_active then player:set_fov(10, false, 0) end
+	if not self.yaw_update_disabled and not self.tool_active then player:set_fov(10, false, 0) end
 	self.tool_active = true
 	self.active = true
 
