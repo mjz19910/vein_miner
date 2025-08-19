@@ -354,18 +354,25 @@ local function yaw_for_arc(distance)
 	return theta_rad
 end
 
+local function get_yaw_speed_for_distance(dist)
+	local xz_offset = dist + DISTANCE_INCREASE / 2
+	local max_dist = vector.new(xz_offset, 2.5, xz_offset):length()
+	return yaw_for_arc(math.ceil(max_dist))
+end
+
 --- Adjust player yaw if few blocks were placed
 ---@param player Player
 ---@param yaw number Current yaw
 ---@param ctrl table Player control state
 function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 	if self.blocks_this_tick ~= 0 or self.yaw_update_disabled then return end
-	local yaw_speed
+	local dist
 	if self.min_dist and self.max_dist then
-		yaw_speed = yaw_for_arc((self.min_dist + DISTANCE_INCREASE) * (2 ^ 0.5) + 4) / 2
+		dist = self.min_dist
 	else
-		yaw_speed = yaw_for_arc((LINE_LENGTH + DISTANCE_INCREASE) * (2 ^ 0.5) + 4) / 2
+		dist = LINE_LENGTH
 	end
+	local yaw_speed = get_yaw_speed_for_distance(dist)
 	if ctrl.sneak then yaw_speed = -yaw_speed end
 	self.scan_radians = self.scan_radians + yaw_speed
 	self.count = self.count + 1
