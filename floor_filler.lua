@@ -216,8 +216,8 @@ function floor_filler.new(player)
 
 	---@type NumRange
 	self.log_range = {
-		min = 150,
-		max = 350,
+		min = 100,
+		max = 150,
 	}
 
 	setmetatable(self, {
