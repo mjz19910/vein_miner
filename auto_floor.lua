@@ -1,9 +1,9 @@
-local require = require
 ---@type LuantiCore
 local core = core
 ---@type VectorModule
 local ipairs = ipairs
 local get_connected_players = core.get_connected_players
+local require = require
 ---@type FloorFiller
 local floor_filler = require("mods.vein_miner.floor_filler")
 ---@type table<string, FloorScanState>
