@@ -725,10 +725,10 @@ local clear_mined_nodes_job = nil
 
 local function dig_finish(state)
 	if state.total_action_count > 0 then
-		log_warning("vein miner complete in " .. state.total_action_count .. " steps\n" .. '***')
+		log_warning("vein miner complete in " .. state.total_action_count .. " steps")
 	elseif state.work_done then
 		if state.mined_nodes > 0 then
-			log_warning("vein miner complete\n" .. '***')
+			log_warning("vein miner complete (nodes were mined)")
 		else
 			log_warning("vein miner complete")
 		end
