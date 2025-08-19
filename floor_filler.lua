@@ -390,7 +390,9 @@ function FloorScanState:run()
 	-- Get player info
 	local player = self.player
 	local yaw = player:get_look_horizontal()
-	local pos = player:get_pos()
+	local player_pos = player:get_pos()
+	local pos = h.mod_pos(player:get_pos(), vector.new(1, 4, 1))
+	if pos.y ~= 0 then pos = player_pos end
 
 	-- Initialize player yaw if not already set
 	if self.player_start_yaw == nil then
@@ -407,7 +409,7 @@ function FloorScanState:run()
 	-- Positioning and direction
 	local look_dir = player:get_look_dir()
 	local forward_dir = normalize(vector.new(look_dir.x, 0, look_dir.z))
-	local line_start = round(pos + down + up / 2)
+	local line_start = round(pos + down + up / 2 - forward_dir)
 
 	-- Player config + controls
 	local plr_name = player:get_player_name()
@@ -492,8 +494,8 @@ function FloorScanState:get_angle_deg() return rad_to_deg_wrap360(self.scan_radi
 function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 	if self.yaw_update_disabled or self.blocks_this_tick ~= 0 then return end
 	local dist
-	if self.max_dist then dist = self.max_dist + 8 end
-	local yaw_speed = get_yaw_speed_for_distance(dist or self.place_limit) / 3
+	if self.max_dist then dist = self.max_dist end
+	local yaw_speed = get_yaw_speed_for_distance(dist or self.place_limit) / 1.5
 	if ctrl.sneak then yaw_speed = -yaw_speed end
 	self.scan_radians = self.scan_radians + yaw_speed -- * math.log((self.count / 5) + 0.2, 3.5)
 	self.count = self.count + 1
