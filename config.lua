@@ -150,6 +150,8 @@ local butterfly = {
 	violet = "butterflies:butterfly_violet",
 }
 
+local firefly = "fireflies:firefly"
+
 ---@class VeinMinerConfig
 local CFG = {}
 
@@ -210,7 +212,7 @@ local mg = {
 	apple = {apple},
 	butterfly = {butterfly.white, butterfly.red, butterfly.violet},
 	papyrus = {papyrus},
-	firefly = {"fireflies:firefly"},
+	firefly = {firefly},
 }
 ---@type MiningGroups
 CFG.mining_groups = mg
@@ -266,9 +268,7 @@ local function register_wires_group()
 		table.insert(mesecon.wire, "mesecons:wire_" .. nodeid .. "_off")
 		table.insert(mesecon.wire, "mesecons:wire_" .. nodeid .. "_on")
 
-		if (nid_inc(nid) == false) then
-			return
-		end
+		if (nid_inc(nid) == false) then return end
 	end
 end
 
@@ -291,21 +291,15 @@ local coral_skeleton = "default:coral_skeleton"
 mg.coral = {coral_skeleton, coral.brown, coral.cyan, coral.green, coral.orange, coral.pink}
 ---@type table<string, boolean>
 local ignored_nodes_set = {}
-for k, v in pairs(ignored_nodes) do
-	ignored_nodes_set[v] = true
-end
+for k, v in pairs(ignored_nodes) do ignored_nodes_set[v] = true end
 CFG.ignored_nodes_set = ignored_nodes_set
 ---@type table<string, boolean>
 local light_nodes_set = {}
-for k, v in pairs(CFG.LIGHT_NODES) do
-	light_nodes_set[v] = true
-end
+for k, v in pairs(CFG.LIGHT_NODES) do light_nodes_set[v] = true end
 CFG.light_nodes_set = light_nodes_set
 ---@type table<string, boolean>
 local exclusive_node_set = {}
-for k, v in pairs(CFG.exclusive_nodes) do
-	exclusive_node_set[v] = true
-end
+for k, v in pairs(CFG.exclusive_nodes) do exclusive_node_set[v] = true end
 CFG.exclusive_node_set = exclusive_node_set
 
 mg.surface = {dirt.dry, dirt.grass.dry}
@@ -318,9 +312,7 @@ local mining_groups = CFG.mining_groups
 ---@type table<string, boolean>
 local target_set = {}
 CFG.target_set = target_set
-for k, v in pairs(CFG.target_list) do
-	target_set[v] = true
-end
+for k, v in pairs(CFG.target_list) do target_set[v] = true end
 ---@type table<string, string>
 local node_to_group = {}
 for key, node_name_list in pairs(mining_groups) do
@@ -342,6 +334,8 @@ light_nodes_set["default:cobble"] = true
 add_light_node("default:jungletree")
 add_light_node("default:junglegrass")
 add_light_node("default:dirt_with_rainforest_litter")
+add_light_node(firefly)
+light_nodes_set[firefly] = true
 ---@type Vector[]
 local vec_dirs = {}
 table.insert(vec_dirs, new_vec(0, 0, 0))
