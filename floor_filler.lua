@@ -226,7 +226,7 @@ end
 
 ---@param self FloorScanState
 function FloorScanState:reset()
-	if self.max_dist > self.place_limit then
+	if self.max_dist and self.max_dist > self.place_limit then
 		self.place_limit = self.max_dist - self.max_dist % 8 + 8
 		core.log("increased place limit to " .. math.floor(self.place_limit / 8) .. " 8x8 chunks")
 	end
