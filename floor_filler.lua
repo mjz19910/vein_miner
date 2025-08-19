@@ -100,22 +100,19 @@ for _, dir in ipairs(support_dirs) do
 	end
 end
 
+local offset = vector.offset
+
 ---@param pos Vector
 local function is_supported(pos, invalid_support_name)
 	for _, offset in ipairs(neighbor_offsets) do
 		local node = get_node_or_nil(pos + offset)
 		if not node then return false end
 	end
-
-	-- Check 5x5 floor (y = pos.y - 1)
+	-- Check 3x3 floor (y = pos.y - 1)
 	local has_passable = false
-	for dx = -3, 3 do
-		for dz = -3, 3 do
-			local check_pos = {
-				x = pos.x + dx,
-				y = pos.y - 1,
-				z = pos.z + dz,
-			}
+	for dx = -2, 2 do
+		for dz = -2, 2 do
+			local check_pos = offset(pos, dx, -1, dz)
 			local node = get_node_or_nil(check_pos)
 			if node and is_passable(node) then
 				has_passable = true
@@ -125,19 +122,14 @@ local function is_supported(pos, invalid_support_name)
 		if has_passable then break end
 	end
 	if not has_passable then
-		-- no passable nodes at all in the 5x5 floor
+		-- no passable nodes at all in the 3x3 floor
 		return false
 	end
-
-	-- Check 5x5 roof (y = pos.y + 3)
+	-- Check 3x3 roof (y = pos.y + 1)
 	has_passable = false
-	for dx = -3, 3 do
-		for dz = -3, 3 do
-			local check_pos = {
-				x = pos.x + dx,
-				y = pos.y + 3,
-				z = pos.z + dz,
-			}
+	for dx = -2, 2 do
+		for dz = -2, 2 do
+			local check_pos = offset(pos, dx, 1, dz)
 			local node = get_node_or_nil(check_pos)
 			if node and is_passable(node) then
 				has_passable = true
@@ -147,7 +139,41 @@ local function is_supported(pos, invalid_support_name)
 		if has_passable then break end
 	end
 	if not has_passable then
-		-- no passable nodes at all in the 5x5 roof
+		-- no passable nodes at all in the 3x3 roof
+		return false
+	end
+	-- Check 3x3 roof (y = pos.y + 2)
+	has_passable = false
+	for dx = -2, 2 do
+		for dz = -2, 2 do
+			local check_pos = offset(pos, dx, 2, dz)
+			local node = get_node_or_nil(check_pos)
+			if node and is_passable(node) then
+				has_passable = true
+				break
+			end
+		end
+		if has_passable then break end
+	end
+	if not has_passable then
+		-- no passable nodes at all in the 3x3 roof
+		return false
+	end
+	-- Check 3x3 roof (y = pos.y + 3)
+	has_passable = false
+	for dx = -2, 2 do
+		for dz = -2, 2 do
+			local check_pos = offset(pos, dx, 3, dz)
+			local node = get_node_or_nil(check_pos)
+			if node and is_passable(node) then
+				has_passable = true
+				break
+			end
+		end
+		if has_passable then break end
+	end
+	if not has_passable then
+		-- no passable nodes at all in the 3x3 roof
 		return false
 	end
 
