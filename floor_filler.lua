@@ -244,13 +244,22 @@ function floor_filler.new(player)
 	return self
 end
 
----@param self FloorScanState
-function FloorScanState:reset()
+function FloorScanState:_maybe_increase_saved_place_limit()
 	if self.max_dist and self.max_dist > self.place_limit then
 		self.place_limit = self.max_dist - self.max_dist % 8 + 8
 		core.log("increased place limit to " .. math.floor(self.place_limit / 8) .. " 8x8 chunks")
 		local name = self.player:get_player_name()
 		player_config_mgr.data[name].floor_place_limit = self.place_limit
+		player_config_mgr.save_player_config(name)
+	end
+end
+
+---@param self FloorScanState
+function FloorScanState:reset()
+	local name = self.player:get_player_name()
+	local config = player_config_mgr.data[name]
+	if config.floor_place_limit ~= 192 then
+		config.floor_place_limit = 192
 		player_config_mgr.save_player_config(name)
 	end
 	self.active = false
@@ -489,9 +498,7 @@ function FloorScanState:_update_counters(player_name)
 end
 
 ---@param dist number
-local function yaw_for_arc(dist)
-	return 1 / dist
-end
+local function yaw_for_arc(dist) return 1 / dist end
 
 ---@param dist number
 local function get_yaw_speed_for_distance(dist)
