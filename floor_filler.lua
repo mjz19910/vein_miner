@@ -174,7 +174,7 @@ local DISTANCE_INCREASE = 8
 ---@field place_limit integer
 local FloorScanState = {
 	-- player yaw constants
-	target_rad = math.rad(360),
+	target_rad = math.rad(360) * 2,
 }
 
 ---@param player Player
