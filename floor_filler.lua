@@ -458,7 +458,7 @@ local function get_yaw_speed_for_distance(dist)
 end
 
 ---@param self FloorScanState
-function FloorScanState:get_angle_deg() return math.deg(self.target_rad + self.player_start_yaw) end
+function FloorScanState:get_angle_deg() return math.deg(self.scan_radians + self.player_start_yaw) end
 
 --- Adjust player yaw if few blocks were placed
 ---@param self FloorScanState
