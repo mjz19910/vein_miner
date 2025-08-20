@@ -33,3 +33,23 @@ core.register_craft({
 	output = "vein_miner:auto_floor",
 	recipe = {{"default:stick", "", "default:stick"}, {"", "default:cobble", ""}, {"", "default:mese_crystal_fragment", ""}},
 })
+core.register_on_mods_loaded(function()
+	function binoculars.update_player_property(player)
+		local new_zoom_fov = 0
+
+		if player:get_inventory():contains_item("main", "binoculars:binoculars") then
+			new_zoom_fov = 10
+		elseif player:get_inventory():contains_item("main", "vein_miner:auto_floor") then
+			new_zoom_fov = 20
+		elseif core.is_creative_enabled(player:get_player_name()) then
+			new_zoom_fov = 15
+		end
+
+		-- Only set property if necessary to avoid player mesh reload
+		if player:get_properties().zoom_fov ~= new_zoom_fov then
+			player:set_properties({
+				zoom_fov = new_zoom_fov,
+			})
+		end
+	end
+end)
