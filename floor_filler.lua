@@ -507,7 +507,7 @@ function FloorScanState:run()
 		local node_below = get_node_or_nil(target_pos)
 		if not node_below then break end
 
-		if not self.last_length or cur_len > self.last_length then
+		if not self.last_length or cur_len > self.last_length + 0.1 then
 			self.show_last_length = true
 			self.last_length = cur_len
 		end
@@ -516,7 +516,7 @@ function FloorScanState:run()
 	end
 
 	if self.show_last_length then
-		core.log("action", ("max distace %.3f"):format(self.last_length))
+		core.chat_send_player(player_name, ("new max valid node distace %.1f"):format(self.last_length))
 		self.show_last_length = false
 	end
 
