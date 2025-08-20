@@ -190,6 +190,7 @@ local TARGET_RADIANS = math.rad(360)
 ---@field max_dist number|nil
 ---@field blocks_this_tick integer Number of blocks placed this tick
 ---@field place_limit integer
+---@field last_length integer|nil
 local FloorScanState = {
 	-- player yaw constants
 	target_rad = math.rad(360) * 3,
@@ -592,6 +593,7 @@ function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 		if self.min_dist and self.max_dist then
 			local cur_pos = new_vec(math.ceil(self.min_dist / 8), math.floor(self.max_dist / 8), 0)
 			core.log("action", ("reset range vars from (%d,%d)"):format(cur_pos.x, cur_pos.y))
+			self.last_length = nil
 		end
 		self.min_dist = nil
 		self.max_dist = nil
