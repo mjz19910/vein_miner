@@ -670,3 +670,7 @@ local tool_caps = {}
 ---@field aspect_w integer
 ---@field aspect_h integer
 ---@field length number
+
+---@class NumRange
+---@field min number
+---@field max number

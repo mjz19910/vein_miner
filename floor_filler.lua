@@ -179,7 +179,6 @@ local DISTANCE_INCREASE = 16
 ---@field playing_sounds table<string, boolean>
 --- player yaw vars
 ---@field player_start_yaw number|nil
----@field last_yaw number|nil
 --- min and max display
 ---@field log_min number|nil
 ---@field log_max number|nil
@@ -198,41 +197,6 @@ function floor_filler.new(player)
 	---@type FloorScanState
 	local self = {
 		player = player,
-		playing_sounds = {},
-		-- generic
-		fresh = true,
-		count = 0,
-		-- player yaw vars
-		player_start_yaw = nil,
-		scan_radians = 0,
-		req_next_reset_scan_radians = 0,
-		yaw_update_disabled = false, -- replaces global table
-		last_yaw = nil, -- replaces global last_yaw_per_player
-		-- min and max display
-		show_log = false,
-		log_min = nil,
-		log_max = nil,
-		min_dist = nil,
-		max_dist = nil,
-		last_pos = vector.zero(),
-		blocks_placed = 0,
-		all_blocks_placed = 0,
-		place_limit = LINE_LENGTH,
-	}
-
-	local name = player:get_player_name()
-	local config = player_config_mgr.data[name]
-
-	if config.floor_place_limit ~= nil then self.place_limit = config.floor_place_limit end
-
-	---@class NumRange
-	---@field min number
-	---@field max number
-
-	---@type NumRange
-	self.log_range = {
-		min = 100,
-		max = 150,
 	}
 
 	setmetatable(self, {
@@ -254,21 +218,27 @@ function FloorScanState:_maybe_increase_saved_place_limit()
 	end
 end
 
----@param self FloorScanState
-function FloorScanState:reset()
+function FloorScanState:_reset_floor_place_limit()
 	local name = self.player:get_player_name()
 	local config = player_config_mgr.data[name]
 	if config.floor_place_limit ~= 192 then
 		config.floor_place_limit = 192
 		player_config_mgr.save_player_config(name)
 	end
+end
+
+---@param self FloorScanState
+function FloorScanState:reset()
+	if not self.playing_sounds then self.playing_sounds = {} end
+	-- generic
 	self.active = false
 	self.count = 0
+	-- player yaw vars
 	self.player_start_yaw = nil
 	self.scan_radians = 0
 	self.req_next_reset_scan_radians = 0
-	self.yaw_update_disabled = false
-	self.last_yaw = nil
+	self.yaw_update_disabled = false -- replaces global table
+	-- min and max display
 	self.show_log = false
 	self.log_min = nil
 	self.log_max = nil
@@ -277,8 +247,18 @@ function FloorScanState:reset()
 	self.last_pos = vector.new(0, -1, 0)
 	self.blocks_placed = 0
 	self.all_blocks_placed = 0
+	self.place_limit = LINE_LENGTH
 	self.blocks_this_tick = 0
-	self.undo_last_yaw_step = false;
+	self.undo_last_yaw_step = false
+	self.last_place_yaw_radians = nil
+
+	if not self.log_range then
+		---@type NumRange
+		self.log_range = {
+			min = 100,
+			max = 150,
+		}
+	end
 end
 
 ---@param self FloorScanState
@@ -362,6 +342,10 @@ local log_action_fmt = "count %d pos %s deg %.1f"
 ---@param target_pos Vector
 ---@param dist number
 function FloorScanState:on_node_placed(pos, dist)
+	if self.last_place_yaw_radians and self.count > self.log_range.min then
+		core.log("finished placing floor at deg " .. rad_to_deg_wrap360(self.last_place_yaw_radians))
+	end
+	self.last_place_yaw_radians = self.scan_radians + self.player_start_yaw
 	if self.blocks_this_tick == 0 and self.blocks_placed == 0 then
 		local a, b = self.count, self.log_range
 		if a >= b.min then
@@ -492,9 +476,6 @@ function FloorScanState:_update_counters(player_name)
 	end
 
 	if self.count > 150 then self.undo_last_yaw_step = true; end
-
-	-- Record last yaw for this player
-	self.last_yaw = self.player_start_yaw
 end
 
 ---@param dist number
