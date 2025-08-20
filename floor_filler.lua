@@ -174,6 +174,8 @@ end
 
 local DISTANCE_INCREASE = 64
 
+local TARGET_RADIANS = math.rad(360)
+
 ---@class FloorScanState
 ---@field player Player
 ---@field playing_sounds table<string, boolean>
@@ -188,7 +190,7 @@ local DISTANCE_INCREASE = 64
 ---@field place_limit integer
 local FloorScanState = {
 	-- player yaw constants
-	target_rad = math.rad(360),
+	target_rad = math.rad(360) * 3,
 }
 
 ---@param player Player
@@ -251,6 +253,7 @@ function FloorScanState:reset()
 	self.blocks_this_tick = 0
 	self.undo_last_yaw_step = false
 	self.last_place_yaw_radians = nil
+	self.use_set_fov = false
 
 	if not self.log_range then
 		---@type NumRange
@@ -330,7 +333,7 @@ function FloorScanState:deactivate_tool()
 	end
 	if self.all_blocks_placed > 0 then self.all_blocks_placed = 0 end
 	if self.tool_active then
-		-- self.player:set_fov(0, false, 0)
+		self.player:set_fov(0, false, 0)
 		self.tool_active = false
 	end
 end
@@ -423,6 +426,8 @@ function FloorScanState:run()
 	local ctrl = player:get_player_control()
 	local config = player_config_mgr.data[plr_name]
 
+	if not self.tool_active and ctrl.zoom then self.use_set_fov = true; end
+
 	-- Sound state
 	local sound_info = sound_info_per_player[plr_name] or {}
 	sound_info.playing_sounds = {}
@@ -491,7 +496,12 @@ local function get_yaw_speed_for_distance(dist)
 end
 
 ---@param self FloorScanState
+function FloorScanState:get_angle_rad() return self.scan_radians + self.player_start_yaw end
+
+---@param self FloorScanState
 function FloorScanState:get_angle_deg() return rad_to_deg_wrap360(self.scan_radians + self.player_start_yaw) end
+
+local TAU = 2 * math.pi
 
 --- Adjust player yaw if few blocks were placed
 ---@param self FloorScanState
@@ -500,12 +510,31 @@ function FloorScanState:get_angle_deg() return rad_to_deg_wrap360(self.scan_radi
 ---@param ctrl table Player control state
 function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 	if self.yaw_update_disabled or self.blocks_this_tick ~= 0 then return end
-	if not self.tool_active then
-		-- player:set_fov(10, false, 0)
+	if not self.tool_active and self.use_set_fov then
+		player:set_fov(10, false, 0)
 		self.tool_active = true
 	end
 	local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit())
 	if ctrl.sneak then yaw_speed = -yaw_speed end
+	local prev = self:get_angle_rad() % TAU
+	local curr = (self:get_angle_rad() + yaw_speed) % TAU
+
+	-- crossed π (180°)
+	-- if prev < math.pi and curr >= math.pi then
+	-- 	core.log("action", "180° passed (forward)")
+	-- elseif prev >= math.pi and curr < math.pi then
+	-- 	core.log("action", "180° passed (backward)")
+	-- end
+
+	-- detect crossing 0° in either direction
+	if math.abs(curr - prev) > math.pi then
+		if self.min_dist and self.max_dist then core.log("action", ("reset range vars from (%d,%d)"):format(self.min_dist, self.max_dist)) end
+		self.min_dist = nil
+		self.max_dist = nil
+		self.log_min = nil
+		self.log_max = nil
+		self.show_log = false
+	end
 	self.scan_radians = self.scan_radians + yaw_speed -- * math.log((self.count / 5) + 0.2, 3.5)
 	self.count = self.count + 1
 
