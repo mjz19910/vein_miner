@@ -205,7 +205,7 @@ minetest.register_chatcommand("vm_set_blocks_per_tick", {
 		local cfg = player_config_mgr.data[name]
 		cfg.blocks_per_tick = count
 
-		player_config_mgr.save_player_config()
+		player_config_mgr:save(name)
 		return true, "Blocks per tick set to " .. count
 	end,
 })
