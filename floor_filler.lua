@@ -421,6 +421,10 @@ local function raycast(dir)
 	end
 end
 
+local p_str = core.pos_to_string
+
+local max_distance_fmt = "node placed at %s with new max distance %.1f from %s"
+
 ---@param self FloorScanState
 function FloorScanState:run()
 	-- Skip if player is not holding the auto-floor tool
@@ -490,7 +494,7 @@ function FloorScanState:run()
 		if target_pos.y ~= -1 and not is_supported(target_pos, placeable_node_name) then goto continue end
 		if not try_place_block_from_inventory(self.player, self.playing_sounds, target_pos, self.place_limit) then goto continue end
 		if not self.last_length or cur_len > self.last_length + 0.1 then
-			core.chat_send_player(player_name, ("new max valid node distace %.1f at %s"):format(cur_len, core.pos_to_string(target_pos)))
+			core.chat_send_player(player_name, max_distance_fmt:format(p_str(target_pos), cur_len, p_str(line_start)))
 			self.last_length = cur_len
 		end
 		self:on_node_placed(target_pos, cur_len)
