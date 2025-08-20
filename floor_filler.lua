@@ -318,7 +318,7 @@ function FloorScanState:_maybe_log_block_distance()
 	end
 end
 
-local deactivate_fmt = "finished placing floor %d blocks placed from center %s"
+local deactivate_fmt = "floor finished at %s, %d nodes placed"
 ---@param self FloorScanState
 function FloorScanState:deactivate_tool()
 	self.scan_radians = 0
@@ -326,7 +326,7 @@ function FloorScanState:deactivate_tool()
 	if self.blocks_placed > 0 then self.all_blocks_placed = self.all_blocks_placed + self.blocks_placed end
 	if self.all_blocks_placed > 0 then
 		local player_pos = round(self.player:get_pos())
-		core.log("action", deactivate_fmt:format(self.all_blocks_placed, core.pos_to_string(player_pos)))
+		core.log("action", deactivate_fmt:format(core.pos_to_string(player_pos), self.all_blocks_placed))
 	end
 	if self.all_blocks_placed > 0 then self.all_blocks_placed = 0 end
 	if self.tool_active then
@@ -342,9 +342,6 @@ local log_action_fmt = "count %d pos %s deg %.1f"
 ---@param target_pos Vector
 ---@param dist number
 function FloorScanState:on_node_placed(pos, dist)
-	if self.last_place_yaw_radians and self.count > self.log_range.min then
-		core.log("finished placing floor at deg " .. rad_to_deg_wrap360(self.last_place_yaw_radians))
-	end
 	self.last_place_yaw_radians = self.scan_radians + self.player_start_yaw
 	if self.blocks_this_tick == 0 and self.blocks_placed == 0 then
 		local a, b = self.count, self.log_range
@@ -497,6 +494,11 @@ function FloorScanState:get_angle_deg() return rad_to_deg_wrap360(self.scan_radi
 ---@param yaw number Current yaw
 ---@param ctrl table Player control state
 function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
+	if self.last_place_yaw_radians and self.count > self.log_range.min then
+		core.log("action", "finished placing floor at deg " .. ("%.1f"):format(rad_to_deg_wrap360(self.last_place_yaw_radians)))
+		self.last_place_yaw_radians = nil
+	end
+
 	if self.yaw_update_disabled or self.blocks_this_tick ~= 0 then return end
 	if not self.tool_active then
 		-- player:set_fov(10, false, 0)
