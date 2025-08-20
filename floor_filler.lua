@@ -1,4 +1,4 @@
-local LINE_LENGTH = 64 * 8
+local LINE_LENGTH = 48 * 8
 
 local assert = assert
 
@@ -172,7 +172,7 @@ local function is_supported(pos, invalid_support_name)
 	return false
 end
 
-local DISTANCE_INCREASE = 64
+local DISTANCE_INCREASE = 24
 
 local TARGET_RADIANS = math.rad(360)
 
@@ -215,18 +215,17 @@ function FloorScanState:_maybe_increase_saved_place_limit()
 		self.place_limit = self.max_dist - self.max_dist % 8 + 8
 		core.log("increased place limit to " .. math.floor(self.place_limit / 8) .. " 8x8 chunks")
 		local name = self.player:get_player_name()
-		player_config_mgr.data[name].floor_place_limit = self.place_limit
+		local config = player_config_mgr.data[name]
+		config.floor_place_limit = self.place_limit
 		player_config_mgr.save_player_config(name)
 	end
 end
 
-function FloorScanState:_reset_floor_place_limit()
+function FloorScanState:_load_user_config()
 	local name = self.player:get_player_name()
 	local config = player_config_mgr.data[name]
-	if config.floor_place_limit ~= 192 then
-		config.floor_place_limit = 192
-		player_config_mgr.save_player_config(name)
-	end
+	if config.floor_place_limit ~= nil then self.place_limit = config.floor_place_limit end
+	self.should_load_user_config = false
 end
 
 ---@param self FloorScanState
@@ -249,11 +248,12 @@ function FloorScanState:reset()
 	self.last_pos = vector.new(0, -1, 0)
 	self.blocks_placed = 0
 	self.all_blocks_placed = 0
-	self.place_limit = LINE_LENGTH
 	self.blocks_this_tick = 0
 	self.undo_last_yaw_step = false
 	self.last_place_yaw_radians = nil
 	self.use_set_fov = false
+
+	if not self.place_limit then self.place_limit = LINE_LENGTH end
 
 	if not self.log_range then
 		---@type NumRange
@@ -261,6 +261,14 @@ function FloorScanState:reset()
 			min = 100,
 			max = 150,
 		}
+	end
+
+	if self.should_load_user_config == nil then self.should_load_user_config = true end
+
+	if self.should_load_user_config then
+		self:_load_user_config()
+	else
+		self:_maybe_increase_saved_place_limit()
 	end
 end
 
@@ -370,10 +378,9 @@ end
 ---@param node_below MapNode
 ---@param placeable_node_name string
 function FloorScanState:iterate_offset(target_pos, line_len, node_below, placeable_node_name)
-	local place_limit = self.place_limit
 	if not is_passable(node_below) then return end
 	if target_pos.y == -1 or is_supported(target_pos, placeable_node_name) then
-		if try_place_block_from_inventory(self.player, self.playing_sounds, target_pos, place_limit) then
+		if try_place_block_from_inventory(self.player, self.playing_sounds, target_pos, self.place_limit) then
 			self:on_node_placed(target_pos, line_len)
 		end
 	end
@@ -500,7 +507,7 @@ function FloorScanState:run()
 	self.blocks_this_tick = 0
 	local max_blocks = config.blocks_per_tick
 
-	for target_pos, cur_len in raycast(line_start, forward_dir, self:get_place_limit() * 24) do
+	for target_pos, cur_len in raycast(line_start, forward_dir, self:get_place_limit()) do
 		if self.blocks_this_tick >= max_blocks then break end
 		local node_below = get_node_or_nil(target_pos)
 		if not node_below then break end
@@ -576,7 +583,7 @@ function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 		player:set_fov(10, false, 0)
 		self.tool_active = true
 	end
-	local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit()) / 2
+	local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit())
 	if ctrl.sneak then yaw_speed = -yaw_speed end
 	local prev = self:get_angle_rad() % TAU
 	local curr = (self:get_angle_rad() + yaw_speed) % TAU
