@@ -68,6 +68,7 @@ function player_config_mgr:get(name)
 	return config
 end
 
+---@param name string
 function player_config_mgr:get_floor_place_limit(name) return self:get(name).floor_place_limit end
 
 --- Set the floor placement limit and save.
