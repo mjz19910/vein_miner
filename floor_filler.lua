@@ -303,7 +303,7 @@ end
 --- Log the current min/max block distance if needed
 ---@param self FloorScanState
 function FloorScanState:_maybe_log_block_distance()
-	local cur_pos = new_vec(self.log_min / 8, self.log_max / 8, 0):round()
+	local cur_pos = new_vec(self.log_min, self.log_max, 0):divide(2):round():multiply(2)
 
 	-- Only log if the position changed
 	if cur_pos ~= self.last_pos then
@@ -523,6 +523,7 @@ function FloorScanState:_update_counters(player_name)
 	end
 
 	if self.last_place_yaw_radians and self.count > self.log_range.min then
+		self:_reset_range_vars()
 		core.log("action", "finished placing floor at deg " .. ("%.1f"):format(rad_to_deg_wrap360(self.last_place_yaw_radians)))
 		self.last_place_yaw_radians = nil
 	end
@@ -548,6 +549,19 @@ function FloorScanState:get_angle_deg() return rad_to_deg_wrap360(self.scan_radi
 
 local TAU = 2 * math.pi
 
+function FloorScanState:_reset_range_vars()
+	if self.min_dist and self.max_dist then
+		local cur_pos = new_vec(self.min_dist, self.max_dist, 0):divide(2):round():multiply(2)
+		core.log("action", ("reset range vars from (%d,%d)"):format(cur_pos.x, cur_pos.y))
+		self.last_length = nil
+	end
+	self.min_dist = nil
+	self.max_dist = nil
+	self.log_min = nil
+	self.log_max = nil
+	self.show_log = false
+end
+
 --- Adjust player yaw if few blocks were placed
 ---@param self FloorScanState
 ---@param player Player
@@ -572,18 +586,7 @@ function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 	-- end
 
 	-- detect crossing 0° in either direction
-	if math.abs(curr - prev) > math.pi then
-		if self.min_dist and self.max_dist then
-			local cur_pos = new_vec(self.min_dist / 8, self.max_dist / 8, 0):round()
-			core.log("action", ("reset range vars from (%d,%d)"):format(cur_pos.x, cur_pos.y))
-			self.last_length = nil
-		end
-		self.min_dist = nil
-		self.max_dist = nil
-		self.log_min = nil
-		self.log_max = nil
-		self.show_log = false
-	end
+	if math.abs(curr - prev) > math.pi then self:_reset_range_vars() end
 	self.scan_radians = self.scan_radians + yaw_speed
 	self.count = self.count + 1
 
