@@ -50,6 +50,16 @@ function player_config_mgr:load_defaults(name)
 	if config.light_debug == nil then config.light_debug = true end
 end
 
+--- Get a player's config
+---@param self PlayerConfigManager
+---@param name string
+---@return PlayerConfig
+function player_config_mgr:get(name)
+	local config = self.data[name]
+	if not config then error("config not loaded for " .. name) end
+	return config
+end
+
 --- Returns whether light debug is enabled for a player.
 ---@param self PlayerConfigManager
 ---@param name string
@@ -63,16 +73,6 @@ function player_config_mgr:is_light_debug_enabled(name) return self:get(name).li
 function player_config_mgr:set_light_debug(name, enabled)
 	self:get(name).light_debug = enabled
 	self:save(name)
-end
-
---- Get a player's config
----@param self PlayerConfigManager
----@param name string
----@return PlayerConfig
-function player_config_mgr:get(name)
-	local config = self.data[name]
-	if not config then error("config not loaded for " .. name) end
-	return config
 end
 
 ---@param self PlayerConfigManager
