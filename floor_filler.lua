@@ -522,7 +522,7 @@ function FloorScanState:run()
 	end
 
 	if self.show_last_length then
-		core.chat_send_player(player_name, ("%.3f"):format(self.last_length))
+		core.log("action", ("max distace %.3f"):format(self.last_length))
 		self.show_last_length = false
 	end
 
