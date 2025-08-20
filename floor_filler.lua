@@ -387,19 +387,13 @@ function FloorScanState:iterate_offset(target_pos, line_len, node_below, placeab
 end
 
 ---@param self FloorScanState
-function FloorScanState:min_based_limit()
-	if self.min_dist then return self.min_dist + DISTANCE_INCREASE + 16 end
-	return self.place_limit + DISTANCE_INCREASE + 16
-end
+function FloorScanState:min_based_limit() return self.min_dist or self.place_limit end
 
 ---@param self FloorScanState
-function FloorScanState:max_based_limit()
-	if self.max_dist then return self.max_dist + DISTANCE_INCREASE + 8 end
-	return self.place_limit + DISTANCE_INCREASE + 8
-end
+function FloorScanState:max_based_limit() return self.max_dist or self.place_limit end
 
 ---@param self FloorScanState
-function FloorScanState:get_place_limit() return self:min_based_limit() end
+function FloorScanState:get_place_limit() return self:max_based_limit() + DISTANCE_INCREASE + 8 end
 
 -- Traces from line_start in forward_dir until limit
 -- yields node positions along the ray
@@ -598,7 +592,10 @@ function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 
 	-- detect crossing 0° in either direction
 	if math.abs(curr - prev) > math.pi then
-		if self.min_dist and self.max_dist then core.log("action", ("reset range vars from (%d,%d)"):format(self.min_dist, self.max_dist)) end
+		if self.min_dist and self.max_dist then
+			local cur_pos = vector.new(math.ceil(self.min_dist / 8), math.floor(self.max_dist / 8), 0)
+			core.log("action", ("reset range vars from (%d,%d)"):format(cur_pos.x, cur_pos.y))
+		end
 		self.min_dist = nil
 		self.max_dist = nil
 		self.log_min = nil
