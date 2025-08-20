@@ -40,7 +40,7 @@ core.register_on_mods_loaded(function()
 		if player:get_inventory():contains_item("main", "binoculars:binoculars") then
 			new_zoom_fov = 10
 		elseif player:get_inventory():contains_item("main", "vein_miner:auto_floor") then
-			new_zoom_fov = 20
+			new_zoom_fov = 10
 		elseif core.is_creative_enabled(player:get_player_name()) then
 			new_zoom_fov = 15
 		end
