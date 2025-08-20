@@ -506,11 +506,16 @@ function FloorScanState:run()
 		if not node_below then break end
 
 		if not self.last_length or cur_len > self.last_length then
+			self.show_last_length = true
 			self.last_length = cur_len
-			core.chat_send_player(player_name, ("%.3f"):format(cur_len))
 		end
 
 		self:iterate_offset(target_pos, cur_len, node_below, placeable_node_name)
+	end
+
+	if self.show_last_length then
+		core.chat_send_player(player_name, ("%.3f"):format(self.last_length))
+		self.show_last_length = false
 	end
 
 	-- Handle yaw rotation if few blocks placed
