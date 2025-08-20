@@ -10,6 +10,7 @@ local player_config_mgr = {
 
 local storage = minetest.get_mod_storage()
 
+---@param self PlayerConfigManager
 ---@param name string
 function player_config_mgr:save(name)
 	if self.data[name] then
@@ -18,6 +19,7 @@ function player_config_mgr:save(name)
 	end
 end
 
+---@param self PlayerConfigManager
 ---@param name string
 function player_config_mgr:load(name)
 	local data = storage:get_string("player_config:" .. name)
@@ -36,6 +38,8 @@ function player_config_mgr:load(name)
 	end
 end
 
+---@param self PlayerConfigManager
+---@param name string
 function player_config_mgr:load_defaults(name)
 	self:load(name)
 	local config = self.data[name]
@@ -47,11 +51,13 @@ function player_config_mgr:load_defaults(name)
 end
 
 --- Returns whether light debug is enabled for a player.
+---@param self PlayerConfigManager
 ---@param name string
 ---@return boolean
 function player_config_mgr:is_light_debug_enabled(name) return self:get(name).light_debug end
 
 --- Sets the light debug flag and saves immediately.
+---@param self PlayerConfigManager
 ---@param name string
 ---@param enabled boolean
 function player_config_mgr:set_light_debug(name, enabled)
@@ -60,6 +66,7 @@ function player_config_mgr:set_light_debug(name, enabled)
 end
 
 --- Get a player's config
+---@param self PlayerConfigManager
 ---@param name string
 ---@return PlayerConfig
 function player_config_mgr:get(name)
@@ -68,10 +75,12 @@ function player_config_mgr:get(name)
 	return config
 end
 
+---@param self PlayerConfigManager
 ---@param name string
 function player_config_mgr:get_floor_place_limit(name) return self:get(name).floor_place_limit end
 
 --- Set the floor placement limit and save.
+---@param self PlayerConfigManager
 ---@param name string
 ---@param limit integer
 function player_config_mgr:set_floor_place_limit(name, limit)
