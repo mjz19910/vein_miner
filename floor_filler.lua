@@ -521,7 +521,7 @@ function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 		-- player:set_fov(10, false, 0)
 		self.tool_active = true
 	end
-	local yaw_speed = get_yaw_speed_for_distance(self.min_dist or 1) / 4
+	local yaw_speed = get_yaw_speed_for_distance(self.min_dist or self.place_limit) / 4
 	if ctrl.sneak then yaw_speed = -yaw_speed end
 	self.scan_radians = self.scan_radians + yaw_speed -- * math.log((self.count / 5) + 0.2, 3.5)
 	self.count = self.count + 1
