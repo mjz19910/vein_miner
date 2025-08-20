@@ -365,13 +365,17 @@ function FloorScanState:on_node_placed(pos, dist)
 end
 
 ---@param self FloorScanState
-function FloorScanState:iterate_offset(pos, offset, sound_info, placeable_node_name)
+---@param target_pos Vector
+---@param line_len number
+---@param node_below MapNode
+---@param placeable_node_name string
+function FloorScanState:iterate_offset(target_pos, line_len, node_below, placeable_node_name)
 	local place_limit = self.place_limit
-	local target_pos = round(pos + offset)
-	local node_below = get_node(target_pos)
 	if not is_passable(node_below) then return end
 	if target_pos.y == -1 or is_supported(target_pos, placeable_node_name) then
-		if try_place_block_from_inventory(self.player, sound_info, target_pos, place_limit) then self:on_node_placed(target_pos, offset:length()) end
+		if try_place_block_from_inventory(self.player, self.playing_sounds, target_pos, place_limit) then
+			self:on_node_placed(target_pos, line_len)
+		end
 	end
 end
 
@@ -422,15 +426,14 @@ function FloorScanState:run()
 	local line_start = round(player_pos + down + up / 2 - forward_dir)
 
 	-- Player config + controls
-	local plr_name = player:get_player_name()
+	local player_name = player:get_player_name()
 	local ctrl = player:get_player_control()
-	local config = player_config_mgr.data[plr_name]
+	local config = player_config_mgr.data[player_name]
 
 	if not self.tool_active and ctrl.zoom then self.use_set_fov = true; end
 
 	-- Sound state
-	local sound_info = sound_info_per_player[plr_name] or {}
-	sound_info.playing_sounds = {}
+	local playing_sounds = self.playing_sounds
 
 	-- Inventory scan: find a valid node to place
 	-- so we can ignore support provided by this node
@@ -452,16 +455,23 @@ function FloorScanState:run()
 	for i = 1, self:get_place_limit() do
 		if self.blocks_this_tick >= max_blocks then break end
 		local offset = forward_dir * i
-		if offset:length() > self:get_place_limit() * 8 then break end
-		core.chat_send_player(player_name, tostring(offset:length()))
-		self:iterate_offset(line_start, offset, sound_info, placeable_node_name)
+		local cur_len = offset:length();
+		if cur_len > self:get_place_limit() * 8 then break end
+		local target_pos = round(line_start + offset)
+		local node_below = get_node_or_nil(target_pos)
+		if not node_below then break end
+		if not self.last_length or cur_len > self.last_length then
+			self.last_length = cur_len;
+			core.chat_send_player(player_name, ("%.3f"):format(cur_len))
+		end
+		self:iterate_offset(target_pos, cur_len, node_below, placeable_node_name)
 	end
 
 	-- Handle yaw rotation if few blocks placed
 	self:_maybe_update_yaw(player, yaw, ctrl)
 
 	-- Handle timers + counters
-	self:_update_counters(plr_name, yaw)
+	self:_update_counters(player_name, yaw)
 end
 
 --- Update counters and timers after a tick

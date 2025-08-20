@@ -215,6 +215,7 @@ local chunk = {}
 ---@field hash_node_position fun(pos: Vector): NodeHash
 ---@field get_position_from_hash fun(hash: NodeHash): Vector
 ---@field get_name_from_content_id fun(id: ContentId): string
+---@field chat_send_player fun(name: string, message: string)
 ---@type CoreModApi
 core = {}
 ---@type CoreModApi
