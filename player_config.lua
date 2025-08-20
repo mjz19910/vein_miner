@@ -88,4 +88,17 @@ function player_config_mgr:set_floor_place_limit(name, limit)
 	self:save(name)
 end
 
+---@param self PlayerConfigManager
+---@param name string
+function player_config_mgr:get_blocks_per_tick(name) return self:get(name).blocks_per_tick end
+
+--- Set the floor placement limit and save.
+---@param self PlayerConfigManager
+---@param name string
+---@param count integer
+function player_config_mgr:set_blocks_per_tick(name, count)
+	self:get(name).blocks_per_tick = count
+	self:save(name)
+end
+
 return player_config_mgr

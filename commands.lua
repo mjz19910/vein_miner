@@ -202,10 +202,7 @@ minetest.register_chatcommand("vm_set_blocks_per_tick", {
 	func = function(name, param)
 		local count = tonumber(param)
 		if not count or count < 1 then return false, "Invalid number" end
-		local cfg = player_config_mgr.data[name]
-		cfg.blocks_per_tick = count
-
-		player_config_mgr:save(name)
+		player_config_mgr:set_blocks_per_tick(name, count)
 		return true, "Blocks per tick set to " .. count
 	end,
 })

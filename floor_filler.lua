@@ -188,7 +188,7 @@ local TARGET_RADIANS = math.rad(360)
 ---@field log_max number|nil
 ---@field min_dist number|nil
 ---@field max_dist number|nil
----@field blocks_this_tick integer Number of blocks placed this tick
+---@field nodes_this_tick integer Number of nodes placed this tick
 ---@field place_limit integer
 ---@field last_length integer|nil
 local FloorScanState = {
@@ -250,7 +250,7 @@ function FloorScanState:reset()
 	self.last_pos = new_vec(0, -1, 0)
 	self.blocks_placed = 0
 	self.all_blocks_placed = 0
-	self.blocks_this_tick = 0
+	self.nodes_this_tick = 0
 	self.undo_last_yaw_step = false
 	self.last_place_yaw_radians = nil
 	self.use_set_fov = false
@@ -268,6 +268,9 @@ function FloorScanState:reset()
 	local name = self.player:get_player_name()
 	local config = player_config_mgr.data[name]
 	if config.floor_place_limit ~= nil then self.place_limit = config.floor_place_limit end
+
+	self.nodes_per_tick = player_config_mgr:get_blocks_per_tick(name)
+
 end
 
 ---@param self FloorScanState
@@ -358,7 +361,7 @@ local log_action_fmt = "count %d pos %s deg %.1f"
 ---@param dist number
 function FloorScanState:on_node_placed(pos, dist)
 	self.last_place_yaw_radians = self.scan_radians + self.player_start_yaw
-	if self.blocks_this_tick == 0 and self.blocks_placed == 0 then
+	if self.nodes_this_tick == 0 and self.blocks_placed == 0 then
 		local a, b = self.count, self.log_range
 		if a >= b.min then
 			local c, d = core.pos_to_string(pos), self:get_angle_deg()
@@ -372,7 +375,7 @@ function FloorScanState:on_node_placed(pos, dist)
 	self:_update_min_dist(dist)
 	self:_update_max_dist(dist)
 	if self.show_log then self:_maybe_log_block_distance() end
-	self.blocks_this_tick = self.blocks_this_tick + 1
+	self.nodes_this_tick = self.nodes_this_tick + 1
 	self.blocks_placed = self.blocks_placed + 1
 end
 
@@ -469,7 +472,6 @@ function FloorScanState:run()
 	-- Player config + controls
 	local player_name = player:get_player_name()
 	local ctrl = player:get_player_control()
-	local config = player_config_mgr.data[player_name]
 
 	if not self.tool_active and ctrl.zoom then self.use_set_fov = true; end
 
@@ -490,15 +492,14 @@ function FloorScanState:run()
 		end
 	end
 
-	-- Place blocks, update min/max distances, maybe log
-	self.blocks_this_tick = 0
-	local max_blocks = config.blocks_per_tick
+	local max_nodes = self.nodes_per_tick
+	self.nodes_this_tick = 0
 
 	for offset in raycast(forward_dir) do
 		local target_pos = line_start + offset
 		local cur_len = offset:length()
 		if cur_len > self:get_place_limit() then break end
-		if self.blocks_this_tick >= max_blocks then break end
+		if self.nodes_this_tick >= max_nodes then break end
 		if math.floor(target_pos.y) <= math.floor(player_pos.y) - 1 then target_pos.y = target_pos.y + 1 end
 		local node_below = get_node_or_nil(target_pos)
 		if not node_below then break end
@@ -525,7 +526,7 @@ end
 ---@param player_name string
 function FloorScanState:_update_counters(player_name)
 	-- no blocks placed: increment timer
-	if self.blocks_this_tick > 0 then
+	if self.nodes_this_tick > 0 then
 		-- Reset count
 		self.count = 0
 
@@ -566,7 +567,7 @@ local TAU = 2 * math.pi
 ---@param yaw number Current yaw
 ---@param ctrl table Player control state
 function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
-	if self.yaw_update_disabled or self.blocks_this_tick ~= 0 then return end
+	if self.yaw_update_disabled or self.nodes_this_tick ~= 0 then return end
 	if not self.tool_active and self.use_set_fov then
 		player:set_fov(10, false, 1)
 		self.tool_active = true
