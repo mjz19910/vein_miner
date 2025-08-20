@@ -5,7 +5,7 @@ local vein_miner = vein_miner
 local table = table
 local vector = vector
 local ItemStack = ItemStack
----@type LuantiCore
+---@type CoreModApi
 local core = core
 local ipairs = ipairs
 local offset = vector.offset

@@ -1,5 +1,6 @@
 local vector = vector
 local ipairs = ipairs
+---@type CoreModApi
 local core = core
 local vein_miner = vein_miner
 local voxel_util = vein_miner.voxel_util

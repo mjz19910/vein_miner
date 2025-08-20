@@ -1,7 +1,7 @@
 ---@class VeinMinerHelpers
 local h = {}
 
----@type LuantiCore
+---@type CoreModApi
 local core = core
 local pairs = pairs
 local ipairs = ipairs

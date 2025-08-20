@@ -1,4 +1,4 @@
-local LINE_LENGTH = 12 * 16
+local LINE_LENGTH = 64 * 8
 
 local assert = assert
 
@@ -16,7 +16,7 @@ local p = new_vec
 local normalize = vector.normalize
 local round = vector.round
 
----@type LuantiCore
+---@type CoreModApi
 local core = core
 
 local registered_nodes = core.registered_nodes
@@ -388,7 +388,7 @@ function FloorScanState:max_based_limit()
 end
 
 ---@param self FloorScanState
-function FloorScanState:get_place_limit() return self:min_based_limit() end
+function FloorScanState:get_place_limit() return self.place_limit + DISTANCE_INCREASE end
 
 ---@param self FloorScanState
 function FloorScanState:run()
@@ -452,7 +452,8 @@ function FloorScanState:run()
 	for i = 1, self:get_place_limit() do
 		if self.blocks_this_tick >= max_blocks then break end
 		local offset = forward_dir * i
-		if offset:length() > self:get_place_limit() then break end
+		if offset:length() > self:get_place_limit() * 8 then break end
+		core.chat_send_player(player_name, tostring(offset:length()))
 		self:iterate_offset(line_start, offset, sound_info, placeable_node_name)
 	end
 

@@ -1,3 +1,4 @@
+---@type CoreModApi
 local core = core
 ---@type VeinMinerGlobal
 local vein_miner = vein_miner

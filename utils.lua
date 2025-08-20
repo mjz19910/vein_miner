@@ -1,6 +1,6 @@
 -- utils.lua
 local error = error
----@type LuantiCore
+---@type CoreModApi
 local core = core
 local dofile = dofile
 local vector = vector

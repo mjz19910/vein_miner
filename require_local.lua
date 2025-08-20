@@ -1,5 +1,5 @@
 local dofile = dofile
----@type LuantiCore
+---@type CoreModApi
 local core = core
 
 local modpath = core.get_modpath("vein_miner")

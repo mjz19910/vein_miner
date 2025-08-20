@@ -1,4 +1,4 @@
----@type LuantiCore
+---@type CoreModApi
 local core = core
 ---@type VectorModule
 local ipairs = ipairs

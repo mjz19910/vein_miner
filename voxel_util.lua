@@ -3,10 +3,12 @@
 local voxel_util = {}
 
 -- voxel_util.lua
+---@type CoreModApi
 local core = core
 local vector = vector
 local table = table
 local ipairs = ipairs
+---@type VoxelArea
 local VoxelArea = VoxelArea
 local p = vector.new
 local hash_node_position = core.hash_node_position
@@ -41,18 +43,12 @@ end
 function voxel_util.iterate_area(area, func)
 	local minp = area.MinEdge
 	local maxp = area.MaxEdge
-	for z = minp.z, maxp.z do
-		for y = minp.y, maxp.y do
-			for x = minp.x, maxp.x do
-				func(p(x, y, z))
-			end
-		end
-	end
+	for z = minp.z, maxp.z do for y = minp.y, maxp.y do for x = minp.x, maxp.x do func(p(x, y, z)) end end end
 end
 
 ---Get node name at a position
 ---@param vm VoxelManip
----@param data integer[]
+---@param data ContentId[]
 ---@param area VoxelArea
 ---@param pos Vector
 ---@return string
@@ -63,20 +59,20 @@ function voxel_util.get_node_at_pos(vm, data, area, pos)
 end
 
 ---Set node content id at a position
----@param data integer[]
+---@param data ContentId[]
 ---@param area VoxelArea
 ---@param pos Vector
----@param content_id integer
+---@param content_id ContentId
 function voxel_util.set_node_at_pos(data, area, pos, content_id)
 	local index = area:index(pos.x, pos.y, pos.z)
 	data[index] = content_id
 end
 
 ---Safely set a node if inside area
----@param data integer[]
+---@param data ContentId[]
 ---@param area VoxelArea
 ---@param pos Vector
----@param content_id integer
+---@param content_id ContentId
 ---@return boolean success
 function voxel_util.safe_set_node(data, area, pos, content_id)
 	if voxel_util.is_inside_area(area, pos) then
@@ -96,21 +92,21 @@ end
 
 ---Fast integer hash for a node position using the engine's built-in method
 ---@param pos Vector
----@return integer
+---@return NodeHash
 function voxel_util.pos_hash(pos) return hash_node_position(pos) end
 
 ---Inverse of pos_hash
----@param hash integer
+---@param hash NodeHash
 ---@return Vector
 function voxel_util.pos_unhash(hash) return get_position_from_hash(hash) end
 
 ---Flood fill a voxel region starting at pos
 ---@param vm VoxelManip
----@param data integer[]
+---@param data ContentId[]
 ---@param area VoxelArea
 ---@param start_pos Vector
 ---@param predicate fun(node_name: string): boolean
----@param fill_content_id integer
+---@param fill_content_id ContentId
 function voxel_util.flood_fill(vm, data, area, start_pos, predicate, fill_content_id)
 	local to_visit = {start_pos}
 	local visited = {}
@@ -124,9 +120,7 @@ function voxel_util.flood_fill(vm, data, area, start_pos, predicate, fill_conten
 			if predicate(node_name) then
 				voxel_util.set_node_at_pos(data, area, pos, fill_content_id)
 				for _, npos in ipairs(voxel_util.get_neighbors(pos)) do
-					if not visited[hash_node_position(npos)] then
-						table.insert(to_visit, npos)
-					end
+					if not visited[hash_node_position(npos)] then table.insert(to_visit, npos) end
 				end
 			end
 		end
@@ -143,7 +137,7 @@ end
 ---@param maxp Vector The maximum corner position of the iteration volume.
 ---@param full_minp Vector The minimum corner of the full VoxelManip area.
 ---@param full_maxp Vector The maximum corner of the full VoxelManip area.
----@return fun(): Vector, integer, integer Iterator function returning (position, value, index) or nil when done.
+---@return fun(): Vector, ContentId, integer
 function voxel_util.iterate_voxelarea(vm, full_minp, full_maxp, user_minp, user_maxp)
 	local area = VoxelArea:new{
 		MinEdge = full_minp, -- Assuming you can get these from vm
@@ -181,9 +175,7 @@ function voxel_util.iterate_voxelarea(vm, full_minp, full_maxp, user_minp, user_
 			y = y + 1
 			if y == yrange then
 				z = z + 1
-				if z == zrange then
-					return
-				end
+				if z == zrange then return end
 				i = i + multistride
 				y = 0
 				nextaction = i + xrange
@@ -203,28 +195,24 @@ end
 
 ---Convert a list of nodenames into a lookup table of content ids for quick checks
 ---@param nodenames string[]
----@return table<integer, boolean> content_id_lookup
+---@return table<ContentId, boolean> content_id_lookup
 function voxel_util.content_ids_lookup(nodenames)
 	local lookup = {}
 	for _, name in ipairs(nodenames) do
 		local cid = core.get_content_id(name)
-		if cid then
-			lookup[cid] = true
-		end
+		if cid then lookup[cid] = true end
 	end
 	return lookup
 end
 
 ---Create a lookup table from content IDs to nodenames (reverse of content_ids_lookup)
----@param cids integer[]
----@return table<integer, string> cid_to_name_lookup
+---@param cids ContentId[]
+---@return table<ContentId, string> cid_to_name_lookup
 function voxel_util.content_names_lookup(cids)
 	local lookup = {}
 	for _, cid in ipairs(cids) do
 		local name = core.get_name_from_content_id(cid)
-		if name then
-			lookup[cid] = name
-		end
+		if name then lookup[cid] = name end
 	end
 	return lookup
 end
@@ -254,6 +242,11 @@ function voxel_util.find_logs_keeping_leaves(pos)
 
 	local found_logs = {}
 
+	local next = voxel_util.iterate_voxelarea(vm, map_minp, map_maxp, minp, maxp)
+	while true do
+		local pos, cid, idx = next()
+		if not pos then break end
+	end
 	for pos, cid, idx in voxel_util.iterate_voxelarea(vm, map_minp, map_maxp, minp, maxp) do
 		if log_cids[cid] then
 			local keeps_leaf = false
@@ -267,23 +260,16 @@ function voxel_util.find_logs_keeping_leaves(pos)
 							break
 						end
 					end
-					if keeps_leaf then
-						break
-					end
+					if keeps_leaf then break end
 				end
-				if keeps_leaf then
-					break
-				end
+				if keeps_leaf then break end
 			end
-			if keeps_leaf then
-				table.insert(found_logs, pos)
-			end
+			if keeps_leaf then table.insert(found_logs, pos) end
 		end
 	end
 
 	return found_logs
 end
-
 
 --- Generate integer offsets in a 3D sphere, sorted optionally later
 ---@param radius integer
@@ -296,9 +282,7 @@ function voxel_util.gen_euclidean_offsets_3d(radius)
 		for y = -radius, radius do
 			for z = -radius, radius do
 				local dist2 = x * x + y * y + z * z
-				if dist2 <= radius_sq then
-					table.insert(offsets, vector.new(x, y, z))
-				end
+				if dist2 <= radius_sq then table.insert(offsets, vector.new(x, y, z)) end
 			end
 		end
 	end

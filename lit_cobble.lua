@@ -1,3 +1,5 @@
+
+---@type CoreModApi
 local core = core
 local table = table
 ---@type VeinMinerGlobal

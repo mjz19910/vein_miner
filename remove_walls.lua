@@ -1,5 +1,6 @@
 local VoxelArea = VoxelArea
 local minetest = minetest
+---@type CoreModApi
 local core = core
 local table = table
 local vector = vector

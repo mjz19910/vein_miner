@@ -2,7 +2,7 @@ local assert = assert
 local string = string
 local math = math
 local tonumber = tonumber
----@type LuantiCore
+---@type CoreModApi
 local core = core
 ---@type VeinMinerGlobal
 local vein_miner = vein_miner

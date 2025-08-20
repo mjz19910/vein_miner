@@ -17,7 +17,7 @@ local BlockDigger = {}
 local vein_miner = vein_miner
 ---@type VectorModule
 local vector = vector
----@type LuantiCore
+---@type CoreModApi
 local core = core
 local ipairs = ipairs
 local p = vector.new

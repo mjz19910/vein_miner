@@ -190,7 +190,10 @@ local chunk = {}
 ---@field object ObjectRef|nil
 ---@field exclude_player string|nil
 
----@class LuantiCore
+---@class NodeHash: number
+---@class ContentId: number
+
+---@class CoreModApi
 ---@field get_voxel_manip fun(): VoxelManip
 ---@field set_node fun(pos: Vector, node: MapNode)
 ---@field get_node fun(pos: Vector): MapNode
@@ -209,9 +212,12 @@ local chunk = {}
 ---@field get_current_modname fun(): string
 ---
 ---@field registered_nodes table<string, RegNode>
----@type LuantiCore
+---@field hash_node_position fun(pos: Vector): NodeHash
+---@field get_position_from_hash fun(hash: NodeHash): Vector
+---@field get_name_from_content_id fun(id: ContentId): string
+---@type CoreModApi
 core = {}
----@type LuantiCore
+---@type CoreModApi
 minetest = {}
 ---@class FixedNodeBox
 ---@field type '"fixed"'
@@ -261,8 +267,8 @@ local vm = core.get_voxel_manip()
 ---@class VoxelManip
 ---@field read_from_map fun(self:VoxelManip, p1:Vector, p2:Vector): Vector, Vector		Reads region from map; returns min and max edges
 ---@field initialize fun(self:VoxelManip, p1:Vector, p2:Vector, fill_node?: table): Vector, Vector	Initializes region optionally filling with node; returns min and max edges
----@field get_data fun(self:VoxelManip, buffer?: table): integer[]	Returns node content IDs; optional buffer table
----@field set_data fun(self:VoxelManip, data: integer[]) Sets node content IDs
+---@field get_data fun(self:VoxelManip, buffer?: table): ContentId[]	Returns node content IDs; optional buffer table
+---@field set_data fun(self:VoxelManip, data: ContentId[]) Sets node content IDs
 ---@field write_to_map fun(self:VoxelManip, update_light?: boolean) Writes changes back to map; optionally updates lighting (default true)
 ---@field get_node_at fun(self:VoxelManip, pos:Vector): table Gets node at position
 ---@field set_node_at fun(self:VoxelManip, pos:Vector, node: table): boolean Sets node at position; returns success
@@ -321,8 +327,6 @@ local vec = {}
 ---@field random_direction fun(): Vector
 ---@field random_in_area fun(min: Vector, max: Vector): Vector
 ---@field zero fun(): Vector
----@type VectorModule
-vector = {}
 
 ---@class PlayerConfig
 ---@field mode '"small"'|'"large"'
@@ -674,3 +678,16 @@ local tool_caps = {}
 ---@class NumRange
 ---@field min number
 ---@field max number
+
+---@class VoxelArea
+---@field MinEdge Vector      Minimum coordinate of the area
+---@field MaxEdge Vector      Maximum coordinate of the area
+---@field ystride integer     Size of one Y-level in array indexing
+---@field zstride integer     Size of one Z-level in array indexing
+---@field index fun(self:VoxelArea, x:integer, y:integer, z:integer): integer
+---@field indexp fun(self:VoxelArea, pos:Vector): integer
+---@field position fun(self:VoxelArea, index:integer): Vector
+---@field contains fun(self:VoxelArea, x:integer, y:integer, z:integer): boolean
+---@field containsp fun(self:VoxelArea, pos:Vector): boolean
+---@field new fun(self: VoxelArea, init: VoxelArea|nil): VoxelArea
+

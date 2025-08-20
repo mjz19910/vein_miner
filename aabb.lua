@@ -5,6 +5,7 @@ local setmetatable = setmetatable
 local ipairs = ipairs
 local table = table
 local math = math
+---@type CoreModApi
 local core = core
 local utils = vein_miner.utils
 ---@class AABB

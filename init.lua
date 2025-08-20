@@ -1,5 +1,5 @@
 local dofile = dofile
----@type LuantiCore
+---@type CoreModApi
 local core = core
 
 local require = dofile(core.get_modpath("vein_miner") .. "/require_local.lua")

@@ -21,19 +21,9 @@ local co_yield = coroutine.yield
 local min = math.min
 local max = math.max
 
--- minetest tables
+---@type CoreModApi
 local core = core
-local minetest = minetest
----@class VoxelArea
----@field MinEdge Vector      Minimum coordinate of the area
----@field MaxEdge Vector      Maximum coordinate of the area
----@field ystride integer     Size of one Y-level in array indexing
----@field zstride integer     Size of one Z-level in array indexing
----@field index fun(self:VoxelArea, x:integer, y:integer, z:integer): integer
----@field indexp fun(self:VoxelArea, pos:Vector): integer
----@field position fun(self:VoxelArea, index:integer): Vector
----@field contains fun(self:VoxelArea, x:integer, y:integer, z:integer): boolean
----@field containsp fun(self:VoxelArea, pos:Vector): boolean
+---@type VoxelArea
 local VoxelArea = VoxelArea
 ---@type fun(): VoxelManip
 local VoxelManip = VoxelManip
@@ -71,7 +61,7 @@ local cids_flowing = {}
 ---@param fmt string
 ---@vararg any
 local function verbose_log(fmt, ...)
-	if minetest.settings:get_bool("vein_miner_verbose_logging", false) then
+	if core.settings:get_bool("vein_miner_verbose_logging", false) then
 		core.log("action", ("[liquid_filler.lua] " .. fmt):format(...))
 	end
 end
@@ -516,7 +506,7 @@ local function visualize_region_particles(region, params)
 	for pos in iter_region_positions(region) do
 		local min, max = region.min, region.max
 		if is_vis_pos(pos, region) then
-			minetest.add_particle({
+			core.add_particle({
 				pos = pos,
 				velocity = vec_new(0, 0, 0),
 				expirationtime = params.expirationtime,
