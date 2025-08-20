@@ -330,7 +330,7 @@ function FloorScanState:deactivate_tool()
 	end
 	if self.all_blocks_placed > 0 then self.all_blocks_placed = 0 end
 	if self.tool_active then
-		self.player:set_fov(0, false, 0)
+		-- self.player:set_fov(0, false, 0)
 		self.tool_active = false
 	end
 end
@@ -501,10 +501,10 @@ function FloorScanState:get_angle_deg() return rad_to_deg_wrap360(self.scan_radi
 function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 	if self.yaw_update_disabled or self.blocks_this_tick ~= 0 then return end
 	if not self.tool_active then
-		player:set_fov(10, false, 0)
+		-- player:set_fov(10, false, 0)
 		self.tool_active = true
 	end
-	local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit()) / 4
+	local yaw_speed = get_yaw_speed_for_distance(self.min_dist or DISTANCE_INCREASE / 2) / 4
 	if ctrl.sneak then yaw_speed = -yaw_speed end
 	self.scan_radians = self.scan_radians + yaw_speed -- * math.log((self.count / 5) + 0.2, 3.5)
 	self.count = self.count + 1
