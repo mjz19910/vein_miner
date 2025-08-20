@@ -193,6 +193,9 @@ local chunk = {}
 ---@class NodeHash: number
 ---@class ContentId: number
 
+---@class Raycast
+---@field next fun(self: Raycast): PointedThing
+
 ---@class CoreModApi
 ---@field get_voxel_manip fun(): VoxelManip
 ---@field set_node fun(pos: Vector, node: MapNode)
@@ -216,6 +219,7 @@ local chunk = {}
 ---@field get_position_from_hash fun(hash: NodeHash): Vector
 ---@field get_name_from_content_id fun(id: ContentId): string
 ---@field chat_send_player fun(name: string, message: string)
+---@field raycast fun(): Raycast
 ---@type CoreModApi
 core = {}
 ---@type CoreModApi

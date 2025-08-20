@@ -394,6 +394,53 @@ end
 ---@param self FloorScanState
 function FloorScanState:get_place_limit() return self.place_limit + DISTANCE_INCREASE end
 
+-- Traces from line_start in forward_dir until limit
+-- yields node positions along the ray
+local function raycast(line_start, forward_dir, max_dist)
+	local pos = vector.round(line_start)
+	local dir = vector.normalize(forward_dir)
+
+	-- avoid divide by zero
+	local step = {
+		x = (dir.x > 0) and 1 or -1,
+		y = (dir.y > 0) and 1 or -1,
+		z = (dir.z > 0) and 1 or -1,
+	}
+
+	local t_max = {
+		x = ((step.x > 0 and (pos.x + 1 - line_start.x) or (line_start.x - pos.x)) / (dir.x ~= 0 and dir.x or 1e-9)),
+		y = ((step.y > 0 and (pos.y + 1 - line_start.y) or (line_start.y - pos.y)) / (dir.y ~= 0 and dir.y or 1e-9)),
+		z = ((step.z > 0 and (pos.z + 1 - line_start.z) or (line_start.z - pos.z)) / (dir.z ~= 0 and dir.z or 1e-9)),
+	}
+
+	local t_delta = {
+		x = math.abs(1 / (dir.x ~= 0 and dir.x or 1e-9)),
+		y = math.abs(1 / (dir.y ~= 0 and dir.y or 1e-9)),
+		z = math.abs(1 / (dir.z ~= 0 and dir.z or 1e-9)),
+	}
+
+	local dist = 0
+	return function()
+		if dist > max_dist then return nil end
+		local cur = vector.new(pos)
+		-- advance
+		if t_max.x < t_max.y and t_max.x < t_max.z then
+			pos.x = pos.x + step.x
+			dist = t_max.x
+			t_max.x = t_max.x + t_delta.x
+		elseif t_max.y < t_max.z then
+			pos.y = pos.y + step.y
+			dist = t_max.y
+			t_max.y = t_max.y + t_delta.y
+		else
+			pos.z = pos.z + step.z
+			dist = t_max.z
+			t_max.z = t_max.z + t_delta.z
+		end
+		return cur, dist
+	end
+end
+
 ---@param self FloorScanState
 function FloorScanState:run()
 	-- Skip if player is not holding the auto-floor tool
@@ -452,21 +499,18 @@ function FloorScanState:run()
 	-- Place blocks, update min/max distances, maybe log
 	self.blocks_this_tick = 0
 	local max_blocks = config.blocks_per_tick
-	local i = 1
-	while true do
+
+	for target_pos, cur_len in raycast(line_start, forward_dir, self:get_place_limit() * 24) do
 		if self.blocks_this_tick >= max_blocks then break end
-		local offset = forward_dir * i
-		local cur_len = offset:length();
-		if cur_len > self:get_place_limit() * 12 then break end
-		local target_pos = round(line_start + offset)
 		local node_below = get_node_or_nil(target_pos)
 		if not node_below then break end
+
 		if not self.last_length or cur_len > self.last_length then
-			self.last_length = cur_len;
+			self.last_length = cur_len
 			core.chat_send_player(player_name, ("%.3f"):format(cur_len))
 		end
+
 		self:iterate_offset(target_pos, cur_len, node_below, placeable_node_name)
-		i = i + 1
 	end
 
 	-- Handle yaw rotation if few blocks placed
