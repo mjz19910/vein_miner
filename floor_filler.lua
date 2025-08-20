@@ -374,7 +374,7 @@ end
 
 ---@param self FloorScanState
 function FloorScanState:min_based_limit()
-	if self.min_dist then return self.min_dist + DISTANCE_INCREASE + 16 end
+	if self.min_dist then return self.min_dist + math.floor(self.max_dist / 8) + DISTANCE_INCREASE + 16 end
 	return self.place_limit + DISTANCE_INCREASE + 16
 end
 
