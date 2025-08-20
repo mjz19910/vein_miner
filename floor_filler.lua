@@ -601,7 +601,7 @@ function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 		self.log_max = nil
 		self.show_log = false
 	end
-	self.scan_radians = self.scan_radians + yaw_speed -- * math.log((self.count / 5) + 0.2, 3.5)
+	self.scan_radians = self.scan_radians + yaw_speed
 	self.count = self.count + 1
 
 	-- Reset if scan exceeds full rotation
