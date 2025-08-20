@@ -386,7 +386,6 @@ end
 ---@param node_below MapNode
 ---@param placeable_node_name string
 function FloorScanState:iterate_offset(target_pos, line_len, node_below, placeable_node_name)
-	if not is_passable(node_below) then return end
 	if target_pos.y == -1 or is_supported(target_pos, placeable_node_name) then
 		if try_place_block_from_inventory(self.player, self.playing_sounds, target_pos, self.place_limit) then
 			self:on_node_placed(target_pos, line_len)
@@ -405,48 +404,38 @@ function FloorScanState:get_place_limit() return self:max_based_limit() + DISTAN
 
 -- Traces from line_start in forward_dir until limit
 -- yields node positions along the ray
-local function raycast(line_start, forward_dir, max_dist)
-	local pos = vector.round(line_start)
-	local dir = vector.normalize(forward_dir)
-
+local function raycast(dir)
+	local pos = vector.zero()
 	-- avoid divide by zero
 	local step = {
 		x = (dir.x > 0) and 1 or -1,
 		y = (dir.y > 0) and 1 or -1,
 		z = (dir.z > 0) and 1 or -1,
 	}
-
 	local t_max = {
-		x = ((step.x > 0 and (pos.x + 1 - line_start.x) or (line_start.x - pos.x)) / (dir.x ~= 0 and dir.x or 1e-9)),
-		y = ((step.y > 0 and (pos.y + 1 - line_start.y) or (line_start.y - pos.y)) / (dir.y ~= 0 and dir.y or 1e-9)),
-		z = ((step.z > 0 and (pos.z + 1 - line_start.z) or (line_start.z - pos.z)) / (dir.z ~= 0 and dir.z or 1e-9)),
+		x = ((step.x > 0 and (pos.x + 1 - pos.x) or (pos.x - pos.x)) / (dir.x ~= 0 and dir.x or 1e-9)),
+		y = ((step.y > 0 and (pos.y + 1 - pos.y) or (pos.y - pos.y)) / (dir.y ~= 0 and dir.y or 1e-9)),
+		z = ((step.z > 0 and (pos.z + 1 - pos.z) or (pos.z - pos.z)) / (dir.z ~= 0 and dir.z or 1e-9)),
 	}
-
 	local t_delta = {
 		x = math.abs(1 / (dir.x ~= 0 and dir.x or 1e-9)),
 		y = math.abs(1 / (dir.y ~= 0 and dir.y or 1e-9)),
 		z = math.abs(1 / (dir.z ~= 0 and dir.z or 1e-9)),
 	}
-
-	local dist = 0
 	return function()
-		if dist > max_dist then return nil end
 		local cur = new_vec(pos)
 		-- advance
 		if t_max.x < t_max.y and t_max.x < t_max.z then
 			pos.x = pos.x + step.x
-			dist = t_max.x
 			t_max.x = t_max.x + t_delta.x
 		elseif t_max.y < t_max.z then
 			pos.y = pos.y + step.y
-			dist = t_max.y
 			t_max.y = t_max.y + t_delta.y
 		else
 			pos.z = pos.z + step.z
-			dist = t_max.z
 			t_max.z = t_max.z + t_delta.z
 		end
-		return cur, dist
+		return cur
 	end
 end
 
@@ -509,18 +498,23 @@ function FloorScanState:run()
 	self.blocks_this_tick = 0
 	local max_blocks = config.blocks_per_tick
 
-	for target_pos, cur_len in raycast(line_start, forward_dir, self:get_place_limit()) do
+	for offset in raycast(forward_dir) do
+		local target_pos = line_start + offset
+		local cur_len = offset:length()
+		if cur_len > self:get_place_limit() then break end
 		if self.blocks_this_tick >= max_blocks then break end
 		if math.floor(target_pos.y) <= math.floor(player_pos.y) - 1 then target_pos.y = target_pos.y + 1 end
 		local node_below = get_node_or_nil(target_pos)
 		if not node_below then break end
-
+		if not is_passable(node_below) then goto continue end
+		if target_pos.y ~= -1 and not is_supported(target_pos, placeable_node_name) then goto continue end
+		if not try_place_block_from_inventory(self.player, self.playing_sounds, target_pos, self.place_limit) then goto continue end
 		if not self.last_length or cur_len > self.last_length + 0.1 then
 			self.show_last_length = true
 			self.last_length = cur_len
 		end
-
-		self:iterate_offset(target_pos, cur_len, node_below, placeable_node_name)
+		self:on_node_placed(target_pos, cur_len)
+		::continue::
 	end
 
 	if self.show_last_length then
