@@ -8,14 +8,14 @@ local core = core
 local vein_miner = vein_miner
 
 local player_config_mgr = vein_miner.player_config_mgr
-assert(player_config_mgr, "need player_config_mgr")
-local light_region_debug = vein_miner.light_region_debug
 
 core.register_chatcommand("toggle_light_debug", {
 	description = "Toggle debug view for light scan regions",
 	func = function(name)
-		light_region_debug[name] = not light_region_debug[name]
-		if light_region_debug[name] then
+		local new_value = not player_config_mgr:is_light_debug_enabled(name)
+		player_config_mgr:set_light_debug(name, new_value)
+
+		if new_value then
 			return true, "Light region debug ON"
 		else
 			return true, "Light region debug OFF"
@@ -28,9 +28,7 @@ core.register_chatcommand("pos", {
 	privs = {},
 	func = function(name)
 		local player = core.get_player_by_name(name)
-		if not player then
-			return false, "Player not found."
-		end
+		if not player then return false, "Player not found." end
 
 		local pos = player:get_pos()
 		local msg = string.format("Your position is: (%.3f, %.3f, %.3f)", pos.x, pos.y, pos.z)
@@ -44,9 +42,7 @@ core.register_chatcommand("yaw", {
 	privs = {},
 	func = function(name, param)
 		local player = core.get_player_by_name(name)
-		if not player then
-			return false, "Player not found."
-		end
+		if not player then return false, "Player not found." end
 
 		local args = param:split(" ")
 		local cmd = args[1]
@@ -55,16 +51,12 @@ core.register_chatcommand("yaw", {
 			return true, ("Your current yaw is %.1f degrees"):format(math.deg(yaw))
 		elseif cmd == "set" then
 			local yaw = 0
-			if args[2] ~= nil then
-				yaw = math.rad(tonumber(args[2]))
-			end
+			if args[2] ~= nil then yaw = math.rad(tonumber(args[2])) end
 			player:set_look_horizontal(yaw)
 			return true, ("Yaw set to %.1f degrees"):format(math.deg(yaw))
 		elseif cmd == "add" then
 			local yaw_change = 0
-			if args[2] ~= nil then
-				yaw_change = tonumber(args[2])
-			end
+			if args[2] ~= nil then yaw_change = tonumber(args[2]) end
 			local yaw = player:get_look_horizontal()
 			if yaw_change ~= 0 then
 				yaw = math.rad(math.deg(yaw) + yaw_change)
@@ -85,20 +77,14 @@ core.register_chatcommand("mine", {
 	privs = {},
 	func = function(name, param)
 		local player = core.get_player_by_name(name)
-		if not player then
-			return false, "Player not found."
-		end
+		if not player then return false, "Player not found." end
 
 		---@type PlayerConfig
 		local config = player_config_mgr.data[name]
 
 		-- Initialize defaults if missing
-		if config.miny == nil then
-			config.miny = -128
-		end
-		if config.maxy == nil then
-			config.maxy = 128
-		end
+		if config.miny == nil then config.miny = -128 end
+		if config.maxy == nil then config.maxy = 128 end
 
 		local args = param:split(" ")
 		local cmd = args[1]
@@ -118,16 +104,12 @@ core.register_chatcommand("mine", {
 		elseif cmd == "set" then
 			if sub == "min" and val then
 				val = math.floor(val)
-				if val > maxy then
-					return false, "miny cannot be greater than maxy (" .. maxy .. ")"
-				end
+				if val > maxy then return false, "miny cannot be greater than maxy (" .. maxy .. ")" end
 				config.miny = val
 				return true, "Minimum mining Y set to y=" .. val
 			elseif sub == "max" and val then
 				val = math.floor(val)
-				if val < miny then
-					return false, "maxy cannot be less than miny (" .. miny .. ")"
-				end
+				if val < miny then return false, "maxy cannot be less than miny (" .. miny .. ")" end
 				config.maxy = val
 				return true, "Maximum mining Y set to y=" .. val
 			elseif sub == nil then
@@ -156,21 +138,15 @@ core.register_chatcommand("mine", {
 			end
 		elseif cmd == "down" then
 			if sub == "min" then
-				if config.miny - 8 > config.maxy then
-					return false, "miny cannot exceed maxy"
-				end
+				if config.miny - 8 > config.maxy then return false, "miny cannot exceed maxy" end
 				config.miny = config.miny - 8
 				return true, "Minimum mining Y decreased to y=" .. config.miny
 			elseif sub == "max" then
-				if config.maxy - 8 < config.miny then
-					return false, "maxy cannot be less than miny"
-				end
+				if config.maxy - 8 < config.miny then return false, "maxy cannot be less than miny" end
 				config.maxy = config.maxy - 8
 				return true, "Maximum mining Y decreased to y=" .. config.maxy
 			elseif sub == "both" or sub == nil then
-				if config.miny - 8 > config.maxy - 8 then
-					return false, "Range collapse: miny would exceed maxy"
-				end
+				if config.miny - 8 > config.maxy - 8 then return false, "Range collapse: miny would exceed maxy" end
 				config.miny = config.miny - 8
 				config.maxy = config.maxy - 8
 				return true, "Mining range decreased: " .. show_layer_bounds(config.miny, config.maxy)
@@ -199,14 +175,10 @@ core.register_chatcommand("mining_mode", {
 	},
 	func = function(name, param)
 		local player = core.get_player_by_name(name)
-		if not player then
-			return false, "Player not found."
-		end
+		if not player then return false, "Player not found." end
 
 		param = param:lower()
-		if player_config_mgr.data[name] == nil then
-			player_config_mgr.data[name] = {}
-		end
+		if player_config_mgr.data[name] == nil then player_config_mgr.data[name] = {} end
 
 		local config = player_config_mgr.data[name]
 
@@ -229,9 +201,7 @@ minetest.register_chatcommand("vm_set_blocks_per_tick", {
 	description = "Set how many blocks vein miner places per tick",
 	func = function(name, param)
 		local count = tonumber(param)
-		if not count or count < 1 then
-			return false, "Invalid number"
-		end
+		if not count or count < 1 then return false, "Invalid number" end
 		local cfg = player_config_mgr.data[name]
 		cfg.blocks_per_tick = count
 

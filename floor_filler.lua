@@ -213,21 +213,19 @@ function floor_filler.new(player)
 	return self
 end
 
+function FloorScanState:_get_config_key() return self.player:get_player_name() end
+
 function FloorScanState:_maybe_increase_saved_place_limit()
 	if self.max_dist and self.max_dist > self.place_limit then
 		self.place_limit = self.max_dist - self.max_dist % 8 + 8
 		core.log("increased place limit to " .. math.floor(self.place_limit / 8) .. " 8x8 chunks")
-		local name = self.player:get_player_name()
-		local config = player_config_mgr.data[name]
-		config.floor_place_limit = self.place_limit
-		player_config_mgr.save_player_config(name)
+		player_config_mgr:set_floor_place_limit(self:_get_config_key(), self.place_limit)
 	end
 end
 
 function FloorScanState:_load_user_config()
-	local name = self.player:get_player_name()
-	local config = player_config_mgr.data[name]
-	if config.floor_place_limit ~= nil then self.place_limit = config.floor_place_limit end
+	local limit = player_config_mgr:get_floor_place_limit(self:_get_config_key())
+	if limit ~= nil then self.place_limit = limit end
 end
 
 ---@param self FloorScanState

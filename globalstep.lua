@@ -15,16 +15,17 @@ local dtime_acc = 0
 local dtime_next_falling_check = 0
 local falling_check_delay = 1.25
 
-local light_region_debug = vein_miner.light_region_debug
 local falling_delay_state = vein_miner.falling_delay_state
+assert(falling_delay_state, "missing falling_delay_state")
 local falling_delay_list = falling_delay_state.delayed_list
 local falling_delayed_set = falling_delay_state.delayed_set
-local check_for_falling = falling_delay_state.check_for_falling
-local light_scan_data = vein_miner.scanner.light_scan_data
-assert(light_region_debug, "need light region debug")
 assert(falling_delay_list and falling_delayed_set, "need falling_delay_list info")
+local check_for_falling = falling_delay_state.check_for_falling
 assert(check_for_falling, "need original core.check_for_falling")
+local light_scan_data = vein_miner.scanner.light_scan_data
 assert(light_scan_data, "need light_scan_data")
+local player_config_mgr = vein_miner.player_config_mgr
+assert(player_config_mgr, "need player_config_mgr")
 
 core.register_globalstep(function(dtime)
 	dtime_acc = dtime_acc + dtime
@@ -37,14 +38,12 @@ core.register_globalstep(function(dtime)
 			check_for_falling(pos)
 		end
 	end
-	for name, enabled in pairs(light_region_debug) do
-		local player = get_player_by_name(name)
-		if enabled and player then
+	for _, player in ipairs(core.get_connected_players()) do
+		local name = player:get_player_name()
+		if player_config_mgr:is_light_debug_enabled(name) then
 			local regions = light_scan_data[name]
 			if dtime_time > 4 then
-				for _, r in ipairs(regions) do
-					r:draw()
-				end
+				for _, r in ipairs(regions) do r:draw() end
 				dtime_time = 0
 			end
 		end

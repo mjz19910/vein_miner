@@ -344,9 +344,6 @@ local vec = {}
 ---@type PlayerConfig
 local config_data = {}
 
----@type PlayerConfigManager
-local player_config_mgr = {}
-
 ---@class ObjectRef
 ---
 ---## Lifecycle
