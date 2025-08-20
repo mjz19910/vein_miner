@@ -477,7 +477,7 @@ function FloorScanState:run()
 	-- Positioning and direction
 	local look_dir = player:get_look_dir()
 	local forward_dir = normalize(vector.new(look_dir.x, 0, look_dir.z))
-	local line_start = round(player_pos + down + up / 2 - forward_dir)
+	local line_start = player_pos + down + up / 2 - forward_dir
 
 	-- Player config + controls
 	local player_name = player:get_player_name()
