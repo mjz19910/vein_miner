@@ -472,6 +472,11 @@ function FloorScanState:_update_counters(player_name)
 		self.blocks_placed = 0
 	end
 
+	if self.last_place_yaw_radians and self.count > self.log_range.min then
+		core.log("action", "finished placing floor at deg " .. ("%.1f"):format(rad_to_deg_wrap360(self.last_place_yaw_radians)))
+		self.last_place_yaw_radians = nil
+	end
+
 	if self.count > 150 then self.undo_last_yaw_step = true; end
 end
 
@@ -494,11 +499,6 @@ function FloorScanState:get_angle_deg() return rad_to_deg_wrap360(self.scan_radi
 ---@param yaw number Current yaw
 ---@param ctrl table Player control state
 function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
-	if self.last_place_yaw_radians and self.count > self.log_range.min then
-		core.log("action", "finished placing floor at deg " .. ("%.1f"):format(rad_to_deg_wrap360(self.last_place_yaw_radians)))
-		self.last_place_yaw_radians = nil
-	end
-
 	if self.yaw_update_disabled or self.blocks_this_tick ~= 0 then return end
 	if not self.tool_active then
 		-- player:set_fov(10, false, 0)
