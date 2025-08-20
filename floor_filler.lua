@@ -345,10 +345,10 @@ function FloorScanState:deactivate_tool()
 	if self.tool_active then
 		local c = self.player:get_player_control()
 		if c.zoom then
-			self.player:set_fov(20, false, 1.5)
-			core.after(1.5, function() self.player:set_fov(0, false, 0) end)
+			self.player:set_fov(10, false, 0.75)
+			core.after(0.75, function() self.player:set_fov(0, false, 0) end)
 		else
-			self.player:set_fov(0, false, 2)
+			self.player:set_fov(0, false, 1.25)
 		end
 		self.tool_active = false
 	end
@@ -583,10 +583,10 @@ local TAU = 2 * math.pi
 function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 	if self.yaw_update_disabled or self.blocks_this_tick ~= 0 then return end
 	if not self.tool_active and self.use_set_fov then
-		player:set_fov(10, false, 1.5)
+		player:set_fov(10, false, 1)
 		self.tool_active = true
 	end
-	local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit()) / 1.2
+	local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit()) / 1.3
 	if ctrl.sneak then yaw_speed = -yaw_speed end
 	local prev = self:get_angle_rad() % TAU
 	local curr = (self:get_angle_rad() + yaw_speed) % TAU
