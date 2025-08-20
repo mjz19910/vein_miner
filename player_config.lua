@@ -43,6 +43,7 @@ function player_config_mgr:load_defaults(name)
 	if config.maxy == nil then config.maxy = 144 end
 	if config.mode == nil then config.mode = "small" end
 	if config.blocks_per_tick == nil then config.blocks_per_tick = 4 end
+	if config.light_debug == nil then config.light_debug = true end
 end
 
 --- Returns whether light debug is enabled for a player.
