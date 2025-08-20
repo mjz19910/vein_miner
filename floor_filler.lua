@@ -113,23 +113,6 @@ local function is_supported(pos, invalid_support_name)
 		if not node then return false end
 	end
 
-	-- --- Floor check (3×3 at y-1) ---
-	local floor_all_solid = true
-	for dx = -2, 2 do
-		for dz = -2, 2 do
-			local check_pos = offset(pos, dx, -1, dz)
-			local node = get_node_or_nil(check_pos)
-			if not node or is_passable(node) then
-				floor_all_solid = false
-				break
-			end
-		end
-		if not floor_all_solid then break end
-	end
-	local has_floor = true -- we always "found" the floor layer
-	-- If all solid, then floor is blocking
-	-- If not all solid, floor is passable enough
-
 	-- --- Roof check (scan y+1..y+3 for closest solid layer) ---
 	local roof_all_solid = false
 	local has_roof = false
@@ -162,7 +145,7 @@ local function is_supported(pos, invalid_support_name)
 	-- if not has_floor and not has_roof then goto check_neighbors end
 
 	-- If both floor and roof exist, require at least one to be NOT full solid
-	if floor_all_solid or roof_all_solid then return false end
+	if roof_all_solid then return false end
 
 	::check_neighbors::
 	-- Neighbor support check
