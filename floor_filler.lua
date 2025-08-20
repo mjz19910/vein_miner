@@ -452,11 +452,12 @@ function FloorScanState:run()
 	-- Place blocks, update min/max distances, maybe log
 	self.blocks_this_tick = 0
 	local max_blocks = config.blocks_per_tick
-	for i = 1, self:get_place_limit() do
+	local i = 1
+	while true do
 		if self.blocks_this_tick >= max_blocks then break end
 		local offset = forward_dir * i
 		local cur_len = offset:length();
-		if cur_len > self:get_place_limit() * 8 then break end
+		if cur_len > self:get_place_limit() * 12 then break end
 		local target_pos = round(line_start + offset)
 		local node_below = get_node_or_nil(target_pos)
 		if not node_below then break end
@@ -465,6 +466,7 @@ function FloorScanState:run()
 			core.chat_send_player(player_name, ("%.3f"):format(cur_len))
 		end
 		self:iterate_offset(target_pos, cur_len, node_below, placeable_node_name)
+		i = i + 1
 	end
 
 	-- Handle yaw rotation if few blocks placed
