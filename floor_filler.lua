@@ -228,11 +228,12 @@ function FloorScanState:_load_user_config()
 	local name = self.player:get_player_name()
 	local config = player_config_mgr.data[name]
 	if config.floor_place_limit ~= nil then self.place_limit = config.floor_place_limit end
-	self.should_load_user_config = false
 end
 
 ---@param self FloorScanState
 function FloorScanState:reset()
+	self:_maybe_increase_saved_place_limit()
+
 	if not self.playing_sounds then self.playing_sounds = {} end
 	-- generic
 	self.active = false
@@ -266,13 +267,9 @@ function FloorScanState:reset()
 		}
 	end
 
-	if self.should_load_user_config == nil then self.should_load_user_config = true end
-
-	if self.should_load_user_config then
-		self:_load_user_config()
-	else
-		self:_maybe_increase_saved_place_limit()
-	end
+	local name = self.player:get_player_name()
+	local config = player_config_mgr.data[name]
+	if config.floor_place_limit ~= nil then self.place_limit = config.floor_place_limit end
 end
 
 ---@param self FloorScanState
