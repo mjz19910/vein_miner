@@ -1,10 +1,16 @@
 local dofile = dofile
 ---@type LuantiCore
 local core = core
----@type LuantiCore
-local minetest = minetest
 
 local require = dofile(core.get_modpath("vein_miner") .. "/require_local.lua")
+
+vein_miner = {}
+---@class VeinMinerGlobal
+local vein_miner = vein_miner
+local utils = require("mods.vein_miner.utils")
+local require = utils.require
+_G.require = require
+vein_miner.utils = utils
 
 local ipairs = ipairs
 local next = next
@@ -25,16 +31,12 @@ local string_match = string.match
 local floor = math.floor
 local ceil = math.ceil
 local yield = coroutine.yield
+local insert = table.insert
+local contains = table.contains
 
 local add_particle = core.add_particle
 
-vein_miner = {}
----@class VeinMinerGlobal
-local vein_miner = vein_miner
-local utils = require("mods.vein_miner.utils")
-local require = utils.require
-_G.require = require
-vein_miner.utils = utils
+local async_wait = utils.async_wait
 
 ---@type table<string, boolean>
 vein_miner.light_region_debug = {}
@@ -51,6 +53,11 @@ local CFG = require("mods.vein_miner.config")
 vein_miner.CFG = CFG
 local mining_groups = CFG.mining_groups
 local node_to_group = CFG.node_to_group
+---@class GroupEntry
+---@field nodes string[]
+---@field falling_nodes string[]
+---@type table<string, GroupEntry>
+local node_to_group_cache = {}
 ---@type AABB
 local aabb = require("mods.vein_miner.aabb")
 vein_miner.aabb = aabb
@@ -92,7 +99,7 @@ core.check_for_falling = function(pos)
 	local h = core.hash_node_position(pos)
 	if not falling_delayed_set[h] then
 		falling_delayed_set[h] = true
-		table.insert(falling_delayed_list, pos)
+		insert(falling_delayed_list, pos)
 	end
 	falling_delay_state.last_falling_node = falling_delay_state.current_tick_time
 end
@@ -103,7 +110,7 @@ require("mods.vein_miner.player_lifecycle")
 
 local fill_liquid_at_pos = vein_miner.fill_liquid_at_pos
 
-local S = minetest.get_translator("vein_miner")
+local S = core.get_translator("vein_miner")
 
 -- Maximum number of nodes that can be vein mined at once
 local MAX_MINED_NODES = 188
@@ -120,16 +127,16 @@ local toolBlacklist = false
 -- Registered tools
 local rTools = {}
 
-minetest.register_on_mods_loaded(function()
+core.register_on_mods_loaded(function()
 	-- Get settings
 
 	-- Check legacy settings
-	local allow_ores = minetest.settings:get_bool("allow_ores")
-	local allow_trees = minetest.settings:get_bool("allow_trees")
-	local allow_all = minetest.settings:get_bool("allow_all")
+	local allow_ores = core.settings:get_bool("allow_ores")
+	local allow_trees = core.settings:get_bool("allow_trees")
+	local allow_all = core.settings:get_bool("allow_all")
 
 	-- Fetch settings
-	MAX_MINED_NODES = tonumber(minetest.settings:get("vein_miner_max_nodes"))
+	MAX_MINED_NODES = tonumber(core.settings:get("vein_miner_max_nodes"))
 
 	-- Set MAX_MINED_NODES to default value in case getting the setting doesn't work
 	if MAX_MINED_NODES == nil then MAX_MINED_NODES = 188 end
@@ -137,14 +144,14 @@ minetest.register_on_mods_loaded(function()
 	CFG.MAX_MINED_NODES = MAX_MINED_NODES
 
 	-- Use namespaces settings if legacy settings are unset
-	if allow_ores == nil then allow_ores = minetest.settings:get_bool("vein_miner_allow_ores", true) end
+	if allow_ores == nil then allow_ores = core.settings:get_bool("vein_miner_allow_ores", true) end
 
-	if allow_trees == nil then allow_trees = minetest.settings:get_bool("vein_miner_allow_trees", false) end
+	if allow_trees == nil then allow_trees = core.settings:get_bool("vein_miner_allow_trees", false) end
 
-	if allow_all == nil then allow_all = minetest.settings:get_bool("vein_miner_allow_all", false) end
+	if allow_all == nil then allow_all = core.settings:get_bool("vein_miner_allow_all", false) end
 
 	-- Initialize tool whitelist with registered tools
-	for name, def in pairs(minetest.registered_tools) do rTools[def.name] = true end
+	for name, def in pairs(core.registered_tools) do rTools[def.name] = true end
 
 	-- Initialize whitelist for registered nodes
 	if allow_all then
@@ -244,7 +251,7 @@ for i, dir in pairs(vec_dirs) do
 		local h = core.hash_node_position(dir_res)
 		if not joined_dirs_set[h] then
 			joined_dirs_set[h] = true
-			table.insert(joined_dirs, dir_res)
+			insert(joined_dirs, dir_res)
 		end
 	end
 end
@@ -271,7 +278,7 @@ local function on_light_source(pos)
 			local next_pos = utils.check_pos(pos + dir)
 			if next_pos then
 				on_found_empty_space(dir)
-				table.insert(res, next_pos)
+				insert(res, next_pos)
 				known_dir_set[core.hash_node_position(dir)] = true
 			end
 		end
@@ -283,7 +290,7 @@ local function on_light_source(pos)
 				local next_pos = utils.check_pos(pos + dir1 + dir2)
 				if next_pos then
 					on_found_empty_space(dir1 + dir2)
-					table.insert(res, next_pos)
+					insert(res, next_pos)
 					known_dir_set[core.hash_node_position(dir1 + dir2)] = true
 				end
 			end
@@ -406,6 +413,7 @@ vein_miner.scanner = scanner
 
 require("mods.vein_miner.globalstep")
 
+---@type table<string, boolean>
 local falling_groups_all = {
 	gravel = true,
 	sand = true,
@@ -413,18 +421,21 @@ local falling_groups_all = {
 	desert_sand = true,
 	snow = true,
 }
+---@type table<string, boolean>
 local known_groups = {
 	cobble = true,
 	tree_trunk = true,
 	surface = true,
 	stem = true,
 	snow = true,
+	snow_block = true,
 	desert_sand = true,
 	apple = true,
 	butterfly = true,
 	firefly = true,
 	coral = true,
 }
+---@type table<string, boolean>
 local green_groups = {
 	fern = true,
 	grass = true,
@@ -437,27 +448,35 @@ local green_groups = {
 	jungle_grass = true,
 	marram_grass = true,
 }
+---@type table<string, boolean>
 local wanted_groups = {
 	clay = true,
 	ore = true,
 	stone = true,
 	dirt = true,
 }
+---@type table<string, boolean>
 local falling_groups = {
 	sand = true,
 	silver_sand = true,
 	gravel = true,
 }
+---@type string[]
 local green_list = {}
+---@type string[]
 local wanted_list = {}
+---@type string[]
 local falling_list = {}
+---@type string[]
 local falling_list_all = {}
 for k, _ in pairs(falling_groups) do table.insert_all(falling_list, mining_groups[k]) end
 for k, _ in pairs(falling_groups_all) do table.insert_all(falling_list_all, mining_groups[k]) end
 for k, _ in pairs(green_groups) do table.insert_all(green_list, mining_groups[k]) end
 for k, _ in pairs(wanted_groups) do table.insert_all(wanted_list, mining_groups[k]) end
 
+---@type string[]
 local cobble_target_list = {}
+---@type table<string, boolean>
 local cobble_target_groups = {
 	cobble = true,
 	stem = true,
@@ -482,6 +501,7 @@ local cobble_target_groups = {
 	mushroom = true,
 	marram_grass = true,
 	coral = true,
+	snow_block = true,
 }
 
 for k, _ in pairs(cobble_target_groups) do table.insert_all(cobble_target_list, mining_groups[k]) end
@@ -526,12 +546,14 @@ end
 
 ---@type table<string, VeinMinerState>
 local vein_miner_current_state = {}
-local function load_cobble_list(target_nodes, target_falling_nodes)
-	for i, v in ipairs(cobble_target_list) do
-		if table.contains(falling_list_all, v) then
-			if not table.contains(target_falling_nodes, v) then table.insert(target_falling_nodes, v) end
-		elseif not table.contains(target_nodes, v) then
-			table.insert(target_nodes, v)
+---@param nodes string[]
+---@param falling_nodes string[]
+local function load_cobble_list(nodes, falling_nodes)
+	for _, nn in ipairs(cobble_target_list) do
+		if contains(falling_list_all, nn) then
+			if not contains(falling_nodes, nn) then insert(falling_nodes, nn) end
+		elseif not contains(nodes, nn) then
+			insert(nodes, nn)
 		end
 	end
 end
@@ -595,7 +617,7 @@ function VeinMinerState:process_queue_item(item, player_name)
 		notify_pos(center, "#0000ffff", 7, 4 * 60)
 	end
 
-	local target_nodes
+	local target_nodes = {}
 	local target_falling_nodes = table.copy(falling_list)
 	local target_flags = {
 		liquid = false,
@@ -606,27 +628,34 @@ function VeinMinerState:process_queue_item(item, player_name)
 	if scan_mode == "ignore" then
 		return
 	elseif scan_mode == "exclusive" then
-		target_nodes = {node_name}
+		if not contains(target_nodes, node_name) then insert(target_nodes, node_name) end
 	elseif scan_mode == "append" then
-		target_nodes = {}
 		load_cobble_list(target_nodes, target_falling_nodes)
-		if table.contains(falling_list_all, node_name) then
-			if not table.contains(target_falling_nodes, node_name) then table.insert(target_falling_nodes, node_name) end
-		elseif not table.contains(target_nodes, node_name) then
-			table.insert(target_nodes, node_name)
+		if contains(falling_list_all, node_name) then
+			if not contains(target_falling_nodes, node_name) then insert(target_falling_nodes, node_name) end
+		elseif not contains(target_nodes, node_name) then
+			insert(target_nodes, node_name)
 		end
 		target_flags.falling = true
 	elseif scan_mode == "by_group" then
-		if node_name == "wool:green" then
-			target_flags.liquid = true
-		else
-		end
-		if node_to_group[node_name] ~= nil then
+		if node_name == "wool:green" then target_flags.liquid = true end
+		if node_to_group_cache[node_name] then
+			local entry = node_to_group_cache[node_name]
+			target_nodes, target_falling_nodes = entry.nodes, entry.falling_nodes
 			local target_key = node_to_group[node_name]
-			target_nodes = table.copy(mining_groups[target_key])
 			group_target = target_key
-		else
-			target_nodes = {node_name}
+		elseif node_to_group[node_name] ~= nil then
+			local target_key = node_to_group[node_name]
+			for _, node_name in ipairs(mining_groups[target_key]) do
+				if not contains(target_nodes, node_name) then insert(target_nodes, node_name) end
+			end
+			group_target = target_key
+			node_to_group_cache[node_name] = {
+				nodes = target_nodes,
+				falling_nodes = target_falling_nodes,
+			}
+		elseif not contains(target_nodes, node_name) then
+			insert(target_nodes, node_name)
 		end
 	elseif scan_mode == "error" then
 		if not known_unhandled_nodes[node_name] then
@@ -639,18 +668,17 @@ function VeinMinerState:process_queue_item(item, player_name)
 		return
 	end
 	if group_target then
-		if group_target == "cobble" then
-			target_nodes = {}
+		if cobble_target_groups[group_target] then
 			load_cobble_list(target_nodes, target_falling_nodes)
 			target_flags.falling = true
 		elseif falling_groups[group_target] then
-			target_nodes = table.copy(wanted_list)
+			for _, nn in ipairs(wanted_list) do if not contains(target_nodes, nn) then insert(target_nodes, nn) end end
 			target_flags.falling = true
 		elseif wanted_groups[group_target] then
-			target_nodes = table.copy(wanted_list)
+			for _, nn in ipairs(wanted_list) do if not contains(target_nodes, nn) then insert(target_nodes, nn) end end
 			target_flags.falling = true
 		elseif green_groups[group_target] then
-			target_nodes = table.copy(green_list)
+			for _, nn in ipairs(green_list) do if not contains(target_nodes, nn) then insert(target_nodes, nn) end end
 		elseif not known_groups[group_target] then
 			log_warning("new group target " .. group_target)
 		end
@@ -659,7 +687,7 @@ function VeinMinerState:process_queue_item(item, player_name)
 	if options.user and options.light then self.found_light_count = self.found_light_count + 1 end
 
 	if not utils.has_empty_main_inv_slot(player) then core.chat_send_player(player_name, "Waiting for empty inventory slot for digging") end
-	while not utils.has_empty_main_inv_slot(player) do utils.async_wait(1) end
+	while not utils.has_empty_main_inv_slot(player) do async_wait(1) end
 	if target_flags.liquid then iter_node_groups(self, core.find_nodes_in_area(minvec, maxvec, water_targets, true)) end
 	if target_flags.falling then iter_node_groups(self, core.find_nodes_in_area(minvec, maxvec, target_falling_nodes, true)) end
 	iter_node_groups(self, core.find_nodes_in_area(minvec, maxvec, target_nodes, true))
@@ -856,9 +884,9 @@ function VeinMinerState.wait_for_player_near_pos(player, target_pos)
 
 		player:set_look_horizontal(yaw)
 		player:set_look_vertical(pitch)
-		utils.async_wait(0.2)
+		async_wait(0.2)
 	end
-	if out_of_range then utils.async_wait(0.6) end
+	if out_of_range then async_wait(0.6) end
 end
 
 -- Update wielded item
