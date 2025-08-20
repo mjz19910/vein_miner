@@ -135,7 +135,10 @@ local blueberry = {
 
 local cotton = "farming:cotton_wild"
 
-local snow = "default:snow"
+local snow = {
+	"default:snow",
+	block = "default:snowblock",
+}
 
 local obsidian = {
 	value = "default:obsidian",
@@ -207,7 +210,7 @@ local mg = {
 	cobble_stair = {cobble.stair},
 	cotton = {cotton},
 	clay = {clay},
-	snow = {snow},
+	snow = {snow[1], snow.block},
 	jungle_sapling = {sapling.jungle},
 	apple = {apple},
 	butterfly = {butterfly.white, butterfly.red, butterfly.violet},
