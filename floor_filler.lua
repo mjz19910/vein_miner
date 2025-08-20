@@ -172,7 +172,7 @@ local function is_supported(pos, invalid_support_name)
 	return false
 end
 
-local DISTANCE_INCREASE = 16
+local DISTANCE_INCREASE = 64
 
 ---@class FloorScanState
 ---@field player Player
