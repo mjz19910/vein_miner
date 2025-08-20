@@ -12,9 +12,11 @@ local math = math
 local vector = vector
 
 local new_vec = vector.new
-local p = new_vec
 local normalize = vector.normalize
 local round = vector.round
+
+local ceil = math.ceil
+local floor = math.floor
 
 ---@type CoreModApi
 local core = core
@@ -245,7 +247,7 @@ function FloorScanState:reset()
 	self.log_max = nil
 	self.min_dist = nil
 	self.max_dist = nil
-	self.last_pos = vector.new(0, -1, 0)
+	self.last_pos = new_vec(0, -1, 0)
 	self.blocks_placed = 0
 	self.all_blocks_placed = 0
 	self.blocks_this_tick = 0
@@ -319,11 +321,11 @@ end
 --- Log the current min/max block distance if needed
 ---@param self FloorScanState
 function FloorScanState:_maybe_log_block_distance()
-	local cur_pos = vector.new(self.log_min / 8, self.log_max / 8, 0):floor()
+	local cur_pos = new_vec(self.log_min / 8, self.log_max / 8, 0):floor()
 
 	-- Only log if the position changed
 	if cur_pos ~= self.last_pos then
-		log_block_distance(cur_pos.x, cur_pos.y, 8, self:get_angle_deg())
+		log_block_distance(ceil(cur_pos.x), floor(cur_pos.y), 8, self:get_angle_deg())
 		self.show_log = false
 		self.last_pos = cur_pos
 	end
@@ -423,7 +425,7 @@ local function raycast(line_start, forward_dir, max_dist)
 	local dist = 0
 	return function()
 		if dist > max_dist then return nil end
-		local cur = vector.new(pos)
+		local cur = new_vec(pos)
 		-- advance
 		if t_max.x < t_max.y and t_max.x < t_max.z then
 			pos.x = pos.x + step.x
@@ -470,7 +472,7 @@ function FloorScanState:run()
 
 	-- Positioning and direction
 	local look_dir = player:get_look_dir()
-	local forward_dir = normalize(vector.new(look_dir.x, 0, look_dir.z))
+	local forward_dir = normalize(new_vec(look_dir.x, 0, look_dir.z))
 	local line_start = round(player_pos + down + up / 2)
 
 	-- Player config + controls
@@ -555,7 +557,7 @@ local function yaw_for_arc(dist) return 1 / dist end
 ---@param dist number
 local function get_yaw_speed_for_distance(dist)
 	local xz_offset = dist + 1
-	local max_dist = vector.new(xz_offset, 0, xz_offset):length()
+	local max_dist = new_vec(xz_offset, 0, xz_offset):length()
 	return yaw_for_arc(math.ceil(max_dist))
 end
 
@@ -593,7 +595,7 @@ function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 	-- detect crossing 0° in either direction
 	if math.abs(curr - prev) > math.pi then
 		if self.min_dist and self.max_dist then
-			local cur_pos = vector.new(math.ceil(self.min_dist / 8), math.floor(self.max_dist / 8), 0)
+			local cur_pos = new_vec(math.ceil(self.min_dist / 8), math.floor(self.max_dist / 8), 0)
 			core.log("action", ("reset range vars from (%d,%d)"):format(cur_pos.x, cur_pos.y))
 		end
 		self.min_dist = nil
