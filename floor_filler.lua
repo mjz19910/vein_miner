@@ -477,7 +477,7 @@ function FloorScanState:run()
 	-- Positioning and direction
 	local look_dir = player:get_look_dir()
 	local forward_dir = normalize(vector.new(look_dir.x, 0, look_dir.z))
-	local line_start = player_pos + down + up / 2 - forward_dir
+	local line_start = round(player_pos + down + up / 2)
 
 	-- Player config + controls
 	local player_name = player:get_player_name()
@@ -507,11 +507,7 @@ function FloorScanState:run()
 	self.blocks_this_tick = 0
 	local max_blocks = config.blocks_per_tick
 
-	line_start.y = math.floor(line_start.y + 0.5)
-	forward_dir.y = 0
-
-	for target_pos, cur_len in raycast(player_pos, line_start, self:get_place_limit()) do
-		if target_pos.y ~= line_start.y then goto continue end
+	for target_pos, cur_len in raycast(line_start, forward_dir, self:get_place_limit()) do
 		if self.blocks_this_tick >= max_blocks then break end
 		local node_below = get_node_or_nil(target_pos)
 		if not node_below then break end
@@ -522,7 +518,6 @@ function FloorScanState:run()
 		end
 
 		self:iterate_offset(target_pos, cur_len, node_below, placeable_node_name)
-		::continue::
 	end
 
 	if self.show_last_length then
