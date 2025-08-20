@@ -509,6 +509,7 @@ function FloorScanState:run()
 
 	for target_pos, cur_len in raycast(line_start, forward_dir, self:get_place_limit()) do
 		if self.blocks_this_tick >= max_blocks then break end
+		target_pos.y = target_pos.y + 1
 		local node_below = get_node_or_nil(target_pos)
 		if not node_below then break end
 
