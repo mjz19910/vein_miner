@@ -174,7 +174,7 @@ local function is_supported(pos, invalid_support_name)
 	return false
 end
 
-local DISTANCE_INCREASE = 24
+local DISTANCE_INCREASE = 48
 
 local TARGET_RADIANS = math.rad(360)
 
@@ -401,7 +401,7 @@ function FloorScanState:min_based_limit() return self.min_dist or self.place_lim
 function FloorScanState:max_based_limit() return self.max_dist or self.place_limit end
 
 ---@param self FloorScanState
-function FloorScanState:get_place_limit() return self:max_based_limit() + DISTANCE_INCREASE + 8 end
+function FloorScanState:get_place_limit() return self:max_based_limit() + DISTANCE_INCREASE end
 
 -- Traces from line_start in forward_dir until limit
 -- yields node positions along the ray
