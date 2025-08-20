@@ -36,6 +36,15 @@ function player_config_mgr:load(name)
 	end
 end
 
+function player_config_mgr:load_defaults(name)
+	self:load(name)
+	local config = self.data[name]
+	if config.miny == nil then config.miny = -144 end
+	if config.maxy == nil then config.maxy = 144 end
+	if config.mode == nil then config.mode = "small" end
+	if config.blocks_per_tick == nil then config.blocks_per_tick = 4 end
+end
+
 --- Returns whether light debug is enabled for a player.
 ---@param name string
 ---@return boolean
