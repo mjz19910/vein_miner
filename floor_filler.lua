@@ -322,11 +322,11 @@ end
 --- Log the current min/max block distance if needed
 ---@param self FloorScanState
 function FloorScanState:_maybe_log_block_distance()
-	local cur_pos = new_vec(self.log_min / 8, self.log_max / 8, 0):floor()
+	local cur_pos = new_vec(self.log_min / 8, self.log_max / 8, 0):round()
 
 	-- Only log if the position changed
 	if cur_pos ~= self.last_pos then
-		log_block_distance(ceil(cur_pos.x), floor(cur_pos.y), 8, self:get_angle_deg())
+		log_block_distance(cur_pos.x, cur_pos.y, 8, self:get_angle_deg())
 		self.show_log = false
 		self.last_pos = cur_pos
 	end
@@ -591,7 +591,7 @@ function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
 	-- detect crossing 0° in either direction
 	if math.abs(curr - prev) > math.pi then
 		if self.min_dist and self.max_dist then
-			local cur_pos = new_vec(math.ceil(self.min_dist / 8), math.floor(self.max_dist / 8), 0)
+			local cur_pos = new_vec(self.min_dist / 8, self.max_dist / 8, 0):round()
 			core.log("action", ("reset range vars from (%d,%d)"):format(cur_pos.x, cur_pos.y))
 			self.last_length = nil
 		end
