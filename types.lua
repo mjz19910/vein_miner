@@ -197,6 +197,7 @@ local chunk = {}
 ---@field next fun(self: Raycast): PointedThing
 
 ---@class CoreModApi
+---@field pos_to_string fun(pos: Vector): string
 ---@field get_voxel_manip fun(): VoxelManip
 ---@field set_node fun(pos: Vector, node: MapNode)
 ---@field get_node fun(pos: Vector): MapNode
