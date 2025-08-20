@@ -343,7 +343,13 @@ function FloorScanState:deactivate_tool()
 	end
 	if self.all_blocks_placed > 0 then self.all_blocks_placed = 0 end
 	if self.tool_active then
-		self.player:set_fov(0, false, 0)
+		local c = self.player:get_player_control()
+		if c.zoom then
+			self.player:set_fov(20, false, 1.5)
+			core.after(1.5, function() self.player:set_fov(0, false, 0) end)
+		else
+			self.player:set_fov(0, false, 2)
+		end
 		self.tool_active = false
 	end
 end
