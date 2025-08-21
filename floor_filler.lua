@@ -376,7 +376,7 @@ function FloorScanState:iterate_offset(target_pos, line_len, node_below, placeab
 end
 
 ---@param self FloorScanState
-function FloorScanState:min_based_limit() return self.min_dist or 1 end
+function FloorScanState:min_based_limit() return self.min_dist or self.place_limit end
 
 ---@param self FloorScanState
 function FloorScanState:max_based_limit() return self.max_dist or self.place_limit end
@@ -445,7 +445,7 @@ function FloorScanState:run()
 			yaw = 0
 		end
 		self.player_start_yaw = yaw
-		self.current_yaw_rad = yaw
+		self.current_yaw_rad = yaw - math.pi / 2
 	end
 
 	self.active = true
@@ -467,7 +467,7 @@ function FloorScanState:run()
 	local player_pos = player:get_pos()
 	local line_start = round(player_pos + down + up / 2)
 
-	if self.yaw_update_disabled then self.current_yaw_rad = player:get_look_horizontal() end
+	if self.yaw_update_disabled then self.current_yaw_rad = player:get_look_horizontal() + math.pi / 2 end
 
 	-- Positioning and direction
 	local forward_dir = vec_new(math.cos(self.current_yaw_rad), 0, math.sin(self.current_yaw_rad))
@@ -596,7 +596,7 @@ function FloorScanState:_maybe_update_yaw(player, ctrl)
 	end
 
 	self.scan_radians = self.scan_radians + yaw_speed
-	self.current_yaw_rad = self.scan_radians + self.player_start_yaw
+	self.current_yaw_rad = self.scan_radians + self.player_start_yaw + math.pi / 2
 	self.count = self.count + 1
 end
 
