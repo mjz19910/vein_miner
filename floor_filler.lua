@@ -522,6 +522,8 @@ function FloorScanState:run()
 		if cur_iter_count > iters_per_tick then break end
 		cur_iter_count = cur_iter_count + 1
 	end
+
+	player:set_look_horizontal(self.current_yaw_rad)
 end
 
 --- Update counters and timers after a tick
@@ -608,7 +610,6 @@ function FloorScanState:_maybe_update_yaw(player, ctrl)
 	-- Reset if scan exceeds full rotation
 	if math.abs(self.scan_radians) > self.target_rad then
 		self.current_yaw_rad = self.target_rad + self.player_start_yaw
-		player:set_look_horizontal(self.current_yaw_rad)
 		self.yaw_update_disabled = true
 		self:deactivate_tool()
 		return
@@ -623,7 +624,6 @@ function FloorScanState:_maybe_update_yaw(player, ctrl)
 
 	-- Update player's horizontal look
 	self.current_yaw_rad = self.scan_radians + self.player_start_yaw
-	player:set_look_horizontal(self.current_yaw_rad)
 end
 
 return floor_filler
