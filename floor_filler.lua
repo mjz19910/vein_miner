@@ -509,6 +509,7 @@ function FloorScanState:run()
 			self.last_length = cur_len
 		end
 		self:on_node_placed(target_pos, cur_len)
+		self.break_on_next = false
 		::next::
 	end
 
@@ -604,6 +605,15 @@ function FloorScanState:_maybe_update_yaw(player, ctrl)
 		local boundary = curr_sector * step
 		core.log("action", ("crossed %.1f°"):format(math.deg(boundary)))
 		self:_reset_range_vars()
+		if curr_sector == 0 then
+			if self.break_on_next then
+				self.yaw_update_disabled = true
+				self:deactivate_tool()
+				self.break_on_next = false
+				return
+			end
+			self.break_on_next = true
+		end
 	end
 
 	-- Abort if player requested abort (sneak + zoom)
