@@ -507,7 +507,7 @@ function FloorScanState:run()
 
 	-- Handle timers + counters
 	self:_update_counters(player_name)
-	player:set_look_horizontal(self.current_yaw_rad - math.pi / 2)
+	if self.use_set_fov then player:set_look_horizontal(self.current_yaw_rad - math.pi / 2) end
 end
 
 --- Update counters and timers after a tick
