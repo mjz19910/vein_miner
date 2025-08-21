@@ -11,7 +11,7 @@ local math = math
 ---@type VectorModule
 local vector = vector
 
-local new_vec = vector.new
+local vec_new = vector.new
 local normalize = vector.normalize
 local round = vector.round
 
@@ -36,8 +36,8 @@ local h = vein_miner.h
 local is_passable = h.is_passable
 local is_node_supporting = h.is_node_supporting
 
-local up = new_vec(0, 1, 0)
-local down = new_vec(0, -1, 0)
+local up = vec_new(0, 1, 0)
+local down = vec_new(0, -1, 0)
 
 local player_config_mgr = vein_miner.player_config_mgr
 assert(player_config_mgr, "need vein_miner.player_config_mgr")
@@ -230,7 +230,7 @@ function FloorScanState:reset()
 	self.log_max = nil
 	self.min_dist = nil
 	self.max_dist = nil
-	self.last_pos = new_vec(0, -1, 0)
+	self.last_pos = vec_new(0, -1, 0)
 	self.blocks_placed = 0
 	self.all_blocks_placed = 0
 	self.nodes_this_tick = 0
@@ -303,7 +303,7 @@ end
 --- Log the current min/max block distance if needed
 ---@param self FloorScanState
 function FloorScanState:_maybe_log_block_distance()
-	local cur_pos = new_vec(self.log_min, self.log_max, 0):divide(2):round():multiply(2)
+	local cur_pos = vec_new(self.log_min, self.log_max, 0):divide(2):round():multiply(2)
 
 	-- Only log if the position changed
 	if cur_pos ~= self.last_pos then
@@ -405,7 +405,7 @@ local function raycast(dir)
 		z = math.abs(1 / (dir.z ~= 0 and dir.z or 1e-9)),
 	}
 	return function()
-		local cur = new_vec(pos)
+		local cur = vec_new(pos)
 		-- advance
 		if t_max.x < t_max.y and t_max.x < t_max.z then
 			pos.x = pos.x + step.x
@@ -437,10 +437,11 @@ function FloorScanState:run()
 
 	-- Get player info
 	local player = self.player
+	local yaw = player:get_look_horizontal()
+	self.current_yaw_rad = yaw
 
 	-- Initialize player yaw if not already set
 	if self.player_start_yaw == nil then
-		local yaw = player:get_look_horizontal()
 		-- protect against NaN
 		if yaw ~= yaw then
 			player:set_look_horizontal(0)
@@ -469,6 +470,9 @@ function FloorScanState:run()
 	local cur_iter_count = 0
 	self.nodes_this_tick = 0
 
+	local player_pos = player:get_pos()
+	local line_start = round(player_pos + down + up / 2)
+
 	while true do
 		local wielded = player:get_wielded_item():get_name()
 		if wielded ~= "vein_miner:auto_floor" then
@@ -477,13 +481,12 @@ function FloorScanState:run()
 			break
 		end
 
-		local yaw = player:get_look_horizontal()
-		local player_pos = player:get_pos()
+		yaw = self.current_yaw_rad
 
 		-- Positioning and direction
-		local look_dir = player:get_look_dir()
-		local forward_dir = normalize(new_vec(look_dir.x, 0, look_dir.z))
-		local line_start = round(player_pos + down + up / 2)
+		-- v3f v(std::cos(pitch) * std::cos(yaw), std::sin(pitch), std::cos(pitch) * std::sin(yaw));
+		local look_dir = vec_new(math.cos(0) * math.cos(yaw), 0, math.cos(0) * math.sin(yaw))
+		local forward_dir = normalize(look_dir)
 
 		-- Player config + controls
 		local player_name = player:get_player_name()
@@ -517,7 +520,7 @@ function FloorScanState:run()
 		self:_maybe_update_yaw(player, ctrl)
 
 		-- Handle timers + counters
-		self:_update_counters(player_name, yaw)
+		self:_update_counters(player_name)
 
 		if self.nodes_this_tick >= max_nodes then break end
 		if cur_iter_count > iters_per_tick then break end
@@ -554,7 +557,7 @@ local function yaw_for_arc(dist) return 1 / dist end
 ---@param dist number
 local function get_yaw_speed_for_distance(dist)
 	local xz_offset = dist + 1
-	local max_dist = new_vec(xz_offset, 0, xz_offset):length()
+	local max_dist = vec_new(xz_offset, 0, xz_offset):length()
 	return yaw_for_arc(math.ceil(max_dist))
 end
 
@@ -568,7 +571,7 @@ local TAU = 2 * math.pi
 
 function FloorScanState:_reset_range_vars()
 	if self.min_dist and self.max_dist then
-		local cur_pos = new_vec(self.min_dist, self.max_dist, 0):divide(2):round():multiply(2)
+		local cur_pos = vec_new(self.min_dist, self.max_dist, 0):divide(2):round():multiply(2)
 		core.log("action", ("reset range vars from (%d,%d)"):format(cur_pos.x, cur_pos.y))
 		self.last_length = nil
 	end
@@ -608,7 +611,8 @@ function FloorScanState:_maybe_update_yaw(player, ctrl)
 
 	-- Reset if scan exceeds full rotation
 	if math.abs(self.scan_radians) > self.target_rad then
-		player:set_look_horizontal(self.target_rad + self.player_start_yaw)
+		self.current_yaw_rad = self.target_rad + self.player_start_yaw
+		player:set_look_horizontal(self.current_yaw_rad)
 		self.yaw_update_disabled = true
 		self:deactivate_tool()
 		return
@@ -622,8 +626,8 @@ function FloorScanState:_maybe_update_yaw(player, ctrl)
 	end
 
 	-- Update player's horizontal look
-	player:set_look_horizontal(self.scan_radians + self.player_start_yaw)
-
+	self.current_yaw_rad = self.scan_radians + self.player_start_yaw
+	player:set_look_horizontal(self.current_yaw_rad)
 end
 
 return floor_filler
