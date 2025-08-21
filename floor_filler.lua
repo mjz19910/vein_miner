@@ -592,7 +592,7 @@ function FloorScanState:_maybe_update_yaw(player, ctrl)
 	local curr_sector = math.floor(curr / step)
 
 	if prev_sector ~= curr_sector then
-		-- optional: which boundary did we cross?
+		-- which boundary did we cross?
 		local boundary = curr_sector * step
 		core.log("action", ("crossed %.1f°"):format(boundary * 180 / math.pi))
 		self:_reset_range_vars()
