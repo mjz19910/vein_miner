@@ -579,9 +579,9 @@ function FloorScanState:_maybe_update_yaw(player, ctrl)
 
 	local prev = self:get_angle_rad() % TAU
 	local curr = (self:get_angle_rad() + yaw_speed) % TAU
-	local step = TAU / 8 -- 45° in radians
+	local step = TAU / 4 -- 90° in radians
 
-	-- detect crossing any multiple of 45°
+	-- detect crossing any multiple of 90°
 	local prev_sector = math.floor(prev / step)
 	local curr_sector = math.floor(curr / step)
 
