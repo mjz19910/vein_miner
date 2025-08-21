@@ -226,6 +226,7 @@ function FloorScanState:reset(first_init)
 	self.log_max = nil
 	self.min_dist = nil
 	self.max_dist = nil
+	self.all_max_dist = nil
 	self.last_pos = vec_new(0, -1, 0)
 	self.blocks_placed = 0
 	self.all_blocks_placed = 0
@@ -292,6 +293,8 @@ function FloorScanState:_update_max_dist(dist)
 			self.show_log = true
 		end
 		self.max_dist = dist
+		if self.all_max_dist == nil then self.all_max_dist = dist end
+		if dist > self.all_max_dist then self.all_max_dist = dist end
 	end
 end
 
@@ -370,7 +373,7 @@ end
 function FloorScanState:min_based_limit() return self.min_dist or self.place_limit end
 
 ---@param self FloorScanState
-function FloorScanState:max_based_limit() return self.max_dist or self.place_limit end
+function FloorScanState:max_based_limit() return self.max_dist or self.all_max_dist or self.place_limit end
 
 ---@param self FloorScanState
 function FloorScanState:get_place_limit() return self:max_based_limit() + DISTANCE_INCREASE end
