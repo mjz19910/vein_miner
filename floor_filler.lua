@@ -473,6 +473,7 @@ function FloorScanState:run()
 	local playing_sounds = self.playing_sounds
 
 	local max_nodes = self.nodes_per_tick
+	local last_place_pos = nil
 	for offset in raycast(forward_dir) do
 		local target_pos = line_start + offset
 		local cur_len = offset:length()
@@ -483,7 +484,7 @@ function FloorScanState:run()
 		if not node_below then break end
 		if not is_passable(node_below) then goto continue end
 		if target_pos.y ~= -1 and not is_supported(target_pos, placeable_node_name) then goto continue end
-		player:set_pos(line_start + vector.new(offset.x, 0, offset.z) + up / 2)
+		last_place_pos = line_start + vector.new(offset.x, 0, offset.z) + up / 2
 		if not try_place_block_from_inventory(self.player, self.playing_sounds, target_pos, self.place_limit) then goto continue end
 		if not self.last_length or cur_len > self.last_length + 0.1 then
 			core.chat_send_player(player_name, max_distance_fmt:format(p_str(target_pos), cur_len, p_str(line_start)))
@@ -491,6 +492,10 @@ function FloorScanState:run()
 		end
 		self:on_node_placed(target_pos, cur_len)
 		::continue::
+	end
+
+	if last_place_pos ~= nil then
+		player:set_pos(last_place_pos)
 	end
 
 	-- Handle yaw rotation if few blocks placed
