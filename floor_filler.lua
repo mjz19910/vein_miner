@@ -567,7 +567,7 @@ end
 function FloorScanState:_maybe_update_yaw(player, ctrl)
 	if self.yaw_update_disabled or self.nodes_this_tick ~= 0 then return end
 	if not self.tool_active and self.use_set_fov then
-		player:set_fov(10, false, 1)
+		player:set_fov(10, false, 0)
 		self.tool_active = true
 	end
 	local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit()) / 1.3
