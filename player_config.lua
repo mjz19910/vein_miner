@@ -48,6 +48,7 @@ function player_config_mgr:load_defaults(name)
 	if config.mode == nil then config.mode = "small" end
 	if config.blocks_per_tick == nil then config.blocks_per_tick = 4 end
 	if config.light_debug == nil then config.light_debug = true end
+	if config.is_mapgen_disabled == nil then config.is_mapgen_disabled = false end
 end
 
 --- Get a player's config
@@ -99,6 +100,22 @@ function player_config_mgr:get_blocks_per_tick(name) return self:get(name).block
 function player_config_mgr:set_blocks_per_tick(name, count)
 	self:get(name).blocks_per_tick = count
 	self:save(name)
+end
+
+--- Set the floor placement limit and save.
+---@param self PlayerConfigManager
+---@param name string
+---@param disable boolean
+function player_config_mgr:persist_mapgen_disabled(name, disable)
+	self:get(name).is_mapgen_disabled = disable
+	self:save(name)
+end
+
+---@param name string
+---@param player Player
+function player_config_mgr:apply_player_flags(name, player)
+	local disable = self:get(name).is_mapgen_disabled
+	if disable then player:set_mapgen_disabled(true) end
 end
 
 return player_config_mgr

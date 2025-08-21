@@ -11,6 +11,7 @@ core.register_on_joinplayer(function(player)
 	player_config_mgr:load_defaults(name)
 	vein_miner.scanner.light_scan_data[name] = {}
 	player_hud.init_player(player)
+	player_config_mgr:apply_player_flags(name, player)
 end)
 
 core.register_on_leaveplayer(function(player)

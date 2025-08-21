@@ -341,6 +341,7 @@ local vec = {}
 ---@field last_maxy number|nil
 ---@field blocks_per_tick number
 ---@field floor_place_limit integer|nil
+---@field is_mapgen_disabled boolean
 ---@type PlayerConfig
 local config_data = {}
 
