@@ -187,7 +187,7 @@ function floor_filler.new(player)
 	})
 
 	-- initialize state
-	self:reset()
+	self:reset(true)
 	return self
 end
 
@@ -207,7 +207,8 @@ function FloorScanState:_load_user_config()
 end
 
 ---@param self FloorScanState
-function FloorScanState:reset()
+---@param first_init boolean
+function FloorScanState:reset(first_init)
 	self:_maybe_increase_saved_place_limit()
 
 	if not self.playing_sounds then self.playing_sounds = {} end
@@ -232,19 +233,22 @@ function FloorScanState:reset()
 	self.last_place_yaw_radians = nil
 	self.use_set_fov = false
 
-	if not self.log_range then
+	local name = self.player:get_player_name()
+	self.place_limit = player_config_mgr:get_floor_place_limit(name) or LINE_LENGTH
+	self.nodes_per_tick = player_config_mgr:get_blocks_per_tick(name)
+	if first_init then
 		---@type NumRange
 		self.log_range = {
 			min = 100,
 			max = 150,
 		}
+		self.did_disable_mapgen = false
 	end
 
-	local name = self.player:get_player_name()
-	self.place_limit = player_config_mgr:get_floor_place_limit(name) or LINE_LENGTH
-	self.nodes_per_tick = player_config_mgr:get_blocks_per_tick(name)
-
-	self.player:set_mapgen_disabled(false)
+	if self.did_disable_mapgen then
+		self.player:set_mapgen_disabled(false)
+		self.did_disable_mapgen = false
+	end
 end
 
 ---@param self FloorScanState
@@ -317,7 +321,6 @@ function FloorScanState:deactivate_tool()
 	if self.all_blocks_placed > 0 then self.all_blocks_placed = 0 end
 	if self.tool_active then
 		self.player:set_fov(0, false, 0)
-		self.player:set_mapgen_disabled(false)
 		self.player:set_pos(self.original_player_pos)
 		self.tool_active = false
 		self.original_player_pos = nil
@@ -439,7 +442,11 @@ function FloorScanState:run()
 		self.original_player_pos = self.player_pos
 		local ctrl = player:get_player_control()
 		if not self.tool_active and ctrl.zoom then self.use_set_fov = true; end
-		player:set_mapgen_disabled(true)
+		self.is_mapgen_disabled = self.player:get_mapgen_disabled()
+		if not self.is_mapgen_disabled then
+			player:set_mapgen_disabled(true)
+			self.did_disable_mapgen = true
+		end
 	end
 
 	self.active = true
