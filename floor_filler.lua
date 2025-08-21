@@ -572,8 +572,6 @@ function FloorScanState:_maybe_update_yaw(player, ctrl)
 	end
 	local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit()) / 1.3
 	if ctrl.sneak then yaw_speed = -yaw_speed end
-	local prev = self:get_angle_rad() % TAU
-	local curr = (self:get_angle_rad() + yaw_speed) % TAU
 
 	-- crossed π (180°)
 	-- if prev < math.pi and curr >= math.pi then
@@ -582,8 +580,23 @@ function FloorScanState:_maybe_update_yaw(player, ctrl)
 	-- 	core.log("action", "180° passed (backward)")
 	-- end
 
-	-- detect crossing 0° in either direction
-	if math.abs(curr - prev) > math.pi then self:_reset_range_vars() end
+	-- -- detect crossing 0° in either direction
+	-- if math.abs(curr - prev) > math.pi then self:_reset_range_vars() end
+
+	local prev = self:get_angle_rad() % TAU
+	local curr = (self:get_angle_rad() + yaw_speed) % TAU
+	local step = TAU / 8 -- 45° in radians
+
+	-- detect crossing any multiple of 45°
+	local prev_sector = math.floor(prev / step)
+	local curr_sector = math.floor(curr / step)
+
+	if prev_sector ~= curr_sector then
+		-- optional: which boundary did we cross?
+		local boundary = curr_sector * step
+		core.log("action", ("crossed %.1f°"):format(boundary * 180 / math.pi))
+		self:_reset_range_vars()
+	end
 
 	-- Reset if scan exceeds full rotation
 	if math.abs(self.scan_radians) > self.target_rad then
