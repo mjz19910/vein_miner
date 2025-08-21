@@ -1,4 +1,6 @@
+local TARGET_RADIANS = math.rad(360) * 4
 local LINE_LENGTH = 48 * 8
+local DISTANCE_INCREASE = 12 * 8
 
 local assert = assert
 
@@ -157,10 +159,6 @@ local function is_supported(pos, invalid_support_name)
 	return false
 end
 
-local DISTANCE_INCREASE = 64
-
-local TARGET_RADIANS = math.rad(360)
-
 ---@class FloorScanState
 ---@field player Player
 ---@field playing_sounds table<string, boolean>
@@ -174,10 +172,7 @@ local TARGET_RADIANS = math.rad(360)
 ---@field nodes_this_tick integer Number of nodes placed this tick
 ---@field place_limit integer
 ---@field last_length integer|nil
-local FloorScanState = {
-	-- player yaw constants
-	target_rad = math.rad(360),
-}
+local FloorScanState = {}
 
 ---@param player Player
 ---@return FloorScanState
@@ -590,22 +585,20 @@ function FloorScanState:_maybe_update_yaw(player, ctrl)
 	if prev_sector ~= curr_sector then
 		-- which boundary did we cross?
 		local boundary = curr_sector * step
-		core.log("action", ("crossed %.1f°"):format(boundary * 180 / math.pi))
+		core.log("action", ("crossed %.1f°"):format(math.deg(boundary)))
 		self:_reset_range_vars()
 	end
 
-	-- Abort if player velocity too high
-	if player:get_velocity():length() > 0.05 then
-		player:set_look_horizontal(self.scan_radians + self.player_start_yaw)
-		self.current_yaw_rad = self.scan_radians + self.player_start_yaw + math.pi / 2
+	-- Abort if player requested abort (sneak + zoom)
+	if player:get_velocity():length() > 0.05 and ctrl.sneak and ctrl.zoom then
 		self.yaw_update_disabled = true
 		self:deactivate_tool()
 		return
 	end
 
 	-- Reset if scan exceeds full rotation
-	if math.abs(self.scan_radians) > self.target_rad then
-		self.current_yaw_rad = self.target_rad + self.player_start_yaw + math.pi / 2
+	if math.abs(self.scan_radians) > TARGET_RADIANS then
+		self.current_yaw_rad = TARGET_RADIANS + self.player_start_yaw + math.pi / 2
 		self.yaw_update_disabled = true
 		self:deactivate_tool()
 		return
