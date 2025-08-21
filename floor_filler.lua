@@ -459,7 +459,9 @@ function FloorScanState:run()
 	end
 
 	if self.yaw_update_disabled then
+		local line_y = self.line_start.y
 		self.line_start = round(player:get_pos() + down + up / 2)
+		self.line_start.y = line_y
 		self.current_yaw_rad = player:get_look_horizontal() + math.pi / 2
 	end
 	local line_start = self.line_start
