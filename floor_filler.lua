@@ -243,6 +243,8 @@ function FloorScanState:reset()
 	local name = self.player:get_player_name()
 	self.place_limit = player_config_mgr:get_floor_place_limit(name) or LINE_LENGTH
 	self.nodes_per_tick = player_config_mgr:get_blocks_per_tick(name)
+
+	self.player:set_mapgen_disabled(false)
 end
 
 ---@param self FloorScanState
@@ -315,7 +317,10 @@ function FloorScanState:deactivate_tool()
 	if self.all_blocks_placed > 0 then self.all_blocks_placed = 0 end
 	if self.tool_active then
 		self.player:set_fov(0, false, 0)
+		self.player:set_mapgen_disabled(false)
+		self.player:set_pos(self.original_player_pos)
 		self.tool_active = false
+		self.original_player_pos = nil
 	end
 end
 
@@ -431,8 +436,10 @@ function FloorScanState:run()
 		self.current_yaw_rad = yaw + math.pi / 2
 		self.player_pos = player:get_pos()
 		self.line_start = round(player:get_pos() + down + up / 2)
+		self.original_player_pos = self.player_pos
 		local ctrl = player:get_player_control()
 		if not self.tool_active and ctrl.zoom then self.use_set_fov = true; end
+		player:set_mapgen_disabled(true)
 	end
 
 	self.active = true
@@ -494,9 +501,7 @@ function FloorScanState:run()
 		::continue::
 	end
 
-	if last_place_pos ~= nil then
-		player:set_pos(last_place_pos)
-	end
+	if last_place_pos ~= nil then player:set_pos(last_place_pos) end
 
 	-- Handle yaw rotation if few blocks placed
 	self:_maybe_update_yaw(player, ctrl)

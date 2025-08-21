@@ -487,6 +487,10 @@ local config_data = {}
 ---@field respawn fun(self:ObjectRef)
 ---@field set_flags fun(self:ObjectRef, flags:EntityFlags)
 ---@field get_flags fun(self:ObjectRef): EntityFlags
+---
+---## Added with to this fork
+---@field get_mapgen_disabled fun(self:ObjectRef): boolean
+---@field set_mapgen_disabled fun(self:ObjectRef, disable:boolean)
 
 ---@type ObjectRef
 local ObjectRef = {}
