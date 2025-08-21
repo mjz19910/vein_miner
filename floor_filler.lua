@@ -157,7 +157,7 @@ local function is_supported(pos, invalid_support_name)
 	return false
 end
 
-local DISTANCE_INCREASE = 48
+local DISTANCE_INCREASE = 24
 
 local TARGET_RADIANS = math.rad(360)
 
