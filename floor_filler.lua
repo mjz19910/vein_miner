@@ -567,13 +567,6 @@ function FloorScanState:_maybe_update_yaw(player, ctrl)
 	local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit()) / 1.3
 	if ctrl.sneak then yaw_speed = -yaw_speed end
 
-	-- crossed π (180°)
-	-- if prev < math.pi and curr >= math.pi then
-	-- 	core.log("action", "180° passed (forward)")
-	-- elseif prev >= math.pi and curr < math.pi then
-	-- 	core.log("action", "180° passed (backward)")
-	-- end
-
 	-- -- detect crossing 0° in either direction
 	-- if math.abs(curr - prev) > math.pi then self:_reset_range_vars() end
 
