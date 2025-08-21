@@ -465,7 +465,7 @@ function FloorScanState:run()
 	end
 
 	local max_nodes = self.nodes_per_tick
-	local iters_per_tick = 7100
+	local iters_per_tick = 32
 	local cur_iter_count = 0
 	self.nodes_this_tick = 0
 
