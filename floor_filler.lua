@@ -513,6 +513,7 @@ function FloorScanState:_update_counters(player_name)
 	-- no blocks placed: increment timer
 	if self.nodes_this_tick > 0 then
 		-- Reset count
+		self.nodes_this_tick = 0
 		self.count = 0
 
 		-- Update total blocks placed
@@ -527,7 +528,6 @@ function FloorScanState:_update_counters(player_name)
 	end
 
 	if self.count > 150 then self.undo_last_yaw_step = true; end
-	self.nodes_this_tick = 0
 end
 
 ---@param dist number
