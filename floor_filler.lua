@@ -115,28 +115,38 @@ local function is_supported(pos, invalid_support_name)
 		if not node then return false end
 	end
 
+	local check_pos = offset(pos, 0, 1, 0)
+	local node = get_node_or_nil(check_pos)
+	local def = registered_nodes[node.name]
+	if def and def.groups and def.groups.falling_node then
+		core.log("action", "falling node is above, placing node below to prevent falling for " .. node.name)
+		return true
+	end
+
+	local floor_air_count = 0
+	for dx = -2, 2 do
+		for dz = -2, 2 do
+			local node = get_node_or_nil(offset(pos, dx, -1, dz))
+			if node and is_passable(node) then floor_air_count = floor_air_count + 1 end
+		end
+	end
+
 	-- --- Roof check (scan y+1..y+3 for closest solid layer) ---
 	local roof_all_solid = false
 	local has_roof = false
 	for dy = 1, 3 do
-		local all_solid = true
+		local air_count = 0
 		for dx = -2, 2 do
 			for dz = -2, 2 do
-				local check_pos = offset(pos, dx, dy, dz)
-				local node = get_node_or_nil(check_pos)
-				if not node or is_passable(node) then
-					all_solid = false
-					break
-				end
+				local node = get_node_or_nil(offset(pos, dx, dy, dz))
+				if node and is_passable(node) then air_count = air_count + 1 end
 			end
-			if not all_solid then break end
 		end
-		if all_solid then
-			roof_all_solid = true
+		if air_count == 0 then
 			has_roof = true
-			break -- closest roof layer found
-		else
-			-- found a layer but not all solid → roof is not fully blocking
+			roof_all_solid = true
+			break
+		elseif air_count < 9 then
 			has_roof = true
 			roof_all_solid = false
 			break
@@ -147,7 +157,7 @@ local function is_supported(pos, invalid_support_name)
 	-- if not has_floor and not has_roof then goto check_neighbors end
 
 	-- If both floor and roof exist, require at least one to be NOT full solid
-	if roof_all_solid then return false end
+	if roof_all_solid or floor_air_count == 0 then return false end
 
 	::check_neighbors::
 	-- Neighbor support check
