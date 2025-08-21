@@ -1,6 +1,6 @@
 local TARGET_RADIANS = math.rad(360) * 4
 local LINE_LENGTH = 48 * 8
-local DISTANCE_INCREASE = 12 * 8
+local DISTANCE_INCREASE = 1 * 8
 
 local assert = assert
 
@@ -499,16 +499,17 @@ function FloorScanState:run()
 		if math.floor(target_pos.y) <= math.floor(player_pos.y) - 1 then target_pos.y = target_pos.y + 1 end
 		local node_below = get_node_or_nil(target_pos)
 		if not node_below then break end
-		if not is_passable(node_below) then goto continue end
-		if target_pos.y ~= -1 and not is_supported(target_pos, placeable_node_name) then goto continue end
+		if not is_passable(node_below) then goto next end
+		if target_pos.y ~= -1 and not is_supported(target_pos, placeable_node_name) then goto next end
+		if node_below.name == "ignore" then goto next end
 		last_place_pos = line_start + vector.new(offset.x, 0, offset.z) + up / 2
-		if not try_place_block_from_inventory(self.player, self.playing_sounds, target_pos, self.place_limit) then goto continue end
+		if not try_place_block_from_inventory(self.player, self.playing_sounds, target_pos, self.place_limit) then goto next end
 		if not self.last_length or cur_len > self.last_length + 0.1 then
 			core.chat_send_player(player_name, max_distance_fmt:format(p_str(target_pos), cur_len, p_str(line_start)))
 			self.last_length = cur_len
 		end
 		self:on_node_placed(target_pos, cur_len)
-		::continue::
+		::next::
 	end
 
 	if last_place_pos ~= nil then player:set_pos(last_place_pos) end
