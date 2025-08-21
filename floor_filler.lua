@@ -465,7 +465,7 @@ function FloorScanState:run()
 	end
 
 	local max_nodes = self.nodes_per_tick
-	local iters_per_tick = 128
+	local iters_per_tick = 512
 	local cur_iter_count = 0
 	self.nodes_this_tick = 0
 
@@ -514,7 +514,7 @@ function FloorScanState:run()
 		end
 
 		-- Handle yaw rotation if few blocks placed
-		self:_maybe_update_yaw(player, yaw, ctrl)
+		self:_maybe_update_yaw(player, ctrl)
 
 		-- Handle timers + counters
 		self:_update_counters(player_name, yaw)
@@ -582,9 +582,8 @@ end
 --- Adjust player yaw if few blocks were placed
 ---@param self FloorScanState
 ---@param player Player
----@param yaw number Current yaw
 ---@param ctrl table Player control state
-function FloorScanState:_maybe_update_yaw(player, yaw, ctrl)
+function FloorScanState:_maybe_update_yaw(player, ctrl)
 	if self.yaw_update_disabled or self.nodes_this_tick ~= 0 then return end
 	if not self.tool_active and self.use_set_fov then
 		player:set_fov(10, false, 1)
