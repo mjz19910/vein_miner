@@ -234,7 +234,6 @@ function FloorScanState:reset()
 	self.blocks_placed = 0
 	self.all_blocks_placed = 0
 	self.nodes_this_tick = 0
-	self.undo_last_yaw_step = false
 	self.last_place_yaw_radians = nil
 	self.use_set_fov = false
 
@@ -528,8 +527,6 @@ function FloorScanState:_update_counters(player_name)
 		core.log("action", "finished placing floor at deg " .. ("%.1f"):format(rad_to_deg_wrap360(self.last_place_yaw_radians)))
 		self.last_place_yaw_radians = nil
 	end
-
-	if self.count > 150 then self.undo_last_yaw_step = true; end
 end
 
 ---@param dist number
