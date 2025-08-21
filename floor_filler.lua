@@ -376,13 +376,13 @@ function FloorScanState:iterate_offset(target_pos, line_len, node_below, placeab
 end
 
 ---@param self FloorScanState
-function FloorScanState:min_based_limit() return self.min_dist or self.place_limit end
+function FloorScanState:min_based_limit() return self.min_dist or 0 end
 
 ---@param self FloorScanState
 function FloorScanState:max_based_limit() return self.max_dist or self.place_limit end
 
 ---@param self FloorScanState
-function FloorScanState:get_place_limit() return self:max_based_limit() + DISTANCE_INCREASE end
+function FloorScanState:get_place_limit() return self:min_based_limit() + DISTANCE_INCREASE end
 
 -- Traces from line_start in forward_dir until limit
 -- yields node positions along the ray
