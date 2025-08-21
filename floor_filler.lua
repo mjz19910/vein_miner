@@ -594,6 +594,15 @@ function FloorScanState:_maybe_update_yaw(player, ctrl)
 		self:_reset_range_vars()
 	end
 
+	-- Abort if player velocity too high
+	if player:get_velocity():length() > 0.05 then
+		player:set_look_horizontal(self.scan_radians + self.player_start_yaw)
+		self.current_yaw_rad = self.scan_radians + self.player_start_yaw + math.pi / 2
+		self.yaw_update_disabled = true
+		self:deactivate_tool()
+		return
+	end
+
 	-- Reset if scan exceeds full rotation
 	if math.abs(self.scan_radians) > self.target_rad then
 		self.current_yaw_rad = self.target_rad + self.player_start_yaw + math.pi / 2
