@@ -587,19 +587,17 @@ function FloorScanState:_maybe_update_yaw(player, ctrl)
 
 	-- detect crossing 0° in either direction
 	if math.abs(curr - prev) > math.pi then self:_reset_range_vars() end
-	self.scan_radians = self.scan_radians + yaw_speed
-	self.count = self.count + 1
 
 	-- Reset if scan exceeds full rotation
 	if math.abs(self.scan_radians) > self.target_rad then
-		self.current_yaw_rad = self.target_rad + self.player_start_yaw
 		self.yaw_update_disabled = true
 		self:deactivate_tool()
 		return
 	end
 
-	-- Update player's horizontal look
+	self.scan_radians = self.scan_radians + yaw_speed
 	self.current_yaw_rad = self.scan_radians + self.player_start_yaw
+	self.count = self.count + 1
 end
 
 return floor_filler
