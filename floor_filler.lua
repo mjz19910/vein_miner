@@ -176,7 +176,7 @@ local TARGET_RADIANS = math.rad(360)
 ---@field last_length integer|nil
 local FloorScanState = {
 	-- player yaw constants
-	target_rad = math.rad(360) * 3,
+	target_rad = math.rad(360),
 }
 
 ---@param player Player
