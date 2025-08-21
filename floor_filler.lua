@@ -195,7 +195,7 @@ function FloorScanState:_get_config_key() return self.player:get_player_name() e
 
 function FloorScanState:_maybe_increase_saved_place_limit()
 	if self.max_dist and self.max_dist > self.place_limit then
-		self.place_limit = self.max_dist - self.max_dist % 8 + 8
+		self.place_limit = self.max_dist + 32
 		core.log("increased place limit to " .. math.floor(self.place_limit / 8) .. " 8x8 chunks")
 		player_config_mgr:set_floor_place_limit(self:_get_config_key(), self.place_limit)
 	end
@@ -232,8 +232,6 @@ function FloorScanState:reset()
 	self.last_place_yaw_radians = nil
 	self.use_set_fov = false
 
-	if not self.place_limit then self.place_limit = LINE_LENGTH end
-
 	if not self.log_range then
 		---@type NumRange
 		self.log_range = {
@@ -242,12 +240,7 @@ function FloorScanState:reset()
 		}
 	end
 
-	local name = self.player:get_player_name()
-	local config = player_config_mgr.data[name]
-	if config.floor_place_limit ~= nil then self.place_limit = config.floor_place_limit end
-
-	self.nodes_per_tick = player_config_mgr:get_blocks_per_tick(name)
-
+	self.place_limit = player_config_mgr:get_floor_place_limit(self.player:get_player_name()) or LINE_LENGTH
 end
 
 ---@param self FloorScanState
@@ -370,7 +363,7 @@ function FloorScanState:min_based_limit() return self.min_dist or self.place_lim
 function FloorScanState:max_based_limit() return self.max_dist or self.place_limit end
 
 ---@param self FloorScanState
-function FloorScanState:get_place_limit() return self:min_based_limit() + DISTANCE_INCREASE end
+function FloorScanState:get_place_limit() return self:max_based_limit() + DISTANCE_INCREASE end
 
 -- Traces from line_start in forward_dir until limit
 -- yields node positions along the ray
@@ -488,6 +481,7 @@ function FloorScanState:run()
 		if not node_below then break end
 		if not is_passable(node_below) then goto continue end
 		if target_pos.y ~= -1 and not is_supported(target_pos, placeable_node_name) then goto continue end
+		player:set_pos(line_start + vector.new(offset.x, 0, offset.z) / 2 + up)
 		if not try_place_block_from_inventory(self.player, self.playing_sounds, target_pos, self.place_limit) then goto continue end
 		if not self.last_length or cur_len > self.last_length + 0.1 then
 			core.chat_send_player(player_name, max_distance_fmt:format(p_str(target_pos), cur_len, p_str(line_start)))
