@@ -326,10 +326,10 @@ function FloorScanState:deactivate_tool()
 	if self.tool_active then
 		local c = self.player:get_player_control()
 		if c.zoom then
-			self.player:set_fov(10, false, 0.75)
-			core.after(0.75, function() self.player:set_fov(0, false, 0) end)
+			self.player:set_fov(10, false, 0)
+			core.after(0.1, function() self.player:set_fov(0, false, 0) end)
 		else
-			self.player:set_fov(0, false, 1.25)
+			self.player:set_fov(0, false, 0)
 		end
 		self.tool_active = false
 	end
