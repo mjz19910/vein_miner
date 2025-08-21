@@ -451,61 +451,65 @@ function FloorScanState:run()
 	end
 	self.active = true
 
-	-- Positioning and direction
-	local look_dir = player:get_look_dir()
-	local forward_dir = normalize(new_vec(look_dir.x, 0, look_dir.z))
-	local line_start = round(player_pos + down + up / 2)
-
-	-- Player config + controls
-	local player_name = player:get_player_name()
-	local ctrl = player:get_player_control()
-
-	if not self.tool_active and ctrl.zoom then self.use_set_fov = true; end
-
-	-- Sound state
-	local playing_sounds = self.playing_sounds
-
-	-- Inventory scan: find a valid node to place
-	-- so we can ignore support provided by this node
-	local placeable_node_name = nil
-	local inv = player:get_inventory()
-	for i = 1, inv:get_size("main") do
-		local stack = inv:get_stack("main", i)
-		local name = stack:get_name()
-		local def = registered_nodes[name]
-		if not placeable_nodes_to_skip[name] and def and name ~= "air" and not def.groups.falling_node then
-			placeable_node_name = def.name
-			break
-		end
-	end
-
 	local max_nodes = self.nodes_per_tick
 	self.nodes_this_tick = 0
 
-	for offset in raycast(forward_dir) do
-		local target_pos = line_start + offset
-		local cur_len = offset:length()
-		if cur_len > self:get_place_limit() then break end
-		if self.nodes_this_tick >= max_nodes then break end
-		if math.floor(target_pos.y) <= math.floor(player_pos.y) - 1 then target_pos.y = target_pos.y + 1 end
-		local node_below = get_node_or_nil(target_pos)
-		if not node_below then break end
-		if not is_passable(node_below) then goto continue end
-		if target_pos.y ~= -1 and not is_supported(target_pos, placeable_node_name) then goto continue end
-		if not try_place_block_from_inventory(self.player, self.playing_sounds, target_pos, self.place_limit) then goto continue end
-		if not self.last_length or cur_len > self.last_length + 0.1 then
-			core.chat_send_player(player_name, max_distance_fmt:format(p_str(target_pos), cur_len, p_str(line_start)))
-			self.last_length = cur_len
+	while true do
+		-- Positioning and direction
+		local look_dir = player:get_look_dir()
+		local forward_dir = normalize(new_vec(look_dir.x, 0, look_dir.z))
+		local line_start = round(player_pos + down + up / 2)
+
+		-- Player config + controls
+		local player_name = player:get_player_name()
+		local ctrl = player:get_player_control()
+
+		if not self.tool_active and ctrl.zoom then self.use_set_fov = true; end
+
+		-- Sound state
+		local playing_sounds = self.playing_sounds
+
+		-- Inventory scan: find a valid node to place
+		-- so we can ignore support provided by this node
+		local placeable_node_name = nil
+		local inv = player:get_inventory()
+		for i = 1, inv:get_size("main") do
+			local stack = inv:get_stack("main", i)
+			local name = stack:get_name()
+			local def = registered_nodes[name]
+			if not placeable_nodes_to_skip[name] and def and name ~= "air" and not def.groups.falling_node then
+				placeable_node_name = def.name
+				break
+			end
 		end
-		self:on_node_placed(target_pos, cur_len)
-		::continue::
+
+		for offset in raycast(forward_dir) do
+			local target_pos = line_start + offset
+			local cur_len = offset:length()
+			if cur_len > self:get_place_limit() then break end
+			if self.nodes_this_tick >= max_nodes then break end
+			if math.floor(target_pos.y) <= math.floor(player_pos.y) - 1 then target_pos.y = target_pos.y + 1 end
+			local node_below = get_node_or_nil(target_pos)
+			if not node_below then break end
+			if not is_passable(node_below) then goto continue end
+			if target_pos.y ~= -1 and not is_supported(target_pos, placeable_node_name) then goto continue end
+			if not try_place_block_from_inventory(self.player, self.playing_sounds, target_pos, self.place_limit) then goto continue end
+			if not self.last_length or cur_len > self.last_length + 0.1 then
+				core.chat_send_player(player_name, max_distance_fmt:format(p_str(target_pos), cur_len, p_str(line_start)))
+				self.last_length = cur_len
+			end
+			self:on_node_placed(target_pos, cur_len)
+			::continue::
+		end
+
+		-- Handle yaw rotation if few blocks placed
+		self:_maybe_update_yaw(player, yaw, ctrl)
+
+		-- Handle timers + counters
+		self:_update_counters(player_name, yaw)
+
+		if self.nodes_this_tick >= max_nodes then break end
 	end
-
-	-- Handle yaw rotation if few blocks placed
-	self:_maybe_update_yaw(player, yaw, ctrl)
-
-	-- Handle timers + counters
-	self:_update_counters(player_name, yaw)
 end
 
 --- Update counters and timers after a tick
