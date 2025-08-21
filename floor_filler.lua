@@ -467,6 +467,8 @@ function FloorScanState:run()
 	local player_pos = player:get_pos()
 	local line_start = round(player_pos + down + up / 2)
 
+	if self.yaw_update_disabled then self.current_yaw_rad = player:get_yaw() end
+
 	-- Positioning and direction
 	local forward_dir = vec_new(math.cos(self.current_yaw_rad), 0, math.sin(self.current_yaw_rad))
 
