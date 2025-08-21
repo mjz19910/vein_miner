@@ -302,7 +302,7 @@ end
 --- Log the current min/max block distance if needed
 ---@param self FloorScanState
 function FloorScanState:_maybe_log_block_distance()
-	local cur_pos = vec_new(self.log_min, self.log_max, 0):divide(2):round():multiply(2)
+	local cur_pos = vec_new(self.log_min, self.log_max, 0):divide(8):floor()
 
 	-- Only log if the position changed
 	if cur_pos ~= self.last_pos then
