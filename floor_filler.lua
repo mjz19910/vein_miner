@@ -376,7 +376,7 @@ function FloorScanState:iterate_offset(target_pos, line_len, node_below, placeab
 end
 
 ---@param self FloorScanState
-function FloorScanState:min_based_limit() return self.min_dist or 0 end
+function FloorScanState:min_based_limit() return self.min_dist or 1 end
 
 ---@param self FloorScanState
 function FloorScanState:max_based_limit() return self.max_dist or self.place_limit end
