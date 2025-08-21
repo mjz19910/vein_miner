@@ -450,7 +450,23 @@ function FloorScanState:run()
 	end
 	self.active = true
 
+	-- Inventory scan: find a valid node to place
+	-- so we can ignore support provided by this node
+	local placeable_node_name = nil
+	local inv = player:get_inventory()
+	for i = 1, inv:get_size("main") do
+		local stack = inv:get_stack("main", i)
+		local name = stack:get_name()
+		local def = registered_nodes[name]
+		if not placeable_nodes_to_skip[name] and def and name ~= "air" and not def.groups.falling_node then
+			placeable_node_name = def.name
+			break
+		end
+	end
+
 	local max_nodes = self.nodes_per_tick
+	local iters_per_tick = 128
+	local cur_iter_count = 0
 	self.nodes_this_tick = 0
 
 	while true do
@@ -478,20 +494,6 @@ function FloorScanState:run()
 		-- Sound state
 		local playing_sounds = self.playing_sounds
 
-		-- Inventory scan: find a valid node to place
-		-- so we can ignore support provided by this node
-		local placeable_node_name = nil
-		local inv = player:get_inventory()
-		for i = 1, inv:get_size("main") do
-			local stack = inv:get_stack("main", i)
-			local name = stack:get_name()
-			local def = registered_nodes[name]
-			if not placeable_nodes_to_skip[name] and def and name ~= "air" and not def.groups.falling_node then
-				placeable_node_name = def.name
-				break
-			end
-		end
-
 		for offset in raycast(forward_dir) do
 			local target_pos = line_start + offset
 			local cur_len = offset:length()
@@ -518,6 +520,8 @@ function FloorScanState:run()
 		self:_update_counters(player_name, yaw)
 
 		if self.nodes_this_tick >= max_nodes then break end
+		if cur_iter_count > iters_per_tick then break end
+		cur_iter_count = cur_iter_count + 1
 	end
 end
 
