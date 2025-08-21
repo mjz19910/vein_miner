@@ -481,12 +481,8 @@ function FloorScanState:run()
 			break
 		end
 
-		yaw = self.current_yaw_rad
-
 		-- Positioning and direction
-		-- v3f v(std::cos(pitch) * std::cos(yaw), std::sin(pitch), std::cos(pitch) * std::sin(yaw));
-		local look_dir = vec_new(math.cos(0) * math.cos(yaw), 0, math.cos(0) * math.sin(yaw))
-		local forward_dir = normalize(look_dir)
+		local forward_dir = vec_new(math.cos(self.current_yaw_rad), 0, math.sin(self.current_yaw_rad))
 
 		-- Player config + controls
 		local player_name = player:get_player_name()
