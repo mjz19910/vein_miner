@@ -464,64 +464,46 @@ function FloorScanState:run()
 		end
 	end
 
-	local max_nodes = self.nodes_per_tick
-	local iters_per_tick = 32
-	local cur_iter_count = 0
-	self.nodes_this_tick = 0
-
 	local player_pos = player:get_pos()
 	local line_start = round(player_pos + down + up / 2)
 
-	while true do
-		local wielded = player:get_wielded_item():get_name()
-		if wielded ~= "vein_miner:auto_floor" then
-			self:deactivate_tool()
-			if self.active then self:reset() end
-			break
+	-- Positioning and direction
+	local forward_dir = vec_new(math.cos(self.current_yaw_rad), 0, math.sin(self.current_yaw_rad))
+
+	-- Player config + controls
+	local player_name = player:get_player_name()
+	local ctrl = player:get_player_control()
+
+	if not self.tool_active and ctrl.zoom then self.use_set_fov = true; end
+
+	-- Sound state
+	local playing_sounds = self.playing_sounds
+
+	local max_nodes = self.nodes_per_tick
+	for offset in raycast(forward_dir) do
+		local target_pos = line_start + offset
+		local cur_len = offset:length()
+		if cur_len > self:get_place_limit() then break end
+		if self.nodes_this_tick >= max_nodes then break end
+		if math.floor(target_pos.y) <= math.floor(player_pos.y) - 1 then target_pos.y = target_pos.y + 1 end
+		local node_below = get_node_or_nil(target_pos)
+		if not node_below then break end
+		if not is_passable(node_below) then goto continue end
+		if target_pos.y ~= -1 and not is_supported(target_pos, placeable_node_name) then goto continue end
+		if not try_place_block_from_inventory(self.player, self.playing_sounds, target_pos, self.place_limit) then goto continue end
+		if not self.last_length or cur_len > self.last_length + 0.1 then
+			core.chat_send_player(player_name, max_distance_fmt:format(p_str(target_pos), cur_len, p_str(line_start)))
+			self.last_length = cur_len
 		end
-
-		-- Positioning and direction
-		local forward_dir = vec_new(math.cos(self.current_yaw_rad), 0, math.sin(self.current_yaw_rad))
-
-		-- Player config + controls
-		local player_name = player:get_player_name()
-		local ctrl = player:get_player_control()
-
-		if not self.tool_active and ctrl.zoom then self.use_set_fov = true; end
-
-		-- Sound state
-		local playing_sounds = self.playing_sounds
-
-		for offset in raycast(forward_dir) do
-			local target_pos = line_start + offset
-			local cur_len = offset:length()
-			if cur_len > self:get_place_limit() then break end
-			if self.nodes_this_tick >= max_nodes then break end
-			if math.floor(target_pos.y) <= math.floor(player_pos.y) - 1 then target_pos.y = target_pos.y + 1 end
-			local node_below = get_node_or_nil(target_pos)
-			if not node_below then break end
-			if not is_passable(node_below) then goto continue end
-			if target_pos.y ~= -1 and not is_supported(target_pos, placeable_node_name) then goto continue end
-			if not try_place_block_from_inventory(self.player, self.playing_sounds, target_pos, self.place_limit) then goto continue end
-			if not self.last_length or cur_len > self.last_length + 0.1 then
-				core.chat_send_player(player_name, max_distance_fmt:format(p_str(target_pos), cur_len, p_str(line_start)))
-				self.last_length = cur_len
-			end
-			self:on_node_placed(target_pos, cur_len)
-			::continue::
-		end
-
-		-- Handle yaw rotation if few blocks placed
-		self:_maybe_update_yaw(player, ctrl)
-
-		-- Handle timers + counters
-		self:_update_counters(player_name)
-
-		if self.yaw_update_disabled then break end
-		if self.nodes_this_tick > 0 then break end
-		if cur_iter_count > iters_per_tick then break end
-		cur_iter_count = cur_iter_count + 1
+		self:on_node_placed(target_pos, cur_len)
+		::continue::
 	end
+
+	-- Handle yaw rotation if few blocks placed
+	self:_maybe_update_yaw(player, ctrl)
+
+	-- Handle timers + counters
+	self:_update_counters(player_name)
 end
 
 --- Update counters and timers after a tick
@@ -545,6 +527,7 @@ function FloorScanState:_update_counters(player_name)
 	end
 
 	if self.count > 150 then self.undo_last_yaw_step = true; end
+	self.nodes_this_tick = 0
 end
 
 ---@param dist number
