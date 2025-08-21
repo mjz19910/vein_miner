@@ -466,7 +466,7 @@ function FloorScanState:run()
 	end
 
 	local max_nodes = self.nodes_per_tick
-	local iters_per_tick = 512
+	local iters_per_tick = 5000
 	local cur_iter_count = 0
 	self.nodes_this_tick = 0
 
@@ -518,7 +518,7 @@ function FloorScanState:run()
 		-- Handle timers + counters
 		self:_update_counters(player_name)
 
-		if self.nodes_this_tick >= max_nodes then break end
+		if self.nodes_this_tick >= 0 then break end
 		if cur_iter_count > iters_per_tick then break end
 		cur_iter_count = cur_iter_count + 1
 	end
