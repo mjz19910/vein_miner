@@ -240,7 +240,9 @@ function FloorScanState:reset()
 		}
 	end
 
-	self.place_limit = player_config_mgr:get_floor_place_limit(self.player:get_player_name()) or LINE_LENGTH
+	local name = self.player:get_player_name()
+	self.place_limit = player_config_mgr:get_floor_place_limit(name) or LINE_LENGTH
+	self.nodes_per_tick = player_config_mgr:get_blocks_per_tick(name)
 end
 
 ---@param self FloorScanState
