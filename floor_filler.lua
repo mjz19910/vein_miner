@@ -439,6 +439,7 @@ function FloorScanState:run()
 		end
 		self.player_start_yaw = yaw
 		self.current_yaw_rad = yaw + math.pi / 2
+		self.player_pos = player:get_pos()
 		self.line_start = round(player:get_pos() + down + up / 2)
 	end
 
@@ -465,6 +466,7 @@ function FloorScanState:run()
 		self.current_yaw_rad = player:get_look_horizontal() + math.pi / 2
 	end
 	local line_start = self.line_start
+	local player_pos = self.player_pos
 
 	-- Positioning and direction
 	local yaw = self.current_yaw_rad
@@ -485,7 +487,7 @@ function FloorScanState:run()
 		local cur_len = offset:length()
 		if cur_len > self:get_place_limit() then break end
 		if self.nodes_this_tick >= max_nodes then break end
-		if math.floor(target_pos.y) < math.floor(line_start.y) then target_pos.y = target_pos.y + 1 end
+		if math.floor(target_pos.y) <= math.floor(player_pos.y) - 1 then target_pos.y = target_pos.y + 1 end
 		local node_below = get_node_or_nil(target_pos)
 		if not node_below then break end
 		if not is_passable(node_below) then goto continue end
