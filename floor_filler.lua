@@ -518,7 +518,7 @@ function FloorScanState:run()
 		-- Handle timers + counters
 		self:_update_counters(player_name)
 
-		if self.nodes_this_tick >= 0 then break end
+		if self.nodes_this_tick > 0 then break end
 		if cur_iter_count > iters_per_tick then break end
 		cur_iter_count = cur_iter_count + 1
 	end
