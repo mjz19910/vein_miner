@@ -437,11 +437,10 @@ function FloorScanState:run()
 
 	-- Get player info
 	local player = self.player
-	local yaw = player:get_look_horizontal()
-	local player_pos = player:get_pos()
 
 	-- Initialize player yaw if not already set
 	if self.player_start_yaw == nil then
+		local yaw = player:get_look_horizontal()
 		-- protect against NaN
 		if yaw ~= yaw then
 			player:set_look_horizontal(0)
@@ -455,6 +454,16 @@ function FloorScanState:run()
 	self.nodes_this_tick = 0
 
 	while true do
+		local wielded = player:get_wielded_item():get_name()
+		if wielded ~= "vein_miner:auto_floor" then
+			self:deactivate_tool()
+			if self.active then self:reset() end
+			break
+		end
+
+		local yaw = player:get_look_horizontal()
+		local player_pos = player:get_pos()
+
 		-- Positioning and direction
 		local look_dir = player:get_look_dir()
 		local forward_dir = normalize(new_vec(look_dir.x, 0, look_dir.z))
