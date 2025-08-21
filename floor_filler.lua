@@ -427,28 +427,27 @@ local max_distance_fmt = "node placed at %s with new max distance %.1f from %s"
 
 ---@param self FloorScanState
 function FloorScanState:run()
+	local player = self.player
+
 	-- Skip if player is not holding the auto-floor tool
-	local wielded = self.player:get_wielded_item():get_name()
+	local wielded = player:get_wielded_item():get_name()
 	if wielded ~= "vein_miner:auto_floor" then
 		self:deactivate_tool()
 		if self.active then self:reset() end
 		return
 	end
 
-	-- Get player info
-	local player = self.player
-	local yaw = player:get_look_horizontal()
-	self.current_yaw_rad = yaw
-
-	-- Initialize player yaw if not already set
 	if self.player_start_yaw == nil then
+		local yaw = player:get_look_horizontal()
 		-- protect against NaN
 		if yaw ~= yaw then
 			player:set_look_horizontal(0)
 			yaw = 0
 		end
 		self.player_start_yaw = yaw
+		self.current_yaw_rad = yaw
 	end
+
 	self.active = true
 
 	-- Inventory scan: find a valid node to place
