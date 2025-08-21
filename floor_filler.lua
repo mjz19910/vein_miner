@@ -441,6 +441,8 @@ function FloorScanState:run()
 		self.current_yaw_rad = yaw + math.pi / 2
 		self.player_pos = player:get_pos()
 		self.line_start = round(player:get_pos() + down + up / 2)
+		local ctrl = player:get_player_control()
+		if not self.tool_active and ctrl.zoom then self.use_set_fov = true; end
 	end
 
 	self.active = true
@@ -476,8 +478,6 @@ function FloorScanState:run()
 	-- Player config + controls
 	local player_name = player:get_player_name()
 	local ctrl = player:get_player_control()
-
-	if not self.tool_active and ctrl.zoom then self.use_set_fov = true; end
 
 	-- Sound state
 	local playing_sounds = self.playing_sounds
