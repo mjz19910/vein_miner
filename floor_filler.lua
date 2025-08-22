@@ -15,6 +15,7 @@ local ipairs = ipairs
 
 ---@type VectorModule
 local vector = vector
+local table = table
 
 local vec_new = vector.new
 local normalize = vector.normalize
@@ -22,7 +23,7 @@ local round = vector.round
 
 local ceil = math.ceil
 local floor = math.floor
-
+local insert_all = table.insert_all
 ---@type CoreModApi
 local core = core
 
@@ -71,10 +72,15 @@ local function try_place_block_from_inventory(player, playing_sounds, target_pos
 			local cur_node = core.get_node(target_pos)
 			if cur_node and cur_node.name ~= "air" then
 				if cur_node.name == "ignore" then return false end
+				if cur_node.name == "default:snow" then
+					core.node_dig(target_pos, cur_node, player)
+					goto after_dig
+				end
 				local def2 = registered_nodes[cur_node.name]
 				if def2.liquidtype == "source" then return false end
 				if def2.walkable then return false end
 				core.node_dig(target_pos, cur_node, player)
+				::after_dig::
 			end
 			set_node(target_pos, {
 				name = name,
@@ -573,6 +579,11 @@ local function safe_set_player_pos(player, target_pos)
 	return target_pos
 end
 
+local dig_anyway_set = {}
+local dig_anyway_list = {"default:snow"}
+insert_all(dig_anyway_list, vein_miner.CFG.mining_groups.tree_trunk)
+for _, v in ipairs(dig_anyway_list) do dig_anyway_set[v] = true end
+
 function FloorScanState:main_loop(player, placeable_node_name)
 	local ctrl = player:get_player_control()
 
@@ -629,11 +640,11 @@ function FloorScanState:main_loop(player, placeable_node_name)
 		if cur_len > self:get_place_limit() then break end
 		if self.nodes_this_loop >= max_nodes then break end
 		if math.floor(target_pos.y) <= math.floor(player_pos.y) - 1 then target_pos.y = target_pos.y + 1 end
-		local node_below = get_node_or_nil(target_pos)
-		if not node_below then break end
-		if not is_passable(node_below) then goto next end
+		local cur = get_node_or_nil(target_pos)
+		if not cur then break end
+		if not is_passable(cur) and not dig_anyway_set[cur.name] then goto next end
 		if target_pos.y ~= -1 and not is_supported(target_pos, placeable_node_name) then goto next end
-		if node_below.name == "ignore" then goto next end
+		if cur.name == "ignore" then goto next end
 		last_place_pos = line_start + vector.new(offset.x, 0, offset.z) + up / 2
 		if not try_place_block_from_inventory(player, playing_sounds, target_pos, place_limit) then goto next end
 		if not self.last_length or cur_len > self.last_length + 0.1 then
