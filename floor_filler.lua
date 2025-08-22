@@ -592,7 +592,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 		local line_y = self.line_start.y
 		local player_pos = vector.round(player:get_pos())
 		self.player_pos = player_pos
-		self.line_start = vector.round(player_pos + down)
+		self.line_start = player_pos + down
 		self.line_start.y = line_y
 		if not self.skip_after_yaw then
 			local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit()) * 1.75
