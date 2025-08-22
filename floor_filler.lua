@@ -118,6 +118,10 @@ local normal_nodes = {
 	["wielded_light:12"] = true,
 	["default:cobble"] = true,
 	["default:stone"] = true,
+	["default:leaves"] = true,
+	["default:apple"] = true,
+	"",
+	[""] = true,
 }
 
 ---@param pos Vector
