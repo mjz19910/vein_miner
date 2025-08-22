@@ -566,13 +566,14 @@ function FloorScanState:main_loop(player, placeable_node_name)
 			local curr_sector = math.floor(curr / TAU)
 
 			if prev_sector ~= curr_sector then
-				core.log("action", ("full rotation %d"):format(curr_sector))
 				self:_reset_range_vars()
 				if curr_sector == 0 then
 					core.log("action", "two full rotations, moving down")
 					core.log("action", "avg " .. self.nodes_per_tick_avg)
 					self.player_pos = safe_set_player_pos(player, vector.offset(self.player_pos, 0, -1, 0))
 					self.line_start = vector.offset(self.player_pos, 0, -1, 0)
+				else
+					core.log("action", ("full rotation %d"):format(curr_sector))
 				end
 			end
 		else
