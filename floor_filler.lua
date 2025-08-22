@@ -573,8 +573,7 @@ local function safe_set_player_pos(player, target_pos)
 		return target_pos
 	end
 
-	-- Expand search radius out to 7 blocks
-	for r = 1, 7 do
+	for r = 1, 32 do
 		for _, d in ipairs(dirs) do
 			local candidate = target_pos + d * r
 			if is_standable(candidate) then
