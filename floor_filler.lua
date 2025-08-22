@@ -336,7 +336,7 @@ function FloorScanState:deactivate_tool()
 	if self.all_blocks_placed > 0 then self.all_blocks_placed = 0 end
 	if self.tool_active then
 		self.player:set_fov(0, false, 0)
-		if self.original_player_pos then self.player:set_pos(self.original_player_pos) end
+		-- if self.original_player_pos then self.player:set_pos(self.original_player_pos) end
 		self.tool_active = false
 	end
 end
@@ -438,7 +438,6 @@ function FloorScanState:run()
 	local wielded = player:get_wielded_item():get_name()
 	if wielded ~= "vein_miner:auto_floor" then
 		self:deactivate_tool()
-		if self.original_player_pos then self.player:set_pos(self.original_player_pos) end
 		if self.active then
 			self:reset()
 			self.skip_after_yaw = false
@@ -459,19 +458,15 @@ function FloorScanState:run()
 		self.line_start = round(player:get_pos() + down + up / 2)
 		self.original_player_pos = self.player_pos
 		local ctrl = player:get_player_control()
-		if not self.tool_active and ctrl.zoom then self.use_set_fov = true; end
+		if not self.tool_active and ctrl.zoom then self.use_set_fov = true end
 		self.is_mapgen_disabled = self.player:get_mapgen_disabled()
 		if not self.is_mapgen_disabled then
 			player:set_mapgen_disabled(true)
 			self.did_disable_mapgen = true
 		end
 	end
-
 	if self.player_pos == nil then self.player_pos = player:get_pos() end
-
 	if self.original_player_pos == nil then self.original_player_pos = self.player_pos end
-
-	self.active = true
 
 	-- Inventory scan: find a valid node to place
 	-- so we can ignore support provided by this node
@@ -487,6 +482,7 @@ function FloorScanState:run()
 		end
 	end
 
+	self.active = true
 	for i = 1, 75 do
 		if self.main_break_on_next then
 			self.main_break_on_next = false
