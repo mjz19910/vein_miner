@@ -106,11 +106,13 @@ core.register_chatcommand("mine", {
 				val = math.floor(val)
 				if val > maxy then return false, "miny cannot be greater than maxy (" .. maxy .. ")" end
 				config.miny = val
+				player_config_mgr:save(name)
 				return true, "Minimum mining Y set to y=" .. val
 			elseif sub == "max" and val then
 				val = math.floor(val)
 				if val < miny then return false, "maxy cannot be less than miny (" .. miny .. ")" end
 				config.maxy = val
+				player_config_mgr:save(name)
 				return true, "Maximum mining Y set to y=" .. val
 			elseif sub == nil then
 				local view_y = player:get_pos().y + 1.6
@@ -118,6 +120,7 @@ core.register_chatcommand("mine", {
 				local new_maxy = math.floor((view_y + 48) / 8) * 8
 				config.miny = new_miny
 				config.maxy = new_maxy
+				player_config_mgr:save(name)
 				return true, "Mining range set from view: " .. show_layer_bounds(new_miny, new_maxy)
 			else
 				return false, "Usage: /mine set [min|max <y>]"
@@ -125,13 +128,16 @@ core.register_chatcommand("mine", {
 		elseif cmd == "up" then
 			if sub == "min" then
 				config.miny = config.miny + 8
+				player_config_mgr:save(name)
 				return true, "Minimum mining Y increased to y=" .. config.miny
 			elseif sub == "max" then
 				config.maxy = config.maxy + 8
+				player_config_mgr:save(name)
 				return true, "Maximum mining Y increased to y=" .. config.maxy
 			elseif sub == "both" or sub == nil then
 				config.miny = config.miny + 8
 				config.maxy = config.maxy + 8
+				player_config_mgr:save(name)
 				return true, "Mining range increased: " .. show_layer_bounds(config.miny, config.maxy)
 			else
 				return false, "Usage: /mine up [min|max|both]"
@@ -140,15 +146,18 @@ core.register_chatcommand("mine", {
 			if sub == "min" then
 				if config.miny - 8 > config.maxy then return false, "miny cannot exceed maxy" end
 				config.miny = config.miny - 8
+				player_config_mgr:save(name)
 				return true, "Minimum mining Y decreased to y=" .. config.miny
 			elseif sub == "max" then
 				if config.maxy - 8 < config.miny then return false, "maxy cannot be less than miny" end
 				config.maxy = config.maxy - 8
+				player_config_mgr:save(name)
 				return true, "Maximum mining Y decreased to y=" .. config.maxy
 			elseif sub == "both" or sub == nil then
 				if config.miny - 8 > config.maxy - 8 then return false, "Range collapse: miny would exceed maxy" end
 				config.miny = config.miny - 8
 				config.maxy = config.maxy - 8
+				player_config_mgr:save(name)
 				return true, "Mining range decreased: " .. show_layer_bounds(config.miny, config.maxy)
 			else
 				return false, "Usage: /mine down [min|max|both]"
