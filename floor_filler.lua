@@ -439,7 +439,10 @@ function FloorScanState:run()
 	if wielded ~= "vein_miner:auto_floor" then
 		self:deactivate_tool()
 		if self.original_player_pos then self.player:set_pos(self.original_player_pos) end
-		if self.active then self:reset() end
+		if self.active then
+			self:reset()
+			self.skip_after_yaw = false
+		end
 		return
 	end
 
@@ -508,16 +511,23 @@ local function get_yaw_speed_for_distance(dist)
 end
 
 function FloorScanState:main_loop(player, placeable_node_name)
+	local ctrl = player:get_player_control()
+
 	if self.yaw_update_disabled then
 		local line_y = self.line_start.y
 		local player_pos = player:get_pos()
 		self.player_pos = player_pos
 		self.line_start = round(player_pos + down + up / 2)
 		self.line_start.y = line_y
-		local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit()) * 1.75
-		self.current_yaw_rad = player:get_look_horizontal() + math.pi / 2 + yaw_speed
-		player:set_look_horizontal(player:get_look_horizontal() + yaw_speed)
+		if not self.skip_after_yaw then
+			local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit()) * 1.75
+			self.current_yaw_rad = player:get_look_horizontal() + math.pi / 2 + yaw_speed
+			player:set_look_horizontal(player:get_look_horizontal() + yaw_speed)
+		else
+			self.current_yaw_rad = player:get_look_horizontal() + math.pi / 2
+		end
 		self.main_break_on_next = true
+		if ctrl.zoom then self.skip_after_yaw = true end
 	end
 
 	local line_start = self.line_start
@@ -529,7 +539,6 @@ function FloorScanState:main_loop(player, placeable_node_name)
 
 	-- Player config + controls
 	local player_name = player:get_player_name()
-	local ctrl = player:get_player_control()
 
 	self.nodes_this_loop = 0
 	local playing_sounds = self.playing_sounds
