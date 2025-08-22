@@ -126,7 +126,7 @@ local function is_supported(pos, invalid_support_name)
 	-- Ensure all immediate neighbors exist
 	for _, offset in ipairs(neighbor_offsets) do
 		local node = get_node_or_nil(pos + offset)
-		if not node then return false end
+		if not node or node.name == "ignore" then return false end
 	end
 
 	local check_pos = offset(pos, 0, 1, 0)
