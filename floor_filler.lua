@@ -496,12 +496,7 @@ function FloorScanState:run()
 		if self.nodes_this_tick > self.nodes_per_tick then break end
 	end
 	self.nodes_per_tick_avg = self.nodes_per_tick_avg / 2 + self.nodes_this_tick / 2
-	if self.nodes_this_tick > 0 then
-		self.nodes_this_tick = 0
-		self.count_since_nonzero = 0
-	else
-		self.count_since_nonzero = self.count_since_nonzero + 1
-	end
+	if self.nodes_this_tick > 0 then self.nodes_this_tick = 0 end
 end
 
 ---@param dist number
@@ -572,7 +567,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 	end
 	if self.nodes_this_loop > 0 then self.nodes_this_tick = self.nodes_this_tick + self.nodes_this_loop end
 	if last_place_pos ~= nil and not self.yaw_update_disabled then player:set_pos(last_place_pos) end
-	if last_place_pos ~= nil and self.yaw_update_disabled and self.count_since_nonzero > 150 then player:set_pos(last_place_pos) end
+	if last_place_pos ~= nil and self.yaw_update_disabled and self.nodes_per_tick_avg < 0.01 then player:set_pos(last_place_pos) end
 	-- Handle yaw rotation if few blocks placed
 	self:_maybe_update_yaw(player, ctrl)
 	-- Handle timers + counters
