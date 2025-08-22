@@ -63,6 +63,7 @@ function Region:grow_clone(margin) return self:clone():grow(margin) end
 function Region:shrink(margin)
 	self.min = vec_add(self.min, margin)
 	self.max = vec_sub(self.max, margin)
+	return self
 end
 
 ---@param self Region
@@ -70,6 +71,7 @@ end
 function Region:grow(margin)
 	self.min = vec_sub(self.min, margin)
 	self.max = vec_add(self.max, margin)
+	return self
 end
 
 ---@param a Region

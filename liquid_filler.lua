@@ -35,11 +35,12 @@ local cid = core.get_content_id
 -- vein_miner tables
 ---@type VeinMinerGlobal
 local vein_miner = vein_miner
+---@type AABB
 local aabb = vein_miner.aabb
 local helpers = vein_miner.h
 
 -- vein_miner table functions
-local new_region = aabb.region
+local new_region = aabb.new_region
 local log_action = helpers.log_action
 
 ---@class LiquidFiller
