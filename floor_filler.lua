@@ -616,7 +616,7 @@ function FloorScanState:_maybe_update_yaw(player, ctrl)
 		player:set_fov(10, false, 0)
 		self.tool_active = true
 	end
-	local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit()) * 2
+	local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit()) * 1.5
 	if ctrl.sneak then yaw_speed = -yaw_speed end
 
 	-- -- detect crossing 0° in either direction
