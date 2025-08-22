@@ -496,7 +496,7 @@ function FloorScanState:run()
 		if self.nodes_this_tick > self.nodes_per_tick then break end
 	end
 
-	self.nodes_last_tick = self.nodes_last_tick / 2 + self.nodes_this_tick * 2
+	self.nodes_last_tick = self.nodes_last_tick / 1.1 + self.nodes_this_tick * 8
 	if self.nodes_this_tick > 0 then self.nodes_this_tick = 0 end
 end
 
