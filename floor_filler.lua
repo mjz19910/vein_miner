@@ -109,8 +109,18 @@ end
 
 local offset = vector.offset
 
-local falling_blocks_to_support = {}
-local normal_nodes = {}
+local falling_blocks_to_support = {
+	["default:gravel"] = true,
+	["default:silver_sand"] = true,
+}
+local falling_blocks_to_support_new = {}
+local normal_nodes = {
+	air = true,
+	["default:stone"] = true,
+	["default:cobble"] = true,
+	["wielded_light:12"] = true,
+}
+local normal_nodes_new = {}
 
 ---@param pos Vector
 ---@param invalid_support_name string
@@ -128,11 +138,13 @@ local function is_supported(pos, invalid_support_name)
 		local def = registered_nodes[node.name]
 		if def and def.groups and def.groups.falling_node then
 			falling_blocks_to_support[node.name] = true
-			core.log("action", core.serialize(falling_blocks_to_support))
+			falling_blocks_to_support_new[node.name] = true
+			core.log("action", core.serialize(falling_blocks_to_support_new))
 			return true
 		else
 			normal_nodes[node.name] = true
-			core.log("action", core.serialize(normal_nodes))
+			normal_nodes_new[node.name] = true
+			core.log("action", core.serialize(normal_nodes_new))
 		end
 	end
 
