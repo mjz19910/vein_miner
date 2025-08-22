@@ -579,9 +579,9 @@ function FloorScanState:main_loop(player, placeable_node_name)
 	if self.yaw_update_disabled then
 		if ctrl.zoom then self.skip_after_yaw = true end
 		local line_y = self.line_start.y
-		local player_pos = player:get_pos()
+		local player_pos = vector.round(player:get_pos())
 		self.player_pos = player_pos
-		self.line_start = round(player_pos + down + up / 2)
+		self.line_start = vector.round(player_pos + down)
 		self.line_start.y = line_y
 		if not self.skip_after_yaw then
 			local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit()) * 1.75
@@ -599,7 +599,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 				if curr_sector == 0 and self.nodes_per_tick_avg < 1 then
 					core.log("action", "2 full rotations, moving down")
 					self.player_pos = safe_set_player_pos(player, vector.offset(self.player_pos, 0, -1, 0))
-					self.line_start = round(self.player_pos + down + up / 2)
+					self.line_start = vector.round(self.player_pos + down)
 				end
 			end
 		else
