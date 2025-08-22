@@ -260,6 +260,7 @@ function FloorScanState:reset(first_init)
 		self.player:set_mapgen_disabled(false)
 		self.did_disable_mapgen = false
 	end
+	self.original_player_pos = nil
 end
 
 ---@param self FloorScanState
@@ -336,7 +337,6 @@ function FloorScanState:deactivate_tool()
 		self.player:set_fov(0, false, 0)
 		self.player:set_pos(self.original_player_pos)
 		self.tool_active = false
-		self.original_player_pos = nil
 	end
 end
 
@@ -437,6 +437,9 @@ function FloorScanState:run()
 	local wielded = player:get_wielded_item():get_name()
 	if wielded ~= "vein_miner:auto_floor" then
 		self:deactivate_tool()
+		if self.original_player_pos then
+			self.player:set_pos(self.original_player_pos)
+		end
 		if self.active then self:reset() end
 		return
 	end
@@ -482,7 +485,7 @@ function FloorScanState:run()
 		end
 	end
 
-	for i = 1, 10 do
+	for i = 1, 500 do
 		if self.main_break_on_next then
 			self.main_break_on_next = false
 			break
