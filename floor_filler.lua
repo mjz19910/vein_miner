@@ -545,8 +545,7 @@ end
 ---@return boolean success
 local function safe_set_player_pos(player, target_pos)
 	if core.get_node(target_pos).name == "ignore" then
-		-- too far, into unloaded area, move player back up
-		return vector.offset(target_pos, 0, 1, 0)
+		return target_pos
 	end
 
 	-- directions to search: N, S, E, W
