@@ -348,7 +348,7 @@ local log_action_fmt = "count %d pos %s deg %.1f"
 ---@param dist number
 function FloorScanState:on_node_placed(pos, dist)
 	self.last_place_yaw_radians = self.scan_radians + self.player_start_yaw
-	if self.nodes_this_tick == 0 and self.blocks_placed == 0 then
+	if self.nodes_this_loop == 0 and self.blocks_placed == 0 then
 		local a, b = self.count, self.log_range
 		if a >= b.min then
 			local c, d = core.pos_to_string(pos), self:get_angle_deg()
@@ -362,7 +362,7 @@ function FloorScanState:on_node_placed(pos, dist)
 	self:_update_min_dist(dist)
 	self:_update_max_dist(dist)
 	if self.show_log then self:_maybe_log_block_distance() end
-	self.nodes_this_tick = self.nodes_this_tick + 1
+	self.nodes_this_loop = self.nodes_this_loop + 1
 	self.blocks_placed = self.blocks_placed + 1
 end
 
@@ -437,9 +437,7 @@ function FloorScanState:run()
 	local wielded = player:get_wielded_item():get_name()
 	if wielded ~= "vein_miner:auto_floor" then
 		self:deactivate_tool()
-		if self.original_player_pos then
-			self.player:set_pos(self.original_player_pos)
-		end
+		if self.original_player_pos then self.player:set_pos(self.original_player_pos) end
 		if self.active then self:reset() end
 		return
 	end
@@ -491,11 +489,13 @@ function FloorScanState:run()
 			break
 		end
 		self:main_loop(player, placeable_node_name)
+		if self.nodes_this_tick > self.nodes_per_tick then break end
 	end
+
+	if self.nodes_this_tick > 0 then self.nodes_this_tick = 0 end
 end
 
 function FloorScanState:main_loop(player, placeable_node_name)
-
 	if self.yaw_update_disabled then
 		local line_y = self.line_start.y
 		self.player_pos = player:get_pos()
@@ -516,16 +516,15 @@ function FloorScanState:main_loop(player, placeable_node_name)
 	local player_name = player:get_player_name()
 	local ctrl = player:get_player_control()
 
-	-- Sound state
 	local playing_sounds = self.playing_sounds
-
-	local max_nodes = self.nodes_per_tick
+	local max_nodes = self.nodes_per_tick - self.nodes_this_tick
+	local place_limit = self.place_limit
 	local last_place_pos = nil
 	for offset in raycast(forward_dir) do
 		local target_pos = line_start + offset
 		local cur_len = offset:length()
 		if cur_len > self:get_place_limit() then break end
-		if self.nodes_this_tick >= max_nodes then break end
+		if self.nodes_this_loop >= max_nodes then break end
 		if math.floor(target_pos.y) <= math.floor(player_pos.y) - 1 then target_pos.y = target_pos.y + 1 end
 		local node_below = get_node_or_nil(target_pos)
 		if not node_below then break end
@@ -533,7 +532,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 		if target_pos.y ~= -1 and not is_supported(target_pos, placeable_node_name) then goto next end
 		if node_below.name == "ignore" then goto next end
 		last_place_pos = line_start + vector.new(offset.x, 0, offset.z) + up / 2
-		if not try_place_block_from_inventory(self.player, self.playing_sounds, target_pos, self.place_limit) then goto next end
+		if not try_place_block_from_inventory(player, playing_sounds, target_pos, place_limit) then goto next end
 		if not self.last_length or cur_len > self.last_length + 0.1 then
 			core.chat_send_player(player_name, max_distance_fmt:format(p_str(target_pos), cur_len, p_str(line_start)))
 			self.last_length = cur_len
@@ -542,12 +541,13 @@ function FloorScanState:main_loop(player, placeable_node_name)
 		self.break_on_next = false
 		::next::
 	end
-
+	if self.nodes_this_loop > 0 then
+		self.nodes_this_tick = self.nodes_this_tick + self.nodes_this_loop
+		self.nodes_this_loop = 0
+	end
 	if last_place_pos ~= nil then player:set_pos(last_place_pos) end
-
 	-- Handle yaw rotation if few blocks placed
 	self:_maybe_update_yaw(player, ctrl)
-
 	-- Handle timers + counters
 	self:_update_counters(player_name)
 	if self.use_set_fov and not self.yaw_update_disabled then player:set_look_horizontal(self.current_yaw_rad - math.pi / 2) end
@@ -558,9 +558,8 @@ end
 ---@param player_name string
 function FloorScanState:_update_counters(player_name)
 	-- no blocks placed: increment timer
-	if self.nodes_this_tick > 0 then
+	if self.blocks_placed > 0 then
 		-- Reset count
-		self.nodes_this_tick = 0
 		self.count = 0
 
 		-- Update total blocks placed
@@ -611,7 +610,7 @@ end
 ---@param player Player
 ---@param ctrl table Player control state
 function FloorScanState:_maybe_update_yaw(player, ctrl)
-	if self.yaw_update_disabled or self.nodes_this_tick ~= 0 then return end
+	if self.yaw_update_disabled or self.nodes_this_loop ~= 0 then return end
 	if not self.tool_active and self.use_set_fov then
 		player:set_fov(10, false, 0)
 		self.tool_active = true
