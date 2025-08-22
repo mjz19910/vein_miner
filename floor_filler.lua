@@ -557,6 +557,8 @@ local function is_standable(pos)
 	local node_head = core.get_node_or_nil(pos + vector.new(0, 1, 0))
 	if not node_feet or not node_head then return false end
 
+	if node_feet.name == "ignore" or node_head.name == "ignore" then return false end
+
 	local def_feet = core.registered_nodes[node_feet.name]
 	local def_head = core.registered_nodes[node_head.name]
 	if not def_feet or not def_head then return false end
@@ -574,7 +576,7 @@ local function safe_set_player_pos(player, target_pos)
 	-- Check target position first
 	if is_standable(target_pos) then
 		player:set_pos(target_pos)
-		return target_pos
+		return target_pos, true
 	end
 
 	for r = 1, 32 do
@@ -582,12 +584,12 @@ local function safe_set_player_pos(player, target_pos)
 			local candidate = target_pos + d * r
 			if is_standable(candidate) then
 				player:set_pos(candidate)
-				return candidate
+				return candidate, true
 			end
 		end
 	end
 
-	return target_pos
+	return target_pos, false
 end
 
 function FloorScanState:main_loop(player, placeable_node_name)
@@ -675,7 +677,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 	end
 	if self.nodes_this_loop > 0 then self.nodes_this_tick = self.nodes_this_tick + self.nodes_this_loop end
 	if last_place_pos ~= nil and not self.yaw_update_disabled then safe_set_player_pos(player, last_place_pos) end
-	if last_place_pos ~= nil and self.yaw_update_disabled and self.nodes_per_tick_avg == 0 then safe_set_player_pos(player, last_place_pos) end
+	if last_place_pos ~= nil and self.yaw_update_disabled and self.nodes_per_tick_avg < 3 then safe_set_player_pos(player, last_place_pos) end
 	-- Handle yaw rotation if few blocks placed
 	self:_maybe_update_yaw(player, ctrl)
 	-- Handle timers + counters
