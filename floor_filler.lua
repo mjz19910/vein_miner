@@ -1,6 +1,6 @@
 local TARGET_RADIANS = math.rad(360) * 4
 local LINE_LENGTH = 48 * 8
-local DISTANCE_INCREASE = 1 * 8
+local DISTANCE_INCREASE = 3 * 8
 
 local assert = assert
 
