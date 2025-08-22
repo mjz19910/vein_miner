@@ -517,7 +517,7 @@ function FloorScanState:run()
 		self.nodes_per_tick_avg = self.nodes_per_tick_avg / 2 + self.nodes_this_tick / 2
 		self.nodes_this_tick = 0
 	else
-		self.nodes_per_tick_avg = self.nodes_per_tick_avg / 1.125
+		self.nodes_per_tick_avg = self.nodes_per_tick_avg / 1.25
 	end
 end
 
