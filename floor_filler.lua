@@ -544,10 +544,6 @@ end
 ---@param target_pos Vector
 ---@return boolean success
 local function safe_set_player_pos(player, target_pos)
-	if core.get_node(target_pos).name == "ignore" then
-		return target_pos
-	end
-
 	-- directions to search: N, S, E, W
 	local dirs = {vector.new(1, 0, 0), vector.new(-1, 0, 0), vector.new(0, 0, 1), vector.new(0, 0, -1)}
 
