@@ -599,7 +599,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 			self.scan_radians = self.scan_radians + yaw_speed
 			self.current_yaw_rad = self.scan_radians + self.player_start_yaw + math.pi / 2
 			player:set_look_horizontal(self.scan_radians + self.player_start_yaw + yaw_speed)
-			if self.nodes_per_tick_avg == 0 then
+			if self:get_angle_rad() > TAU and self.nodes_per_tick_avg == 0 then
 				self:_reset_range_vars()
 				core.log("action", "no nodes placed, moving down")
 				self.player_pos = safe_set_player_pos(player, vector.offset(self.player_pos, 0, -1, 0))
