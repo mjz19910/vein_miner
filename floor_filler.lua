@@ -538,6 +538,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 					core.log("action", "crossed (after yaw disabled) 0° twice, moving down")
 					self.player_pos.y = self.player_pos.y - 1
 					player:set_pos(self.player_pos)
+					core.log("action", "avg " .. self.nodes_per_tick_avg)
 				end
 			end
 		else
