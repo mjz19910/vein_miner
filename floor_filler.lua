@@ -645,8 +645,8 @@ function FloorScanState:main_loop(player, placeable_node_name)
 		::next::
 	end
 	if self.nodes_this_loop > 0 then self.nodes_this_tick = self.nodes_this_tick + self.nodes_this_loop end
-	if last_place_pos ~= nil and not self.yaw_update_disabled then player:set_pos(last_place_pos) end
-	if last_place_pos ~= nil and self.yaw_update_disabled and self.nodes_per_tick_avg == 0 then player:set_pos(last_place_pos) end
+	if last_place_pos ~= nil and not self.yaw_update_disabled then safe_set_player_pos(player, last_place_pos) end
+	if last_place_pos ~= nil and self.yaw_update_disabled and self.nodes_per_tick_avg == 0 then safe_set_player_pos(player, last_place_pos) end
 	-- Handle yaw rotation if few blocks placed
 	self:_maybe_update_yaw(player, ctrl)
 	-- Handle timers + counters
