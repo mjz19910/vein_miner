@@ -1,3 +1,7 @@
+local math = math
+
+local TAU = 2 * math.pi
+
 local TARGET_RADIANS = math.rad(360) * 4
 local LINE_LENGTH = 48 * 8
 local DISTANCE_INCREASE = 3 * 8
@@ -9,7 +13,6 @@ local setmetatable = setmetatable
 -- localize table iterators
 local ipairs = ipairs
 
-local math = math
 ---@type VectorModule
 local vector = vector
 
@@ -455,13 +458,14 @@ function FloorScanState:run()
 		self.player_pos = player:get_pos()
 		self.line_start = round(player:get_pos() + down + up / 2)
 		local ctrl = player:get_player_control()
-		if not self.tool_active and ctrl.zoom then self.use_set_fov = true end
+		if not self.tool_active and ctrl.zoom then self.use_set_fov = true; end
 		self.is_mapgen_disabled = self.player:get_mapgen_disabled()
 		if not self.is_mapgen_disabled then
 			player:set_mapgen_disabled(true)
 			self.did_disable_mapgen = true
 		end
 	end
+
 	if self.player_pos == nil then self.player_pos = player:get_pos() end
 
 	-- Inventory scan: find a valid node to place
@@ -515,6 +519,23 @@ function FloorScanState:main_loop(player, placeable_node_name)
 			local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit()) * 1.75
 			self.current_yaw_rad = player:get_look_horizontal() + math.pi / 2 + yaw_speed
 			player:set_look_horizontal(player:get_look_horizontal() + yaw_speed)
+			local prev = self:get_angle_rad() % TAU
+			local curr = (self:get_angle_rad() + yaw_speed) % TAU
+			local step = TAU / 4 -- 90° in radians
+
+			-- detect crossing any multiple of 90°
+			local prev_sector = math.floor(prev / step)
+			local curr_sector = math.floor(curr / step)
+
+			if prev_sector ~= curr_sector then
+				-- which boundary did we cross?
+				local boundary = curr_sector * step
+				core.log("action", ("crossed %.1f°"):format(math.deg(boundary)))
+				self:_reset_range_vars()
+				if curr_sector == 0 then
+					self.line_start.y = self.line_start.y - 1
+				end
+			end
 		else
 			self.current_yaw_rad = player:get_look_horizontal() + math.pi / 2
 		end
@@ -559,7 +580,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 	end
 	if self.nodes_this_loop > 0 then self.nodes_this_tick = self.nodes_this_tick + self.nodes_this_loop end
 	if last_place_pos ~= nil and not self.yaw_update_disabled then player:set_pos(last_place_pos) end
-	if last_place_pos ~= nil and self.yaw_update_disabled and self.nodes_per_tick_avg * 100 < 0.01 then player:set_pos(last_place_pos) end
+	if last_place_pos ~= nil and self.yaw_update_disabled and self.nodes_per_tick_avg == 0 then player:set_pos(last_place_pos) end
 	-- Handle yaw rotation if few blocks placed
 	self:_maybe_update_yaw(player, ctrl)
 	-- Handle timers + counters
@@ -593,8 +614,6 @@ function FloorScanState:get_angle_rad() return self.scan_radians + self.player_s
 
 ---@param self FloorScanState
 function FloorScanState:get_angle_deg() return rad_to_deg_wrap360(self.scan_radians + self.player_start_yaw) end
-
-local TAU = 2 * math.pi
 
 function FloorScanState:_reset_range_vars()
 	if self.min_dist and self.max_dist then
