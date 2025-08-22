@@ -483,9 +483,8 @@ function FloorScanState:run()
 	end
 
 	for i = 1, 10 do
-		if self.break_on_next then
-			self:deactivate_tool()
-			self.break_on_next = false
+		if self.main_break_on_next then
+			self.main_break_on_next = false
 			break
 		end
 		self:main_loop(player, placeable_node_name)
@@ -500,6 +499,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 		self.line_start = round(self.player_pos + down + up / 2)
 		self.line_start.y = line_y
 		self.current_yaw_rad = player:get_look_horizontal() + math.pi / 2
+		self.main_break_on_next = true
 	end
 
 	local line_start = self.line_start
@@ -635,6 +635,9 @@ function FloorScanState:_maybe_update_yaw(player, ctrl)
 		if curr_sector == 0 then
 			if self.break_on_next then
 				self.yaw_update_disabled = true
+				self.main_break_on_next = true
+				self.break_on_next = false
+				self:deactivate_tool()
 				return
 			end
 			self.break_on_next = true
@@ -645,6 +648,8 @@ function FloorScanState:_maybe_update_yaw(player, ctrl)
 	if player:get_velocity():length() > 0.05 and ctrl.sneak and ctrl.zoom then
 		self.yaw_update_disabled = true
 		self.break_on_next = true
+		self.main_break_on_next = true
+		self:deactivate_tool()
 		return
 	end
 
@@ -653,6 +658,8 @@ function FloorScanState:_maybe_update_yaw(player, ctrl)
 		self.current_yaw_rad = TARGET_RADIANS + self.player_start_yaw + math.pi / 2
 		self.yaw_update_disabled = true
 		self.break_on_next = true
+		self.main_break_on_next = true
+		self:deactivate_tool()
 		return
 	end
 
