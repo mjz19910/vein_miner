@@ -599,7 +599,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 				if curr_sector == 0 and self.nodes_per_tick_avg < 1 then
 					core.log("action", "2 full rotations, moving down")
 					self.player_pos = safe_set_player_pos(player, vector.offset(self.player_pos, 0, -1, 0))
-					self.line_start = vector.offset(self.player_pos, 0, -1, 0)
+					self.line_start = round(self.player_pos + down + up / 2)
 				end
 			end
 		else
