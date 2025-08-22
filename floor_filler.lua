@@ -120,6 +120,8 @@ local normal_nodes = {
 	["default:stone"] = true,
 	["default:leaves"] = true,
 	["default:apple"] = true,
+	["default:tree"] = true,
+	["default:bush_leaves"] = true,
 	"",
 	[""] = true,
 }
