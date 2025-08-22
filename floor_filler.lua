@@ -493,7 +493,7 @@ function FloorScanState:run()
 		if self.nodes_this_tick > self.nodes_per_tick then break end
 	end
 
-	self.nodes_last_tick = self.nodes_last_tick / 2 + self.nodes_this_tick / 2
+	self.nodes_last_tick = self.nodes_last_tick / 2 + self.nodes_this_tick * 2
 	if self.nodes_this_tick > 0 then self.nodes_this_tick = 0 end
 end
 
@@ -514,7 +514,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 		self.player_pos = player_pos
 		self.line_start = round(player_pos + down + up / 2)
 		self.line_start.y = line_y
-		local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit()) * 4
+		local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit()) * 1.75
 		self.current_yaw_rad = player:get_look_horizontal() + math.pi / 2 + yaw_speed
 		player:set_look_horizontal(player:get_look_horizontal() + yaw_speed)
 		self.main_break_on_next = true
@@ -559,7 +559,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 	end
 	if self.nodes_this_loop > 0 then self.nodes_this_tick = self.nodes_this_tick + self.nodes_this_loop end
 	if last_place_pos ~= nil and not self.yaw_update_disabled then player:set_pos(last_place_pos) end
-	if last_place_pos ~= nil and self.yaw_update_disabled and math.floor(self.nodes_last_tick * 10000) == 0 then
+	if last_place_pos ~= nil and self.yaw_update_disabled and math.floor(self.nodes_last_tick * 5 * 1000 * 1000) == 0 then
 		player:set_pos(last_place_pos)
 	end
 	-- Handle yaw rotation if few blocks placed
