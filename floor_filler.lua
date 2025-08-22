@@ -513,8 +513,12 @@ function FloorScanState:run()
 		self:main_loop(player, placeable_node_name)
 		if self.nodes_this_tick > self.nodes_per_tick then break end
 	end
-	self.nodes_per_tick_avg = self.nodes_per_tick_avg / 2 + self.nodes_this_tick
-	if self.nodes_this_tick > 0 then self.nodes_this_tick = 0 end
+	if self.nodes_this_tick > 0 then
+		self.nodes_per_tick_avg = self.nodes_per_tick_avg + self.nodes_this_tick
+		self.nodes_this_tick = 0
+	else
+		self.nodes_per_tick_avg = self.nodes_per_tick_avg / 1.125
+	end
 end
 
 ---@param dist number
@@ -589,9 +593,12 @@ function FloorScanState:main_loop(player, placeable_node_name)
 
 			if prev_sector ~= curr_sector then
 				self:_reset_range_vars()
-				core.log("action", "full rotation, moving down")
-				self.player_pos = safe_set_player_pos(player, vector.offset(self.player_pos, 0, -1, 0))
-				self.line_start = vector.offset(self.player_pos, 0, -1, 0)
+				core.log("action", "avg " .. math.floor(self.nodes_per_tick_avg * 10000000) / 10000000)
+				if curr_sector == 0 and self.nodes_per_tick_avg < 1 then
+					core.log("action", "2 full rotations, moving down")
+					self.player_pos = safe_set_player_pos(player, vector.offset(self.player_pos, 0, -1, 0))
+					self.line_start = vector.offset(self.player_pos, 0, -1, 0)
+				end
 			end
 		else
 			self.current_yaw_rad = player:get_look_horizontal() + math.pi / 2
