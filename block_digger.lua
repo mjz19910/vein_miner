@@ -185,9 +185,6 @@ function BlockDigger.dig_node_list(state, node_name, node_list, repeat_count)
 	local skip_pos = state.skip_pos
 	local mined_nodes_count = 0
 	if is_liquid(node_name, "water") or is_liquid(node_name, "lava") then
-		if true then
-			return 0, true
-		end
 		for index, pos in pairs(node_list) do
 			fill_liquid_at_pos(pos, l_utils.handle_pos_notify)
 			mined_nodes_count = mined_nodes_count + 1
