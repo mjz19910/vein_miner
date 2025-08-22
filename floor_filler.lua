@@ -562,19 +562,14 @@ function FloorScanState:main_loop(player, placeable_node_name)
 			player:set_look_horizontal(self.scan_radians + self.player_start_yaw + yaw_speed)
 			local prev = self:get_angle_rad() % (TAU * 2)
 			local curr = (self:get_angle_rad() + yaw_speed) % (TAU * 2)
-			local step = TAU / 2 -- 180° in radians
-
-			-- detect crossing any multiple of 180°
-			local prev_sector = math.floor(prev / step)
-			local curr_sector = math.floor(curr / step)
+			local prev_sector = math.floor(prev / TAU)
+			local curr_sector = math.floor(curr / TAU)
 
 			if prev_sector ~= curr_sector then
-				-- which boundary did we cross?
-				local boundary = curr_sector * step
-				core.log("action", ("crossed (after yaw disabled) %.1f°"):format(math.deg(boundary)))
+				core.log("action", ("full rotation %d"):format(curr_sector))
 				self:_reset_range_vars()
 				if curr_sector == 0 then
-					core.log("action", "crossed (after yaw disabled) 0° twice, moving down")
+					core.log("action", "two full rotations, moving down")
 					core.log("action", "avg " .. self.nodes_per_tick_avg)
 					self.player_pos = safe_set_player_pos(player, vector.offset(self.player_pos, 0, -1, 0))
 					self.line_start = vector.offset(self.player_pos, 0, -1, 0)
