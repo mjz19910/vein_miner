@@ -495,13 +495,25 @@ function FloorScanState:run()
 	if self.nodes_this_tick > 0 then self.nodes_this_tick = 0 end
 end
 
+---@param dist number
+local function yaw_for_arc(dist) return 1 / dist end
+
+---@param dist number
+local function get_yaw_speed_for_distance(dist)
+	local xz_offset = dist + 1
+	local max_dist = vec_new(xz_offset, 0, xz_offset):length()
+	return yaw_for_arc(math.ceil(max_dist))
+end
+
 function FloorScanState:main_loop(player, placeable_node_name)
 	if self.yaw_update_disabled then
 		local line_y = self.line_start.y
 		self.player_pos = player:get_pos()
 		self.line_start = round(self.player_pos + down + up / 2)
 		self.line_start.y = line_y
-		self.current_yaw_rad = player:get_look_horizontal() + math.pi / 2
+		local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit()) * 4
+		self.current_yaw_rad = player:get_look_horizontal() + math.pi / 2 + yaw_speed
+		player:set_look_horizontal(player:get_look_horizontal() + yaw_speed)
 		self.main_break_on_next = true
 	end
 
@@ -542,9 +554,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 		self.break_on_next = false
 		::next::
 	end
-	if self.nodes_this_loop > 0 then
-		self.nodes_this_tick = self.nodes_this_tick + self.nodes_this_loop
-	end
+	if self.nodes_this_loop > 0 then self.nodes_this_tick = self.nodes_this_tick + self.nodes_this_loop end
 	if last_place_pos ~= nil then player:set_pos(last_place_pos) end
 	-- Handle yaw rotation if few blocks placed
 	self:_maybe_update_yaw(player, ctrl)
@@ -572,16 +582,6 @@ function FloorScanState:_update_counters(player_name)
 		core.log("action", "finished placing floor at deg " .. ("%.1f"):format(rad_to_deg_wrap360(self.last_place_yaw_radians)))
 		self.last_place_yaw_radians = nil
 	end
-end
-
----@param dist number
-local function yaw_for_arc(dist) return 1 / dist end
-
----@param dist number
-local function get_yaw_speed_for_distance(dist)
-	local xz_offset = dist + 1
-	local max_dist = vec_new(xz_offset, 0, xz_offset):length()
-	return yaw_for_arc(math.ceil(max_dist))
 end
 
 ---@param self FloorScanState
