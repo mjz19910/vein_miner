@@ -115,15 +115,6 @@ local falling_blocks_to_support = {
 }
 local normal_nodes = {
 	["air"] = true,
-	["wielded_light:12"] = true,
-	["default:cobble"] = true,
-	["default:stone"] = true,
-	["default:leaves"] = true,
-	["default:apple"] = true,
-	["default:tree"] = true,
-	["default:bush_leaves"] = true,
-	"",
-	[""] = true,
 }
 
 ---@param pos Vector
@@ -141,10 +132,10 @@ local function is_supported(pos, invalid_support_name)
 	if not normal_nodes[node.name] then
 		local def = registered_nodes[node.name]
 		if def and def.groups and def.groups.falling_node then
-			core.log("action", "falling node is above, placing node below to prevent falling for " .. node.name)
+			falling_blocks_to_support[node.name] = true
 			return true
 		else
-			core.log("action", "falling node is not above " .. node.name)
+			normal_nodes[node.name] = true
 		end
 	end
 
