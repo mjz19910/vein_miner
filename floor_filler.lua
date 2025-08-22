@@ -485,7 +485,7 @@ function FloorScanState:run()
 		end
 	end
 
-	for i = 1, 500 do
+	for i = 1, 200 do
 		if self.main_break_on_next then
 			self.main_break_on_next = false
 			break
