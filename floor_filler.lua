@@ -58,6 +58,11 @@ local vertical_offsets = vein_miner.CFG.VERTICAL_OFFSETS
 
 local sound_info_per_player = {}
 
+local dig_anyway_set = {}
+local dig_anyway_list = {"default:snow"}
+insert_all(dig_anyway_list, vein_miner.CFG.mining_groups.tree_trunk)
+for _, v in ipairs(dig_anyway_list) do dig_anyway_set[v] = true end
+
 ---@param player Player
 ---@param playing_sounds table<string, boolean>
 ---@param target_pos Vector
@@ -69,17 +74,17 @@ local function try_place_block_from_inventory(player, playing_sounds, target_pos
 		local name = stack:get_name()
 		local def = registered_nodes[name]
 		if not placeable_nodes_to_skip[name] and def and name ~= "air" and not def.groups.falling_node then
-			local cur_node = core.get_node(target_pos)
-			if cur_node and cur_node.name ~= "air" then
-				if cur_node.name == "ignore" then return false end
-				if cur_node.name == "default:snow" then
-					core.node_dig(target_pos, cur_node, player)
+			local node = core.get_node(target_pos)
+			if node and node.name ~= "air" then
+				if node.name == "ignore" then return false end
+				if dig_anyway_set[node.name] then
+					core.node_dig(target_pos, node, player)
 					goto after_dig
 				end
-				local def2 = registered_nodes[cur_node.name]
+				local def2 = registered_nodes[node.name]
 				if def2.liquidtype == "source" then return false end
 				if def2.walkable then return false end
-				core.node_dig(target_pos, cur_node, player)
+				core.node_dig(target_pos, node, player)
 				::after_dig::
 			end
 			set_node(target_pos, {
@@ -578,11 +583,6 @@ local function safe_set_player_pos(player, target_pos)
 
 	return target_pos
 end
-
-local dig_anyway_set = {}
-local dig_anyway_list = {"default:snow"}
-insert_all(dig_anyway_list, vein_miner.CFG.mining_groups.tree_trunk)
-for _, v in ipairs(dig_anyway_list) do dig_anyway_set[v] = true end
 
 function FloorScanState:main_loop(player, placeable_node_name)
 	local ctrl = player:get_player_control()
