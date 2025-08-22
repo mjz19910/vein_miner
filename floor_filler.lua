@@ -644,7 +644,7 @@ function FloorScanState:_maybe_update_yaw(player, ctrl)
 	-- Abort if player requested abort (sneak + zoom)
 	if player:get_velocity():length() > 0.05 and ctrl.sneak and ctrl.zoom then
 		self.yaw_update_disabled = true
-		self:deactivate_tool()
+		self.break_on_next = true
 		return
 	end
 
@@ -652,7 +652,7 @@ function FloorScanState:_maybe_update_yaw(player, ctrl)
 	if math.abs(self.scan_radians) > TARGET_RADIANS then
 		self.current_yaw_rad = TARGET_RADIANS + self.player_start_yaw + math.pi / 2
 		self.yaw_update_disabled = true
-		self:deactivate_tool()
+		self.break_on_next = true
 		return
 	end
 
