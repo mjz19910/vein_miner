@@ -130,6 +130,8 @@ local function is_supported(pos, invalid_support_name)
 	if def and def.groups and def.groups.falling_node then
 		core.log("action", "falling node is above, placing node below to prevent falling for " .. node.name)
 		return true
+	else
+		core.log("action", "falling node is not above " .. node.name)
 	end
 
 	local floor_air_count = 0
