@@ -505,25 +505,30 @@ local function get_yaw_speed_for_distance(dist)
 	return yaw_for_arc(math.ceil(max_dist))
 end
 
+-- Helper: check if both feet+head are passable
+local function is_standable(pos)
+	local node_feet = core.get_node_or_nil(pos)
+	local node_head = core.get_node_or_nil(pos + vector.new(0, 1, 0))
+	if not node_feet or not node_head then return false end
+
+	local def_feet = core.registered_nodes[node_feet.name]
+	local def_head = core.registered_nodes[node_head.name]
+	if not def_feet or not def_head then return false end
+
+	return not def_feet.walkable and not def_head.walkable
+end
+
 ---@param player Player
 ---@param target_pos Vector
 ---@return boolean success
 local function safe_set_player_pos(player, target_pos)
+	if core.get_node(target_pos).name == "ignore" then
+		-- too far, into unloaded area, move player back up
+		return vector.offset(target_pos, 0, 1, 0)
+	end
+
 	-- directions to search: N, S, E, W
 	local dirs = {vector.new(1, 0, 0), vector.new(-1, 0, 0), vector.new(0, 0, 1), vector.new(0, 0, -1)}
-
-	-- Helper: check if both feet+head are passable
-	local function is_standable(pos)
-		local node_feet = core.get_node_or_nil(pos)
-		local node_head = core.get_node_or_nil(pos + vector.new(0, 1, 0))
-		if not node_feet or not node_head then return false end
-
-		local def_feet = core.registered_nodes[node_feet.name]
-		local def_head = core.registered_nodes[node_head.name]
-		if not def_feet or not def_head then return false end
-
-		return not def_feet.walkable and not def_head.walkable
-	end
 
 	-- Check target position first
 	if is_standable(target_pos) then
