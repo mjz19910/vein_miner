@@ -61,7 +61,9 @@ local node_to_group_cache = {}
 ---@type AABB
 local aabb = require("mods.vein_miner.aabb")
 vein_miner.aabb = aabb
-require("mods.vein_miner.liquid_filler")
+local liquid_filler = require("mods.vein_miner.liquid_filler")
+---@type LiquidFiller
+vein_miner.liquid_filler = liquid_filler
 require("mods.vein_miner.remove_walls")
 local player_hud = require("mods.vein_miner.player_hud")
 vein_miner.player_hud = player_hud
@@ -108,7 +110,7 @@ local CFG = vein_miner.CFG
 require("mods.vein_miner.lit_cobble")
 require("mods.vein_miner.player_lifecycle")
 
-local fill_liquid_at_pos = vein_miner.fill_liquid_at_pos
+local fill_liquid_at_pos = liquid_filler.fill_liquid_at_pos
 
 local S = core.get_translator("vein_miner")
 
@@ -563,6 +565,32 @@ local function load_cobble_list(nodes, falling_nodes)
 	end
 end
 
+---@class ScanItem
+---@field node_name string
+---@field pos Vector
+---@field options ScanOptions
+---@field oldnode MapNode | nil
+
+---@param self VeinMinerState
+---@param node_name string
+---@param pos Vector
+---@param options ScanOptions
+function VeinMinerState:add_pos_to_queue(node_name, pos, options)
+	local h = core.hash_node_position(pos)
+	if self.queued_set[h] then
+		return nil
+	end
+	self.queued_set[h] = true
+	---@type ScanItem
+	local item = {
+		node_name = node_name,
+		pos = pos,
+		options = l_utils.get_scan_options(node_name, options),
+	}
+	self.queue:push_right(item)
+	return item
+end
+
 ---@param self VeinMinerState
 ---@param item ScanItem
 ---@param player_name string
@@ -974,7 +1002,7 @@ core.register_on_dignode(function(pos, oldnode, player)
 		state = VeinMinerState.new(pos, player, player_name, wielded)
 		vein_miner_current_state[player_name] = state
 	end
-	local q_item = l_utils.add_pos_to_queue(state, node_name, pos, {
+	local q_item = state:add_pos_to_queue(node_name, pos, {
 		user = true,
 	})
 	if q_item then q_item.oldnode = oldnode end

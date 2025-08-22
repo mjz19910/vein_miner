@@ -42,6 +42,9 @@ local helpers = vein_miner.h
 local new_region = aabb.region
 local log_action = helpers.log_action
 
+---@class LiquidFiller
+local liquid_filler = {}
+
 -- constants
 local cardinal_dirs = vein_miner.CFG.CARDINAL_DIRS
 local liquid_set = {
@@ -744,10 +747,10 @@ local function build_walls(state, region)
 	end
 end
 
----@param vein_miner_state any
+---@param vein_miner_state VeinMinerState
 ---@param pos Vector
 ---@param notify_pos Vector
-function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
+function liquid_filler.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 	verbose_log("fill_liquid_at_pos called at %s", pos_str(pos))
 
 	if not liquid_set[core.get_node(pos).name] then
@@ -802,3 +805,5 @@ function vein_miner.fill_liquid_at_pos(vein_miner_state, pos, notify_pos)
 
 	verbose_log("Completed fill_liquid_at_pos for %s", pos_str(pos))
 end
+
+return liquid_filler

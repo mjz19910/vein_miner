@@ -61,7 +61,7 @@ local function mark_near_light(self, node_name, pos)
 	local h = core.hash_node_position(pos)
 	if not self.known_lights[h] then
 		self.known_lights[h] = true
-		l_utils.add_pos_to_queue(self, node_name, pos)
+		self:add_pos_to_queue(node_name, pos)
 		return true
 	end
 	return false
