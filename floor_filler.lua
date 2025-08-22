@@ -113,6 +113,10 @@ local falling_blocks_to_support = {
 	["default:silver_sand"] = true,
 	["default:gravel"] = true,
 }
+local normal_nodes = {
+	["air"] = true,
+	["wielded_light:12"] = true,
+}
 
 ---@param pos Vector
 ---@param invalid_support_name string
@@ -126,12 +130,14 @@ local function is_supported(pos, invalid_support_name)
 	local check_pos = offset(pos, 0, 1, 0)
 	local node = get_node_or_nil(check_pos)
 	if falling_blocks_to_support[node.name] then return true end
-	local def = registered_nodes[node.name]
-	if def and def.groups and def.groups.falling_node then
-		core.log("action", "falling node is above, placing node below to prevent falling for " .. node.name)
-		return true
-	else
-		core.log("action", "falling node is not above " .. node.name)
+	if not normal_nodes[node.name] then
+		local def = registered_nodes[node.name]
+		if def and def.groups and def.groups.falling_node then
+			core.log("action", "falling node is above, placing node below to prevent falling for " .. node.name)
+			return true
+		else
+			core.log("action", "falling node is not above " .. node.name)
+		end
 	end
 
 	local floor_air_count = 0
