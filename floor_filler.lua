@@ -530,10 +530,13 @@ function FloorScanState:main_loop(player, placeable_node_name)
 			if prev_sector ~= curr_sector then
 				-- which boundary did we cross?
 				local boundary = curr_sector * step
-				core.log("action", ("crossed %.1f°"):format(math.deg(boundary)))
+				core.log("action", ("crossed (after yaw disabled) %.1f°"):format(math.deg(boundary)))
 				self:_reset_range_vars()
 				if curr_sector == 0 then
 					self.line_start.y = self.line_start.y - 1
+					core.log("action", "crossed (after yaw disabled) 0°, moving down")
+					self.player_pos.y = self.player_pos.y - 1
+					player:set_pos(self.player_pos)
 				end
 			end
 		else
