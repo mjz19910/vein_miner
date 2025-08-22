@@ -576,7 +576,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 				if curr_sector == 0 then
 					core.log("action", "crossed (after yaw disabled) 0° twice, moving down")
 					core.log("action", "avg " .. self.nodes_per_tick_avg)
-					self.player_pos = safe_set_player_pos(self.player_pos)
+					self.player_pos = safe_set_player_pos(player, vector.offset(self.player_pos, 0, -1, 0))
 					self.line_start = vector.offset(self.player_pos, 0, 1, 0)
 				end
 			end
