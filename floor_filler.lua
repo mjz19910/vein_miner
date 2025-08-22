@@ -505,6 +505,46 @@ local function get_yaw_speed_for_distance(dist)
 	return yaw_for_arc(math.ceil(max_dist))
 end
 
+---@param player Player
+---@param target_pos Vector
+---@return boolean success
+local function safe_set_player_pos(player, target_pos)
+	-- directions to search: N, S, E, W
+	local dirs = {vector.new(1, 0, 0), vector.new(-1, 0, 0), vector.new(0, 0, 1), vector.new(0, 0, -1)}
+
+	-- Helper: check if both feet+head are passable
+	local function is_standable(pos)
+		local node_feet = core.get_node_or_nil(pos)
+		local node_head = core.get_node_or_nil(pos + vector.new(0, 1, 0))
+		if not node_feet or not node_head then return false end
+
+		local def_feet = core.registered_nodes[node_feet.name]
+		local def_head = core.registered_nodes[node_head.name]
+		if not def_feet or not def_head then return false end
+
+		return not def_feet.walkable and not def_head.walkable
+	end
+
+	-- Check target position first
+	if is_standable(target_pos) then
+		player:set_pos(target_pos)
+		return target_pos
+	end
+
+	-- Expand search radius out to 7 blocks
+	for r = 1, 7 do
+		for _, d in ipairs(dirs) do
+			local candidate = target_pos + d * r
+			if is_standable(candidate) then
+				player:set_pos(candidate)
+				return candidate
+			end
+		end
+	end
+
+	return target_pos
+end
+
 function FloorScanState:main_loop(player, placeable_node_name)
 	local ctrl = player:get_player_control()
 
@@ -534,11 +574,10 @@ function FloorScanState:main_loop(player, placeable_node_name)
 				core.log("action", ("crossed (after yaw disabled) %.1f°"):format(math.deg(boundary)))
 				self:_reset_range_vars()
 				if curr_sector == 0 then
-					self.line_start.y = self.line_start.y - 1
 					core.log("action", "crossed (after yaw disabled) 0° twice, moving down")
-					self.player_pos.y = self.player_pos.y - 1
-					player:set_pos(self.player_pos)
 					core.log("action", "avg " .. self.nodes_per_tick_avg)
+					self.player_pos = safe_set_player_pos(self.player_pos)
+					self.line_start = vector.offset(self.player_pos, 0, 1, 0)
 				end
 			end
 		else
