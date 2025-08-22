@@ -454,7 +454,6 @@ function FloorScanState:run()
 		self.current_yaw_rad = yaw + math.pi / 2
 		self.player_pos = player:get_pos()
 		self.line_start = round(player:get_pos() + down + up / 2)
-		self.original_player_pos = self.player_pos
 		local ctrl = player:get_player_control()
 		if not self.tool_active and ctrl.zoom then self.use_set_fov = true end
 		self.is_mapgen_disabled = self.player:get_mapgen_disabled()
@@ -464,7 +463,6 @@ function FloorScanState:run()
 		end
 	end
 	if self.player_pos == nil then self.player_pos = player:get_pos() end
-	if self.original_player_pos == nil then self.original_player_pos = self.player_pos end
 
 	-- Inventory scan: find a valid node to place
 	-- so we can ignore support provided by this node
