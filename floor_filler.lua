@@ -340,6 +340,7 @@ function FloorScanState:deactivate_tool()
 		self.player:set_fov(0, false, 0)
 		self.tool_active = false
 	end
+	self.player_start_yaw = 0
 end
 
 local floor_place_fmt = "started placing floor after %d steps at %s with yaw=%.1f"
@@ -517,11 +518,11 @@ function FloorScanState:main_loop(player, placeable_node_name)
 		self.line_start.y = line_y
 		if not self.skip_after_yaw then
 			local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit()) * 1.75
-			local player_yaw = player:get_look_horizontal()
-			self.current_yaw_rad = player_yaw + math.pi / 2 + yaw_speed
-			player:set_look_horizontal(player_yaw + yaw_speed)
-			local prev = player_yaw % (TAU * 2)
-			local curr = (player_yaw + yaw_speed) % (TAU * 2)
+			local yaw = self.scan_radians
+			self.scan_radians = yaw + yaw_speed
+			player:set_look_horizontal(self.scan_radians)
+			local prev = yaw % (TAU * 2)
+			local curr = (yaw + yaw_speed) % (TAU * 2)
 			local step = TAU / 2 -- 180° in radians
 
 			-- detect crossing any multiple of 180°
@@ -538,10 +539,11 @@ function FloorScanState:main_loop(player, placeable_node_name)
 					core.log("action", "crossed (after yaw disabled) 0° twice, moving down")
 					self.player_pos.y = self.player_pos.y - 1
 					player:set_pos(self.player_pos)
+					self.yaw_update_disabled = false
 				end
 			end
 		else
-			self.current_yaw_rad = player:get_look_horizontal() + math.pi / 2
+			self.scan_radians = player:get_look_horizontal()
 		end
 		self.main_break_on_next = true
 	end
@@ -550,7 +552,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 	local player_pos = self.player_pos
 
 	-- Positioning and direction
-	local yaw = self.current_yaw_rad
+	local yaw = self.scan_radians - math.pi / 2
 	local forward_dir = vec_new(math.cos(yaw), 0, math.sin(yaw))
 
 	-- Player config + controls
