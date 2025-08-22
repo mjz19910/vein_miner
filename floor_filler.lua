@@ -335,7 +335,7 @@ function FloorScanState:deactivate_tool()
 	if self.all_blocks_placed > 0 then self.all_blocks_placed = 0 end
 	if self.tool_active then
 		self.player:set_fov(0, false, 0)
-		self.player:set_pos(self.original_player_pos)
+		if self.original_player_pos then self.player:set_pos(self.original_player_pos) end
 		self.tool_active = false
 	end
 end
@@ -508,8 +508,9 @@ end
 function FloorScanState:main_loop(player, placeable_node_name)
 	if self.yaw_update_disabled then
 		local line_y = self.line_start.y
-		self.player_pos = player:get_pos()
-		self.line_start = round(self.player_pos + down + up / 2)
+		local player_pos = player:get_pos()
+		self.player_pos = player_pos
+		self.line_start = round(player_pos + down + up / 2)
 		self.line_start.y = line_y
 		local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit()) * 4
 		self.current_yaw_rad = player:get_look_horizontal() + math.pi / 2 + yaw_speed
