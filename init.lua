@@ -434,6 +434,7 @@ local known_groups = {
 	butterfly = true,
 	firefly = true,
 	coral = true,
+	green_wool = true,
 }
 ---@type table<string, boolean>
 local green_groups = {
@@ -482,8 +483,6 @@ local cobble_target_groups = {
 	stem = true,
 	tree_trunk = true,
 	surface = true,
-	snow = true,
-	desert_sand = true,
 	cotton = true,
 	dry_grass = true,
 	fern = true,
@@ -502,6 +501,12 @@ local cobble_target_groups = {
 	marram_grass = true,
 	coral = true,
 	snow_block = true,
+	green_wool = true,
+	gravel = true,
+	sand = true,
+	silver_sand = true,
+	desert_sand = true,
+	snow = true,
 }
 
 for k, _ in pairs(cobble_target_groups) do table.insert_all(cobble_target_list, mining_groups[k]) end

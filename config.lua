@@ -217,6 +217,7 @@ local mg = {
 	butterfly = {butterfly.white, butterfly.red, butterfly.violet},
 	papyrus = {papyrus},
 	firefly = {firefly},
+	green_wool = {"wool:green"},
 }
 ---@type MiningGroups
 CFG.mining_groups = mg
@@ -333,13 +334,6 @@ local function add_light_node(node_name)
 	-- light_nodes_set[node_name] = true
 end
 
-add_light_node("default:cobble")
-light_nodes_set["default:cobble"] = true
-add_light_node("default:jungletree")
-add_light_node("default:junglegrass")
-add_light_node("default:dirt_with_rainforest_litter")
-add_light_node(firefly)
-light_nodes_set[firefly] = true
 ---@type Vector[]
 local vec_dirs = {}
 table.insert(vec_dirs, new_vec(0, 0, 0))
@@ -366,4 +360,19 @@ CFG.SUPPORT_DIRS = support_dirs
 ---@type Vector[]
 local vertical_offsets = {down, new_vec(0, 0, 0), up, up * 2}
 CFG.VERTICAL_OFFSETS = vertical_offsets
+
+add_light_node("default:cobble")
+light_nodes_set["default:cobble"] = true
+add_light_node("default:jungletree")
+add_light_node("default:junglegrass")
+add_light_node("default:dirt_with_rainforest_litter")
+add_light_node(firefly)
+light_nodes_set[firefly] = true
+for _, butterfly_color in pairs(butterfly) do
+	add_light_node(butterfly_color)
+	light_nodes_set[butterfly_color] = true
+end
+add_light_node("wool:green")
+light_nodes_set["wool:green"] = true
+
 return CFG
