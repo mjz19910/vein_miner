@@ -514,6 +514,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 	local ctrl = player:get_player_control()
 
 	if self.yaw_update_disabled then
+		if ctrl.zoom then self.skip_after_yaw = true end
 		local line_y = self.line_start.y
 		local player_pos = player:get_pos()
 		self.player_pos = player_pos
@@ -527,7 +528,6 @@ function FloorScanState:main_loop(player, placeable_node_name)
 			self.current_yaw_rad = player:get_look_horizontal() + math.pi / 2
 		end
 		self.main_break_on_next = true
-		if ctrl.zoom then self.skip_after_yaw = true end
 	end
 
 	local line_start = self.line_start
