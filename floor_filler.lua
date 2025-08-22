@@ -260,7 +260,6 @@ function FloorScanState:reset(first_init)
 		self.player:set_mapgen_disabled(false)
 		self.did_disable_mapgen = false
 	end
-	self.original_player_pos = nil
 	self.nodes_per_tick_avg = 0
 end
 
@@ -336,7 +335,6 @@ function FloorScanState:deactivate_tool()
 	if self.all_blocks_placed > 0 then self.all_blocks_placed = 0 end
 	if self.tool_active then
 		self.player:set_fov(0, false, 0)
-		-- if self.original_player_pos then self.player:set_pos(self.original_player_pos) end
 		self.tool_active = false
 	end
 end
@@ -509,7 +507,10 @@ function FloorScanState:main_loop(player, placeable_node_name)
 	local ctrl = player:get_player_control()
 
 	if self.yaw_update_disabled then
-		if ctrl.zoom then self.skip_after_yaw = true end
+		if ctrl.zoom then
+			self.skip_after_yaw = true
+			if self.original_player_pos then player:set_pos(self.original_player_pos) end
+		end
 		local line_y = self.line_start.y
 		local player_pos = player:get_pos()
 		self.player_pos = player_pos
