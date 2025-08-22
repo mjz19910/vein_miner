@@ -462,6 +462,10 @@ function FloorScanState:run()
 		end
 	end
 
+	if self.player_pos == nil then self.player_pos = player:get_pos() end
+
+	if self.original_player_pos == nil then self.original_player_pos = self.player_pos end
+
 	self.active = true
 
 	-- Inventory scan: find a valid node to place
@@ -478,6 +482,18 @@ function FloorScanState:run()
 		end
 	end
 
+	for i = 1, 10 do
+		if self.break_on_next then
+			self:deactivate_tool()
+			self.break_on_next = false
+			break
+		end
+		self:main_loop(player, placeable_node_name)
+	end
+end
+
+function FloorScanState:main_loop(player, placeable_node_name)
+
 	if self.yaw_update_disabled then
 		local line_y = self.line_start.y
 		self.player_pos = player:get_pos()
@@ -485,6 +501,7 @@ function FloorScanState:run()
 		self.line_start.y = line_y
 		self.current_yaw_rad = player:get_look_horizontal() + math.pi / 2
 	end
+
 	local line_start = self.line_start
 	local player_pos = self.player_pos
 
@@ -618,8 +635,6 @@ function FloorScanState:_maybe_update_yaw(player, ctrl)
 		if curr_sector == 0 then
 			if self.break_on_next then
 				self.yaw_update_disabled = true
-				self:deactivate_tool()
-				self.break_on_next = false
 				return
 			end
 			self.break_on_next = true
