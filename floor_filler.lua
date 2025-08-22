@@ -516,6 +516,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 	local player_name = player:get_player_name()
 	local ctrl = player:get_player_control()
 
+	self.nodes_this_loop = 0
 	local playing_sounds = self.playing_sounds
 	local max_nodes = self.nodes_per_tick - self.nodes_this_tick
 	local place_limit = self.place_limit
@@ -543,7 +544,6 @@ function FloorScanState:main_loop(player, placeable_node_name)
 	end
 	if self.nodes_this_loop > 0 then
 		self.nodes_this_tick = self.nodes_this_tick + self.nodes_this_loop
-		self.nodes_this_loop = 0
 	end
 	if last_place_pos ~= nil then player:set_pos(last_place_pos) end
 	-- Handle yaw rotation if few blocks placed
