@@ -297,6 +297,7 @@ function FloorScanState:reset(first_init)
 		self.did_disable_mapgen = false
 	end
 	self.nodes_per_tick_avg = 0
+	self.current_line_y = 0
 end
 
 ---@param self FloorScanState
@@ -488,8 +489,10 @@ function FloorScanState:run()
 		end
 		self.player_start_yaw = yaw
 		self.current_yaw_rad = yaw + math.pi / 2
-		self.player_pos = player:get_pos()
-		self.line_start = round(player:get_pos() + down + up / 2)
+		self.player_pos = round(player:get_pos())
+		self.line_start = self.player_pos + down
+		self.current_line_y = self.line_start.y
+		core.log("action", "start line floor placing at " .. self.current_line_y)
 		local ctrl = player:get_player_control()
 		if not self.tool_active and ctrl.zoom then self.use_set_fov = true; end
 		self.is_mapgen_disabled = self.player:get_mapgen_disabled()
@@ -589,11 +592,10 @@ function FloorScanState:main_loop(player, placeable_node_name)
 
 	if self.yaw_update_disabled then
 		if ctrl.zoom then self.skip_after_yaw = true end
-		local line_y = self.line_start.y
 		local player_pos = vector.round(player:get_pos())
+		player_pos.y = self.current_line_y + 1
 		self.player_pos = player_pos
-		self.line_start = player_pos + down
-		self.line_start.y = line_y
+		self.line_start.y = self.current_line_y
 		if not self.skip_after_yaw then
 			local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit()) * 1.75
 			self.scan_radians = self.scan_radians + yaw_speed
@@ -608,15 +610,21 @@ function FloorScanState:main_loop(player, placeable_node_name)
 				self:_reset_range_vars()
 				if self.nodes_per_tick_avg == 0 then
 					core.log("action", "no nodes placed, moving down")
-					self.player_pos = safe_set_player_pos(player, vector.offset(self.player_pos, 0, -1, 0))
-					self.line_start = vector.round(self.player_pos + down)
+					self.current_line_y = self.current_line_y - 1
+					self.player_pos.y = self.current_line_y + 1
+					self.player_pos = safe_set_player_pos(player, self.player_pos)
+					self.line_start = vector.new(self.player_pos)
+					self.line_start.y = self.current_line_y
 					goto continue_loop
 				end
 				core.log("action", "avg " .. math.floor(self.nodes_per_tick_avg * 10000000) / 10000000)
 				if curr_sector == 0 and self.nodes_per_tick_avg < 1 then
 					core.log("action", "2 full rotations, moving down")
-					self.player_pos = safe_set_player_pos(player, vector.offset(self.player_pos, 0, -1, 0))
-					self.line_start = vector.round(self.player_pos + down)
+					self.current_line_y = self.current_line_y - 1
+					self.player_pos.y = self.current_line_y + 1
+					self.player_pos = safe_set_player_pos(player, self.player_pos)
+					self.line_start = vector.new(self.player_pos)
+					self.line_start.y = self.current_line_y
 				end
 			end
 			::continue_loop::
