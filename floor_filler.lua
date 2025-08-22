@@ -116,6 +116,7 @@ local falling_blocks_to_support = {
 local normal_nodes = {
 	["air"] = true,
 	["wielded_light:12"] = true,
+	["default:cobble"] = true,
 }
 
 ---@param pos Vector
