@@ -130,6 +130,10 @@ local normal_nodes = {
 	["default:stone"] = true,
 	["default:cobble"] = true,
 	["wielded_light:12"] = true,
+	["default:pine_bush_needles"] = true,
+	["default:dirt"] = true,
+	["default:stone_with_coal"] = true,
+	["default:blueberry_bush_leaves_with_berries"] = true,
 }
 local normal_nodes_new = {}
 
