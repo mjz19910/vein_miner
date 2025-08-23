@@ -495,9 +495,7 @@ function FloorScanState:run()
 		self.current_yaw_rad = yaw + math.pi / 2
 		self.player_pos = round(player:get_pos())
 		local pos_offset = self.player_pos - player:get_pos()
-		if pos_offset.y < -0.3 then
-			self.player_pos.y = self.player_pos.y + 1
-		end
+		if pos_offset.y < -0.3 then self.player_pos.y = self.player_pos.y + 1 end
 		pos_offset = self.player_pos - player:get_pos()
 		core.log("pos diff " .. tostring(pos_offset))
 		self.line_start = self.player_pos + down
@@ -608,29 +606,20 @@ function FloorScanState:main_loop(player, placeable_node_name)
 		self.player_pos = player_pos
 		self.line_start.y = self.current_line_y
 		if not self.skip_after_yaw then
-			local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit()) * 1.75
+			local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit()) * 3
 			self.scan_radians = self.scan_radians + yaw_speed
 			self.current_yaw_rad = self.scan_radians + self.player_start_yaw + math.pi / 2
 			player:set_look_horizontal(self.scan_radians + self.player_start_yaw + yaw_speed)
 			local prev = self:get_angle_rad() % (TAU * 2)
 			local curr = (self:get_angle_rad() + yaw_speed) % (TAU * 2)
-			local prev_sector = math.floor(prev / TAU)
-			local curr_sector = math.floor(curr / TAU)
+			local prev_sector = math.floor(prev / TAU * 2)
+			local curr_sector = math.floor(curr / TAU * 2)
 
 			if prev_sector ~= curr_sector then
 				self:_reset_range_vars()
-				if self.nodes_per_tick_avg == 0 then
-					core.log("action", "no nodes placed, moving down")
-					self.current_line_y = self.current_line_y - 1
-					self.player_pos.y = self.current_line_y + 1
-					self.player_pos = safe_set_player_pos(player, self.player_pos)
-					self.line_start = vector.new(self.player_pos)
-					self.line_start.y = self.current_line_y
-					goto continue_loop
-				end
-				core.log("action", "avg " .. math.floor(self.nodes_per_tick_avg * 10000000) / 10000000)
-				if curr_sector == 0 and self.nodes_per_tick_avg < 1 then
-					core.log("action", "2 full rotations, moving down")
+				if self.nodes_per_tick_avg < 4 then
+					local avg_rounded = math.floor(self.nodes_per_tick_avg * 1e5) / 1e5
+					core.log("action", "moving down with avg " .. avg_rounded)
 					self.current_line_y = self.current_line_y - 1
 					self.player_pos.y = self.current_line_y + 1
 					self.player_pos = safe_set_player_pos(player, self.player_pos)
@@ -638,7 +627,6 @@ function FloorScanState:main_loop(player, placeable_node_name)
 					self.line_start.y = self.current_line_y
 				end
 			end
-			::continue_loop::
 		else
 			self.current_yaw_rad = player:get_look_horizontal() + math.pi / 2
 		end
