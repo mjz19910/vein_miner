@@ -392,5 +392,7 @@ add_rec_light("default:cave_ice")
 add_rec_light("default:snowblock")
 add_rec_light("default:snow")
 add_rec_light(dirt.grass.coniferous)
+for _, trunk in ipairs(trees.trunk) do add_rec_light(trunk) end
+for _, stem in ipairs(trees.stem) do add_rec_light(stem) end
 
 return CFG
