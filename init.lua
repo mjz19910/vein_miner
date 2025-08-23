@@ -33,6 +33,7 @@ local ceil = math.ceil
 local yield = coroutine.yield
 local insert = table.insert
 local contains = table.contains
+local vec_new = vector.new
 
 local add_particle = core.add_particle
 
@@ -615,7 +616,8 @@ function VeinMinerState:process_queue_item(item, player_name)
 	end
 	if not options.large then options.small = true end
 
-	local vec_size = vector.new(xz_len, y_len, xz_len);
+	local vec_size = vector.new(xz_len, y_len, xz_len)
+	vec_size = vec_new(2, 2, 2)
 
 	local minvec = h.mod_pos(pos, vec_size)
 	minvec = scanner.clamp_vec_to_player_bounds(minvec, config)
