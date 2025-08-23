@@ -171,11 +171,11 @@ function scanner.scan_nearby_lights(state, pos, node_name, options, show_log)
 		config.last_maxy = config.maxy
 	end
 	if options.user then for _, r in ipairs(regions) do if r:is_point_in_region(pos) then full_scan(r) end end end
-	local scan_dist = CFG.light_scan_dist
-	local scan_range = scan_dist / 2
-	local minvec = vector.subtract(pos, math.floor(scan_range))
+	local light_scan_distance = CFG.light_scan_dist
+	local light_scan_range = light_scan_distance / 2
+	local minvec = vector.subtract(pos, math.floor(light_scan_range))
 	minvec = scanner.clamp_vec_to_player_bounds(minvec, config)
-	local maxvec = vector.add(minvec, scan_dist)
+	local maxvec = vector.add(minvec, light_scan_distance)
 	maxvec = scanner.clamp_vec_to_player_bounds(maxvec, config)
 	local total_count = 0
 	local r = aabb.new_region(minvec, maxvec)
@@ -210,7 +210,7 @@ function scanner.scan_nearby_lights(state, pos, node_name, options, show_log)
 	for _, r in ipairs(unknown) do normal_scan(r) end
 	for _, r in ipairs(regions) do
 		local size = r.min - r.max
-		local size_change = scan_dist
+		local size_change = light_scan_distance
 		if size_change < 1 then size_change = 1 end
 		if size.x > size_change * 2 then
 			r.min.x = r.min.x + math.floor(size_change / 2) + 2
