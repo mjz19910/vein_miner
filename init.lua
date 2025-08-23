@@ -721,7 +721,6 @@ function VeinMinerState:process_queue_item(item, player_name)
 
 	if not utils.has_empty_main_inv_slot(player) then core.chat_send_player(player_name, "Waiting for empty inventory slot for digging") end
 	while not utils.has_empty_main_inv_slot(player) do async_wait(1) end
-	target_flags.liquid = true
 	if target_flags.liquid then iter_node_groups(self, core.find_nodes_in_area(minvec, maxvec, water_targets, true)) end
 	if target_flags.falling then iter_node_groups(self, core.find_nodes_in_area(minvec, maxvec, target_falling_nodes, true)) end
 	iter_node_groups(self, core.find_nodes_in_area(minvec, maxvec, target_nodes, true))
