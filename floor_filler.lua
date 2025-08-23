@@ -158,6 +158,11 @@ local normal_nodes = {
 	["default:stone_with_copper"] = true,
 	["default:tree"] = true,
 	["default:jungletree"] = true,
+	["default:acacia_leaves"] = true,
+	["default:dry_dirt"] = true,
+	["default:aspen_leaves"] = true,
+	["default:aspen_tree"] = true,
+	["default:apple"] = true,
 }
 local normal_nodes_new = {}
 
