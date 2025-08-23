@@ -625,6 +625,9 @@ function FloorScanState:main_loop(player, placeable_node_name)
 					self.player_pos = safe_set_player_pos(player, self.player_pos)
 					self.line_start = vector.new(self.player_pos)
 					self.line_start.y = self.current_line_y
+				else
+					local avg_rounded = math.floor(self.nodes_per_tick_avg * 1e5) / 1e5
+					core.log("action", "avg " .. avg_rounded)
 				end
 			end
 		else
