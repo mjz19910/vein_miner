@@ -646,18 +646,14 @@ function FloorScanState:main_loop(player, placeable_node_name)
 			local curr_sector = math.floor(curr / step)
 
 			if prev_sector ~= curr_sector then
-				local has_big_max = self.max_dist and self.max_dist > 96 + 8
-				if self.nodes_per_tick_avg < 0.05 or (has_big_max and self.nodes_per_tick_avg < 3) then
+				local has_big_max = self.max_dist and self.max_dist >= 64
+				if self.nodes_per_tick_avg < 0.4 or (has_big_max and self.nodes_per_tick_avg < 1.5) then
 					local avg_rounded = math.floor(self.nodes_per_tick_avg * 1e5) / 1e5
-					core.log("action", "moving down with avg " .. avg_rounded)
 					self.current_line_y = self.current_line_y - 1
 					self.player_pos.y = self.current_line_y + 1
 					self.player_pos = safe_set_player_pos(player, self.player_pos)
 					self.line_start = vector.new(self.player_pos)
 					self.line_start.y = self.current_line_y
-				else
-					local avg_rounded = math.floor(self.nodes_per_tick_avg * 1e5) / 1e5
-					core.log("action", "avg " .. avg_rounded)
 				end
 				self:_reset_range_vars()
 			end
@@ -752,8 +748,6 @@ function FloorScanState:get_angle_deg() return rad_to_deg_wrap360(self.scan_radi
 ---@param self FloorScanState
 function FloorScanState:_reset_range_vars()
 	if self.min_dist and self.max_dist then
-		local cur_pos = vec_new(self.min_dist, self.max_dist, 0):divide(2):round():multiply(2)
-		core.log("action", ("reset range vars from (%d,%d)"):format(cur_pos.x, cur_pos.y))
 		self.last_length = nil
 	end
 	self.min_dist = nil
