@@ -250,7 +250,6 @@ end
 ---@field max_dist number|nil
 ---@field nodes_this_tick integer Number of nodes placed this tick
 ---@field place_limit integer
----@field last_length integer|nil
 local FloorScanState = {}
 
 ---@param player Player
@@ -633,9 +632,6 @@ function FloorScanState:main_loop(player, placeable_node_name)
 		local player_pos = round(player:get_pos())
 		local pos_offset = self.player_pos - player:get_pos()
 		if pos_offset.y < -0.3 then self.player_pos.y = self.player_pos.y + 1 end
-		player_pos.y = self.current_line_y + 1
-		self.player_pos = player_pos
-		self.line_start.y = self.current_line_y
 		if not self.skip_after_yaw then
 			local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit()) * 1.5
 			self.scan_radians = self.scan_radians + yaw_speed
@@ -700,12 +696,6 @@ function FloorScanState:main_loop(player, placeable_node_name)
 		::try_dig::
 		last_place_pos = line_start + vector.new(offset.x, 0, offset.z) + up / 2
 		if not try_place_block_from_inventory(player, playing_sounds, target_pos, place_limit) then goto next end
-		if not self.last_length or cur_len > self.last_length + 0.1 then
-			local distance_msg = max_distance_fmt:format(p_str(target_pos), cur_len, p_str(line_start))
-			core.chat_send_player(player_name, distance_msg)
-			core.log("action", "chat:" .. player_name .. ": " .. distance_msg)
-			self.last_length = cur_len
-		end
 		self:on_node_placed(target_pos, cur_len)
 		self.break_on_next = false
 		::next::
@@ -749,9 +739,6 @@ function FloorScanState:get_angle_deg() return rad_to_deg_wrap360(self.scan_radi
 
 ---@param self FloorScanState
 function FloorScanState:_reset_range_vars()
-	if self.min_dist and self.max_dist then
-		self.last_length = nil
-	end
 	self.min_dist = nil
 	self.max_dist = nil
 	self.log_min = nil
