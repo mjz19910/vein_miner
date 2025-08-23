@@ -64,6 +64,7 @@ local function mark_near_light(self, node_name, pos)
 	if not self.known_lights[h] then
 		self.known_lights[h] = true
 		self:add_pos_to_queue(node_name, pos)
+		return true
 	end
 end
 
@@ -73,53 +74,18 @@ local p = vector.new
 ---@param regions Region[]
 ---@param pos Vector
 ---@param node_name string
----@param user_action boolean
----@param show_log boolean
 ---@param config PlayerConfig
-local function scan_region_for_node(state, regions, r, pos, node_name, user_action, show_log, config)
-	local scan_nodes, node_counts = core.find_nodes_in_area(r.min, r.max, node_name, false)
-	for _, p in pairs(scan_nodes) do mark_near_light(state, node_name, p) end
-	local count = node_counts[node_name]
+local function scan_region_for_node(state, regions, r, pos, node_name, config)
+	local scan_nodes = core.find_nodes_in_area(r.min, r.max, node_name, false)
+	local count = 0
+	for _, p in pairs(scan_nodes) do
+		if mark_near_light(state, node_name, p) then
+			count = count + 1
+		end
+	end
 	if count > 0 then
 		state.found_light_count = state.found_light_count + count
 		log_warning(region_scan_fmt1:format(count, r))
-	end
-	if false and (count > 0 or user_action) then
-		if not show_log then return end
-		local size = r.max - r.min
-		local function scan_near(next_pos, next_pos_name) scan_nearby_region(state, r, next_pos, next_pos_name, pos, node_name, config) end
-		scan_near(p(size.x, 0, 0), "X+")
-		scan_near(p(-size.x, 0, 0), "X-")
-		scan_near(p(0, size.y, 0), "Y+")
-		scan_near(p(0, -size.y, 0), "Y-")
-		scan_near(p(0, 0, size.z), "Z+")
-		scan_near(p(0, 0, -size.z), "Z-")
-		scan_near(p(size.x, 0, -size.z), "X+ Z-")
-		scan_near(p(size.x, 0, size.z), "X+ Z+")
-		scan_near(p(size.x, size.y, 0), "X+ Y+")
-		scan_near(p(size.x, -size.y, 0), "X+ Y-")
-		scan_near(p(size.x, size.y, -size.z), "X+ Y+ Z-")
-		scan_near(p(size.x, size.y, size.z), "X+ Y+ Z+")
-		scan_near(p(size.x, -size.y, -size.z), "X+ Y- Z-")
-		scan_near(p(size.x, -size.y, size.z), "X+ Y- Z+")
-		scan_near(p(-size.x * 2, 0, 0), "X- X-")
-		scan_near(p(-size.x, 0, size.z), "X- Z+")
-		scan_near(p(-size.x, 0, -size.z), "X- Z-")
-		scan_near(p(-size.x, size.y, 0), "X- Y+")
-		scan_near(p(-size.x, -size.y, 0), "X- Y-")
-		scan_near(p(-size.x, size.y, -size.z), "X- Y+ Z-")
-		scan_near(p(-size.x, -size.y, -size.z), "X- Y- Z-")
-		scan_near(p(-size.x, size.y, size.z), "X- Y+ Z+")
-		scan_near(p(-size.x, -size.y, size.z), "X- Y- Z+")
-		scan_near(p(size.x * 2, 0, 0), "X+ X+")
-		scan_near(p(0, size.y, size.z), "Y+ Z+")
-		scan_near(p(0, size.y, -size.z), "Y+ Z-")
-		scan_near(p(0, -size.y * 2, 0), "Y- Y-")
-		scan_near(p(0, -size.y, size.z), "Y- Z+")
-		scan_near(p(0, -size.y, -size.z), "Y- Z-")
-		scan_near(p(0, size.y * 2, 0), "Y+ Y+")
-		scan_near(p(0, 0, size.z * 2), "Z+ Z+")
-		scan_near(p(0, 0, -size.z * 2), "Z- Z-")
 	end
 end
 
@@ -134,24 +100,18 @@ function scanner.light_scan_reset(name) scanner.light_scan_data[name] = {} end
 ---@param pos Vector
 ---@param node_name string
 ---@param options ScanOptions
----@param show_log boolean
-function scanner.scan_nearby_lights(state, pos, node_name, options, show_log)
+function scanner.scan_nearby_lights(state, pos, node_name, options)
 	local name = state.player_name
 	local regions = scanner.light_scan_data[name]
 	local config = player_config_mgr.data[name]
 	local maxy = config.maxy
 	---@param r Region
-	---@param user_action boolean
-	local function base_scan(r, user_action) scan_region_for_node(state, regions, r, pos, node_name, user_action, show_log, config) end
-	---@param r Region
-	local function full_scan(r) base_scan(r, true) end
-	---@param r Region
-	local function normal_scan(r) base_scan(r, false) end
+	local function scan(r) scan_region_for_node(state, regions, r, pos, node_name, config) end
 	if config.last_maxy ~= config.maxy then
-		for _, r in ipairs(regions) do normal_scan(r) end
+		-- for _, r in ipairs(regions) do scan(r) end
 		config.last_maxy = config.maxy
 	end
-	if options.user then for _, r in ipairs(regions) do if r:is_point_in_region(pos) then full_scan(r) end end end
+	if options.user then for _, r in ipairs(regions) do if r:is_point_in_region(pos) then scan(r) end end end
 	local light_scan_distance = CFG.light_scan_dist
 	local minvec = vector.subtract(pos, math.floor(light_scan_distance / 2))
 	minvec = scanner.clamp_vec_to_player_bounds(minvec, config)
@@ -167,7 +127,7 @@ function scanner.scan_nearby_lights(state, pos, node_name, options, show_log)
 			max_distance = 26,
 			---@param r Region
 			on_flush = function(r)
-				normal_scan(r)
+				scan(r)
 				table.insert(regions, r)
 			end,
 		};
@@ -180,14 +140,14 @@ function scanner.scan_nearby_lights(state, pos, node_name, options, show_log)
 			local gap = aabb.between(regions[i], regions[j], MAX_GAP_DIST)
 			if gap and gap:volume() < GAP_THRESHOLD then
 				if not aabb.is_covered_by_any(gap, regions) then
-					normal_scan(r)
+					scan(r)
 					table.insert(regions, r)
 				end
 			end
 		end
 	end
 	local unknown = aabb.compact_regions(regions)
-	for _, r in ipairs(unknown) do normal_scan(r) end
+	for _, r in ipairs(unknown) do scan(r) end
 	if newly_scanned and player_config_mgr:is_light_debug_enabled(name) then for _, region in ipairs(regions) do region:draw() end end
 end
 

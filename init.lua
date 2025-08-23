@@ -634,7 +634,7 @@ function VeinMinerState:process_queue_item(item, player_name)
 			name = node_name,
 			options = options,
 		})
-		scanner.scan_nearby_lights(self, pos, node_name, options, false)
+		scanner.scan_nearby_lights(self, pos, node_name, options)
 	end
 
 	if not options.large and player_config_mgr:is_light_debug_enabled(player_name) then
