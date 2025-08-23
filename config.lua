@@ -374,5 +374,7 @@ for _, butterfly_color in pairs(butterfly) do
 end
 add_light_node("wool:green")
 light_nodes_set["wool:green"] = true
+add_light_node("default:stone")
+light_nodes_set["default:stone"] = true
 
 return CFG

@@ -617,7 +617,7 @@ function VeinMinerState:process_queue_item(item, player_name)
 	if not options.large then options.small = true end
 
 	local vec_size = vector.new(xz_len, y_len, xz_len)
-	vec_size = vec_new(2, 2, 2)
+	vec_size = vec_new(8, 8, 8)
 
 	local minvec = h.mod_pos(pos, vec_size)
 	minvec = scanner.clamp_vec_to_player_bounds(minvec, config)
