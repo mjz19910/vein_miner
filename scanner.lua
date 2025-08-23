@@ -211,15 +211,15 @@ function scanner.scan_nearby_lights(state, pos, node_name, options, show_log)
 		local size = r.max - r.min
 		local size_change = light_scan_distance
 		if size_change < 1 then size_change = 1 end
-		if size.x > size_change * 3 then
+		if size.x > size_change * 4 then
 			r.min.x = r.min.x + math.floor(size_change / 2)
 			r.max.x = r.max.x - math.floor(size_change / 2)
 		end
-		if size.y > size_change * 3 then
+		if size.y > size_change * 4 then
 			r.min.y = r.min.y + math.floor(size_change / 2)
 			r.max.y = r.max.y - math.floor(size_change / 2)
 		end
-		if size.z > size_change * 3 then
+		if size.z > size_change * 4 then
 			r.min.z = r.min.z + math.floor(size_change / 2)
 			r.max.z = r.max.z - math.floor(size_change / 2)
 		end
