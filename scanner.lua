@@ -99,7 +99,7 @@ local function scan_region_for_node(state, regions, r, pos, node_name, user_acti
 		local is_new_light = mark_near_light(state, node_name, p)
 		if is_new_light then state.found_light_count = state.found_light_count + 1 end
 	end
-	if count > 0 or user_action then
+	if false and count > 0 or user_action then
 		if not show_log then return end
 		local min_str = core.pos_to_string(r.min)
 		local max_str = core.pos_to_string(r.max)
