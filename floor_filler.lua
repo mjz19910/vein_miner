@@ -76,6 +76,7 @@ local function try_place_block_from_inventory(player, playing_sounds, target_pos
 			local node = core.get_node(target_pos)
 			if node and node.name ~= "air" then
 				if node.name == "ignore" then return false end
+				if node.name == name then return false end
 				if dig_anyway_set[node.name] then
 					core.node_dig(target_pos, node, player)
 					goto after_dig
