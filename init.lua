@@ -242,10 +242,7 @@ local target_set = CFG.target_set
 
 local function get_scan_mode(node_name)
 	if ignored_nodes_set[node_name] then return "ignore" end
-	if light_nodes_set[node_name] then return "append" end
-	if exclusive_node_set[node_name] then return "exclusive" end
-	if target_set[node_name] then return "by_group" end
-	return "error"
+	if not target_set[node_name] then return "error" end
 end
 
 for i, dir in pairs(vec_dirs) do
@@ -459,21 +456,12 @@ local wanted_groups = {
 	stone = true,
 	dirt = true,
 }
----@type table<string, boolean>
-local falling_groups = {
-	sand = true,
-	silver_sand = true,
-	gravel = true,
-}
 ---@type string[]
 local green_list = {}
 ---@type string[]
 local wanted_list = {}
 ---@type string[]
-local falling_list = {}
----@type string[]
 local falling_list_all = {}
-for k, _ in pairs(falling_groups) do table.insert_all(falling_list, mining_groups[k]) end
 for k, _ in pairs(falling_groups_all) do table.insert_all(falling_list_all, mining_groups[k]) end
 for k, _ in pairs(green_groups) do table.insert_all(green_list, mining_groups[k]) end
 for k, _ in pairs(wanted_groups) do table.insert_all(wanted_list, mining_groups[k]) end
@@ -495,7 +483,6 @@ local cobble_target_groups = {
 	clay = true,
 	ore = true,
 	stone = true,
-	dirt = true,
 	butterfly = true,
 	firefly = true,
 	papyrus = true,
@@ -505,11 +492,6 @@ local cobble_target_groups = {
 	coral = true,
 	snow_block = true,
 	green_wool = true,
-	gravel = true,
-	sand = true,
-	silver_sand = true,
-	desert_sand = true,
-	snow = true,
 }
 
 for k, _ in pairs(cobble_target_groups) do table.insert_all(cobble_target_list, mining_groups[k]) end
@@ -578,9 +560,7 @@ end
 ---@param options ScanOptions
 function VeinMinerState:add_pos_to_queue(node_name, pos, options)
 	local h = core.hash_node_position(pos)
-	if self.queued_set[h] then
-		return nil
-	end
+	if self.queued_set[h] then return nil end
 	self.queued_set[h] = true
 	---@type ScanItem
 	local item = {
@@ -646,93 +626,19 @@ function VeinMinerState:process_queue_item(item, player_name)
 
 	-- self.wait_for_player_near_pos(player, center)
 
-	if options.large then
-		notify_pos(center, "#0000ffff", 7 * 4, 4 * 60)
-	else
-		notify_pos(center, "#0000ffff", 7, 4 * 60)
-	end
-
-	local target_nodes = {}
-	local target_falling_nodes = table.copy(falling_list)
-	local target_flags = {
-		liquid = false,
-		falling = false,
-	}
-	local group_target = nil
-	local scan_mode = get_scan_mode(node_name)
-	if scan_mode == "ignore" then
-		return
-	elseif scan_mode == "exclusive" then
-		if not contains(target_nodes, node_name) then insert(target_nodes, node_name) end
-	elseif scan_mode == "append" then
-		load_cobble_list(target_nodes, target_falling_nodes)
-		if contains(falling_list_all, node_name) then
-			if not contains(target_falling_nodes, node_name) then insert(target_falling_nodes, node_name) end
-		elseif not contains(target_nodes, node_name) then
-			insert(target_nodes, node_name)
-		end
-		target_flags.falling = true
-	elseif scan_mode == "by_group" then
-		if node_name == "wool:green" then target_flags.liquid = true end
-		if node_to_group_cache[node_name] then
-			local entry = node_to_group_cache[node_name]
-			target_nodes, target_falling_nodes = entry.nodes, entry.falling_nodes
-			local target_key = node_to_group[node_name]
-			group_target = target_key
-		elseif node_to_group[node_name] ~= nil then
-			local target_key = node_to_group[node_name]
-			for _, node_name in ipairs(mining_groups[target_key]) do
-				if not contains(target_nodes, node_name) then insert(target_nodes, node_name) end
-			end
-			group_target = target_key
-			node_to_group_cache[node_name] = {
-				nodes = target_nodes,
-				falling_nodes = target_falling_nodes,
-			}
-		elseif not contains(target_nodes, node_name) then
-			insert(target_nodes, node_name)
-		end
-	elseif scan_mode == "error" then
-		if not known_unhandled_nodes[node_name] then
-			known_unhandled_nodes[node_name] = true
-			log_error("unhandled node name " .. node_name)
-		end
-		return
-	else
-		log_error("unhandled scan mode " .. scan_mode)
-		return
-	end
-	if group_target then
-		if cobble_target_groups[group_target] then
-			load_cobble_list(target_nodes, target_falling_nodes)
-			target_flags.falling = true
-		elseif falling_groups[group_target] then
-			for _, nn in ipairs(wanted_list) do if not contains(target_nodes, nn) then insert(target_nodes, nn) end end
-			target_flags.falling = true
-		elseif wanted_groups[group_target] then
-			for _, nn in ipairs(wanted_list) do if not contains(target_nodes, nn) then insert(target_nodes, nn) end end
-			target_flags.falling = true
-		elseif green_groups[group_target] then
-			for _, nn in ipairs(green_list) do if not contains(target_nodes, nn) then insert(target_nodes, nn) end end
-		elseif not known_groups[group_target] then
-			log_warning("new group target " .. group_target)
+	if player_config_mgr:is_light_debug_enabled(player_name) then
+		if options.large then
+			notify_pos(center, "#0000ffff", 7 * 4, 4 * 60)
+		else
+			notify_pos(center, "#0000ffff", 7, 4 * 60)
 		end
 	end
-
+	local target_nodes = {node_name}
 	if options.user and options.light then self.found_light_count = self.found_light_count + 1 end
-
 	if not utils.has_empty_main_inv_slot(player) then core.chat_send_player(player_name, "Waiting for empty inventory slot for digging") end
 	while not utils.has_empty_main_inv_slot(player) do async_wait(1) end
-	if target_flags.liquid then iter_node_groups(self, core.find_nodes_in_area(minvec, maxvec, water_targets, true)) end
-	if target_flags.falling then iter_node_groups(self, core.find_nodes_in_area(minvec, maxvec, target_falling_nodes, true)) end
 	iter_node_groups(self, core.find_nodes_in_area(minvec, maxvec, target_nodes, true))
-
 	core.fix_light(minvec, maxvec)
-
-	-- for v in self.pending_light_notify:iter_right() do
-	-- 	add_light_to_teleport_queue(self, v)
-	-- end
-
 	if options.light then
 		self.pending_light_scan:push_left({
 			pos = pos,
@@ -742,9 +648,9 @@ function VeinMinerState:process_queue_item(item, player_name)
 		scanner.scan_nearby_lights(self, pos, node_name, options, false)
 	end
 
-	if not options.large then
+	if not options.large and player_config_mgr:is_light_debug_enabled(player_name) then
 		-- allow water to flow
-		core.after(3, function()
+		core.after(5, function()
 			local light_timeout = 120
 			notify_pos(minvec, "#ffff00ff", 6, light_timeout + 60)
 			local lp_north = vector.offset(minvec, 3, 3, 7)
