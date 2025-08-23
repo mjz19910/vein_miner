@@ -212,12 +212,18 @@ function scanner.scan_nearby_lights(state, pos, node_name, options, show_log)
 		local size = r.min - r.max
 		local size_change = scan_dist
 		if size_change < 1 then size_change = 1 end
-		r.min.x = r.min.x + size_change
-		r.max.x = r.max.x - size_change
-		r.min.y = r.min.y + size_change
-		r.max.y = r.max.y - size_change
-		r.min.z = r.min.z + size_change
-		r.max.z = r.max.z - size_change
+		if size.x > size_change * 2 then
+			r.min.x = r.min.x + math.floor(size_change / 2)
+			r.max.x = r.max.x - math.floor(size_change / 2)
+		end
+		if size.y > size_change * 2 then
+			r.min.y = r.min.y + math.floor(size_change / 2)
+			r.max.y = r.max.y - math.floor(size_change / 2)
+		end
+		if size.z > size_change * 2 then
+			r.min.z = r.min.z + math.floor(size_change / 2)
+			r.max.z = r.max.z - math.floor(size_change / 2)
+		end
 	end
 	if newly_scanned and player_config_mgr:is_light_debug_enabled(name) then for _, region in ipairs(regions) do region:draw() end end
 end
