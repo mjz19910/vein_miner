@@ -606,33 +606,22 @@ function VeinMinerState:process_queue_item(item, player_name)
 	maxvec = scanner.clamp_vec_to_player_bounds(maxvec, config)
 
 	if self.pos_mod_seen[chunk_hash] then return end
-
-	-- Position check
 	if not scanner.is_pos_in_player_bounds(pos, config) then return end
 
 	if is_liquid(node_name, "water") or is_liquid(node_name, "lava") then
 		fill_liquid_at_pos(self, pos, l_utils.handle_pos_notify)
 		return
 	end
-	-- if options.light then
-	-- 	self.pending_light_notify:push_left({
-	-- 		pos = pos,
-	-- 		queue_left = self.queue:length(),
-	-- 	})
-	-- end
-
-	local center = vector.floor(vector.divide(vector.add(minvec, maxvec), 2))
-	if vector.distance(player:get_pos(), center) > 220 then return end
-
-	-- self.wait_for_player_near_pos(player, center)
 
 	if player_config_mgr:is_light_debug_enabled(player_name) then
+		local center = vector.floor(vector.divide(vector.add(minvec, maxvec), 2))
 		if options.large then
 			notify_pos(center, "#0000ffff", 7 * 4, 4 * 60)
 		else
 			notify_pos(center, "#0000ffff", 7, 4 * 60)
 		end
 	end
+
 	local target_nodes = {node_name}
 	if options.user and options.light then self.found_light_count = self.found_light_count + 1 end
 	if not utils.has_empty_main_inv_slot(player) then core.chat_send_player(player_name, "Waiting for empty inventory slot for digging") end
