@@ -641,8 +641,9 @@ function FloorScanState:main_loop(player, placeable_node_name)
 			player:set_look_horizontal(self.scan_radians + self.player_start_yaw + yaw_speed)
 			local prev = self:get_angle_rad() % (TAU * 2)
 			local curr = (self:get_angle_rad() + yaw_speed) % (TAU * 2)
-			local prev_sector = math.floor(prev / TAU * 2)
-			local curr_sector = math.floor(curr / TAU * 2)
+			local step = TAU / 2 -- 180° in radians
+			local prev_sector = math.floor(prev / step)
+			local curr_sector = math.floor(curr / step)
 
 			if prev_sector ~= curr_sector then
 				local has_big_max = self.max_dist and self.max_dist > 96 + 8
