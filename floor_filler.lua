@@ -635,7 +635,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 		self.player_pos = player_pos
 		self.line_start.y = self.current_line_y
 		if not self.skip_after_yaw then
-			local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit()) / 2
+			local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit()) * 1.5
 			self.scan_radians = self.scan_radians + yaw_speed
 			self.current_yaw_rad = self.scan_radians + self.player_start_yaw + math.pi / 2
 			player:set_look_horizontal(self.scan_radians + self.player_start_yaw + yaw_speed)
