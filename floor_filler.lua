@@ -640,8 +640,8 @@ function FloorScanState:main_loop(player, placeable_node_name)
 			local curr_sector = math.floor(curr / TAU * 2)
 
 			if prev_sector ~= curr_sector then
-				self:_reset_range_vars()
-				if self.nodes_per_tick_avg < 4 then
+				local has_big_max = self.max_dist and self.max_dist > 96 + 8
+				if self.nodes_per_tick_avg == 0 or (has_big_max and self.nodes_per_tick_avg < 3) then
 					local avg_rounded = math.floor(self.nodes_per_tick_avg * 1e5) / 1e5
 					core.log("action", "moving down with avg " .. avg_rounded)
 					self.current_line_y = self.current_line_y - 1
@@ -653,6 +653,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 					local avg_rounded = math.floor(self.nodes_per_tick_avg * 1e5) / 1e5
 					core.log("action", "avg " .. avg_rounded)
 				end
+				self:_reset_range_vars()
 			end
 		else
 			self.current_yaw_rad = player:get_look_horizontal() + math.pi / 2
@@ -733,6 +734,7 @@ function FloorScanState:get_angle_rad() return self.scan_radians + self.player_s
 ---@param self FloorScanState
 function FloorScanState:get_angle_deg() return rad_to_deg_wrap360(self.scan_radians + self.player_start_yaw) end
 
+---@param self FloorScanState
 function FloorScanState:_reset_range_vars()
 	if self.min_dist and self.max_dist then
 		local cur_pos = vec_new(self.min_dist, self.max_dist, 0):divide(2):round():multiply(2)
