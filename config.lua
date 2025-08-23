@@ -394,5 +394,6 @@ add_rec_light("default:snow")
 add_rec_light(dirt.grass.coniferous)
 for _, trunk in ipairs(trees.trunk) do add_rec_light(trunk) end
 for _, stem in ipairs(trees.stem) do add_rec_light(stem) end
+for _, stone_with_ore in pairs(stone.ore) do add_rec_light(stone_with_ore) end
 
 return CFG
