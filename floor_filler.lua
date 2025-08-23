@@ -631,6 +631,8 @@ function FloorScanState:main_loop(player, placeable_node_name)
 	if self.yaw_update_disabled then
 		if ctrl.zoom then self.skip_after_yaw = true end
 		local player_pos = round(player:get_pos())
+		local pos_offset = self.player_pos - player:get_pos()
+		if pos_offset.y < -0.3 then self.player_pos.y = self.player_pos.y + 1 end
 		player_pos.y = self.current_line_y + 1
 		self.player_pos = player_pos
 		self.line_start.y = self.current_line_y
