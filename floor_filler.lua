@@ -70,8 +70,7 @@ for _, v in ipairs(dig_anyway_list) do dig_anyway_set[v] = true end
 local function try_place_block_from_inventory(player, playing_sounds, target_pos, max_hear_distance)
 	local inv = player:get_inventory()
 	for i = 1, inv:get_size("main") do
-		local stack = inv:get_stack("main", i)
-		local name = stack:get_name()
+		local name = inv:get_stack("main", i):get_name()
 		local def = registered_nodes[name]
 		if not placeable_nodes_to_skip[name] and def and name ~= "air" and not def.groups.falling_node then
 			local node = core.get_node(target_pos)
@@ -90,7 +89,7 @@ local function try_place_block_from_inventory(player, playing_sounds, target_pos
 			set_node(target_pos, {
 				name = name,
 			})
-			stack = inv:get_stack("main", i)
+			local stack = inv:get_stack("main", i)
 			stack:take_item(1)
 			inv:set_stack("main", i, stack)
 			if not playing_sounds[def.sounds.place] then
