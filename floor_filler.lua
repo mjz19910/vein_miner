@@ -653,7 +653,6 @@ function FloorScanState:main_loop(player, placeable_node_name)
 					self.line_start = vector.new(self.player_pos)
 					self.line_start.y = self.current_line_y
 				end
-				self:_reset_range_vars()
 			end
 		else
 			self.current_yaw_rad = player:get_look_horizontal() + math.pi / 2
@@ -725,7 +724,6 @@ function FloorScanState:_update_counters(player_name)
 	end
 
 	if self.last_place_yaw_radians and self.count > self.log_range.min then
-		self:_reset_range_vars()
 		core.log("action", "finished placing floor at deg " .. ("%.1f"):format(rad_to_deg_wrap360(self.last_place_yaw_radians)))
 		self.last_place_yaw_radians = nil
 	end
@@ -736,15 +734,6 @@ function FloorScanState:get_angle_rad() return self.scan_radians + self.player_s
 
 ---@param self FloorScanState
 function FloorScanState:get_angle_deg() return rad_to_deg_wrap360(self.scan_radians + self.player_start_yaw) end
-
----@param self FloorScanState
-function FloorScanState:_reset_range_vars()
-	self.min_dist = nil
-	self.max_dist = nil
-	self.log_min = nil
-	self.log_max = nil
-	self.show_log = false
-end
 
 --- Adjust player yaw if few blocks were placed
 ---@param self FloorScanState
@@ -759,9 +748,6 @@ function FloorScanState:_maybe_update_yaw(player, ctrl)
 	local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit()) * 1.25
 	if ctrl.sneak then yaw_speed = -yaw_speed end
 
-	-- -- detect crossing 0° in either direction
-	-- if math.abs(curr - prev) > math.pi then self:_reset_range_vars() end
-
 	local prev = self:get_angle_rad() % TAU
 	local curr = (self:get_angle_rad() + yaw_speed) % TAU
 	local step = TAU / 4 -- 90° in radians
@@ -774,7 +760,6 @@ function FloorScanState:_maybe_update_yaw(player, ctrl)
 		-- which boundary did we cross?
 		local boundary = curr_sector * step
 		core.log("action", ("crossed %.1f°"):format(math.deg(boundary)))
-		self:_reset_range_vars()
 		if curr_sector == 0 then
 			if self.break_on_next then
 				self.yaw_update_disabled = true
