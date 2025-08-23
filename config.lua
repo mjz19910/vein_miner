@@ -16,7 +16,7 @@ local dirt = {
 	"default:dirt",
 	dry = "default:dry_dirt",
 	grass = {
-		"default:dirt_with_grass",
+		normal = "default:dirt_with_grass",
 		dry = "default:dry_dirt_with_dry_grass",
 		snow = "default:dirt_with_snow",
 		rainforest = "default:dirt_with_rainforest_litter",
@@ -313,7 +313,7 @@ for k, v in pairs(CFG.exclusive_nodes) do exclusive_node_set[v] = true end
 CFG.exclusive_node_set = exclusive_node_set
 
 mg.surface = {dirt.dry, dirt.grass.dry}
-table.insert_all(mg.surface, {dirt.grass[1]})
+table.insert_all(mg.surface, {dirt.grass.normal})
 table.insert_all(mg.surface, {dirt.grass.snow, dirt.grass.rainforest, dirt.grass.coniferous})
 table.insert_all(mg.surface, {dirt.permafrost.moss, dirt.permafrost.stones})
 table.insert_all(mg.surface, {sand.with_kelp})
@@ -382,9 +382,10 @@ add_rec_light(wool.green)
 add_rec_light(stone[1])
 add_rec_light(stone.sandstone)
 add_rec_light(stone.desert)
-add_rec_light(dirt[1])
-add_rec_light(sand.normal)
-add_rec_light(sand.silver)
-add_rec_light(gravel)
+-- add_rec_light(dirt[1])
+-- add_rec_light(sand.normal)
+-- add_rec_light(sand.silver)
+-- add_rec_light(gravel)
+add_rec_light(dirt.grass.normal)
 
 return CFG
