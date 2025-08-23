@@ -23,7 +23,7 @@ local dirt = {
 		coniferous = "default:dirt_with_coniferous_litter",
 	},
 	permafrost = {
-		"default:permafrost",
+		normal = "default:permafrost",
 		moss = "default:permafrost_with_moss",
 		stones = "default:permafrost_with_stones",
 	},
@@ -160,6 +160,8 @@ local wool = {
 	orange = "wool:orange",
 }
 
+local ice = "default:ice"
+
 ---@class VeinMinerConfig
 local CFG = {}
 
@@ -205,7 +207,7 @@ local mg = {
 	mushroom = flower.mushroom,
 	stem = trees.stem,
 	tree_trunk = trees.trunk,
-	dirt = {dirt[1], dirt.permafrost[1]},
+	dirt = {dirt[1], dirt.permafrost.normal},
 	ore = {stone.ore.coal, stone.ore.copper, stone.ore.diamond, stone.ore.gold, stone.ore.iron, stone.ore.mese, stone.ore.tin},
 	stone = {stone[1], stone.desert, stone.sandstone, stone.desert_sandstone, stone.silver_sandstone, stone.cave_ice},
 	mesecon_wire = mesecon.wire,
@@ -223,6 +225,7 @@ local mg = {
 	papyrus = {papyrus},
 	firefly = {firefly},
 	green_wool = {wool.green},
+	ice = {ice},
 }
 ---@type MiningGroups
 CFG.mining_groups = mg
@@ -396,5 +399,10 @@ for _, trunk in ipairs(trees.trunk) do add_rec_light(trunk) end
 for _, stem in ipairs(trees.stem) do add_rec_light(stem) end
 for _, stone_with_ore in pairs(stone.ore) do add_rec_light(stone_with_ore) end
 add_rec_light("flowers:waterlily_waving")
+add_rec_light(dirt.permafrost.moss)
+add_rec_light(dirt.permafrost.stones)
+add_rec_light(dirt.permafrost.normal)
+
+add_rec_light(ice)
 
 return CFG
