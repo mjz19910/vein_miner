@@ -1,5 +1,7 @@
 local ipairs = ipairs
 local pairs = pairs
+---@type CoreModApi
+local core = core
 ---@type VeinMinerGlobal
 local vein_miner = vein_miner
 local aabb = vein_miner.aabb
@@ -57,14 +59,12 @@ end
 local VeinMinerState = vein_miner.mt
 
 local function mark_near_light(self, node_name, pos)
-	if not is_valid_pos_to_iter(pos, self.player_name) then return false end
+	if not is_valid_pos_to_iter(pos, self.player_name) then return end
 	local h = core.hash_node_position(pos)
 	if not self.known_lights[h] then
 		self.known_lights[h] = true
 		self:add_pos_to_queue(node_name, pos)
-		return true
 	end
-	return false
 end
 
 local p = vector.new
@@ -77,22 +77,16 @@ local p = vector.new
 ---@param show_log boolean
 ---@param config PlayerConfig
 local function scan_region_for_node(state, regions, r, pos, node_name, user_action, show_log, config)
-	local center = (r.min + r.max) / 2
-	local scan_distance = vector.distance(state.player:get_pos(), center)
-	local scan_nodes = core.find_nodes_in_area(r.min, r.max, node_name, false)
-	local count = count_found_nodes(state, scan_nodes, pos, config)
-	for _, p in pairs(scan_nodes) do
-		local is_new_light = mark_near_light(state, node_name, p)
-		if is_new_light then state.found_light_count = state.found_light_count + 1 end
-	end
+	local scan_nodes, node_counts = core.find_nodes_in_area(r.min, r.max, node_name, false)
+	for _, p in pairs(scan_nodes) do mark_near_light(state, node_name, p) end
+	local count = node_counts[node_name]
 	if count > 0 then
+		state.found_light_count = state.found_light_count + count
 		log_warning(region_scan_fmt1:format(count, r))
 	end
 	if false and (count > 0 or user_action) then
 		if not show_log then return end
-		local max_str = core.pos_to_string(r.max)
 		local size = r.max - r.min
-		local size_str = core.pos_to_string(size)
 		local function scan_near(next_pos, next_pos_name) scan_nearby_region(state, r, next_pos, next_pos_name, pos, node_name, config) end
 		scan_near(p(size.x, 0, 0), "X+")
 		scan_near(p(-size.x, 0, 0), "X-")
