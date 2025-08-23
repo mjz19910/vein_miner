@@ -172,8 +172,7 @@ function scanner.scan_nearby_lights(state, pos, node_name, options, show_log)
 	end
 	if options.user then for _, r in ipairs(regions) do if r:is_point_in_region(pos) then full_scan(r) end end end
 	local light_scan_distance = CFG.light_scan_dist
-	local light_scan_range = light_scan_distance / 2
-	local minvec = vector.subtract(pos, math.floor(light_scan_range))
+	local minvec = vector.subtract(pos, math.floor(light_scan_distance / 2))
 	minvec = scanner.clamp_vec_to_player_bounds(minvec, config)
 	local maxvec = vector.add(minvec, light_scan_distance)
 	maxvec = scanner.clamp_vec_to_player_bounds(maxvec, config)
