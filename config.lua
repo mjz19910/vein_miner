@@ -387,7 +387,9 @@ add_rec_light(stone.desert)
 -- add_rec_light(sand.silver)
 -- add_rec_light(gravel)
 add_rec_light(dirt.grass.normal)
+add_rec_light(dirt.grass.snow)
 add_rec_light("default:cave_ice")
 add_rec_light("default:snowblock")
+add_rec_light("default:snow")
 
 return CFG
