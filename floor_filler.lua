@@ -90,6 +90,7 @@ local function try_place_block_from_inventory(player, playing_sounds, target_pos
 			set_node(target_pos, {
 				name = name,
 			})
+			stack = inv:get_stack("main", i)
 			stack:take_item(1)
 			inv:set_stack("main", i, stack)
 			if not playing_sounds[def.sounds.place] then
