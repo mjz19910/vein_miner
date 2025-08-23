@@ -696,7 +696,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 		if not try_place_block_from_inventory(player, playing_sounds, target_pos, place_limit) then goto next end
 		if not self.last_length or cur_len > self.last_length + 0.1 then
 			local distance_msg = max_distance_fmt:format(p_str(target_pos), cur_len, p_str(line_start))
-			core.chat_send_player(player_name, max_distance_fmt:format(p_str(target_pos), cur_len, p_str(line_start)))
+			core.chat_send_player(player_name, distance_msg)
 			core.log("action", "chat:" .. player_name .. ": " .. distance_msg)
 			self.last_length = cur_len
 		end
