@@ -79,33 +79,20 @@ local p = vector.new
 local function scan_region_for_node(state, regions, r, pos, node_name, user_action, show_log, config)
 	local center = (r.min + r.max) / 2
 	local scan_distance = vector.distance(state.player:get_pos(), center)
-	if false then
-		if not show_log then return end
-		local scan_nodes = core.find_nodes_in_area(r.min, r.max, node_name, false)
-		local count = count_found_nodes(state, scan_nodes, pos, config)
-		if count > 0 or user_action then
-			local region_scan_fmt = "[LightScan] skipped region (%s) %s to %s (%s) Volume=%d Distance=%d"
-			local min_str = core.pos_to_string(r.min)
-			local max_str = core.pos_to_string(r.max)
-			local size_str = core.pos_to_string(r.max - r.min)
-			log_error(region_scan_fmt:format(count, min_str, max_str, size_str, aabb.volume(r), scan_distance))
-		end
-		return
-	end
-	-- state.wait_for_player_near_pos(state.player, center)
 	local scan_nodes = core.find_nodes_in_area(r.min, r.max, node_name, false)
 	local count = count_found_nodes(state, scan_nodes, pos, config)
 	for _, p in pairs(scan_nodes) do
 		local is_new_light = mark_near_light(state, node_name, p)
 		if is_new_light then state.found_light_count = state.found_light_count + 1 end
 	end
-	if false and count > 0 or user_action then
+	if count > 0 then
+		log_warning(region_scan_fmt1:format(count, r))
+	end
+	if false and (count > 0 or user_action) then
 		if not show_log then return end
-		local min_str = core.pos_to_string(r.min)
 		local max_str = core.pos_to_string(r.max)
 		local size = r.max - r.min
 		local size_str = core.pos_to_string(size)
-		log_warning(region_scan_fmt1:format(count, r))
 		local function scan_near(next_pos, next_pos_name) scan_nearby_region(state, r, next_pos, next_pos_name, pos, node_name, config) end
 		scan_near(p(size.x, 0, 0), "X+")
 		scan_near(p(-size.x, 0, 0), "X-")
