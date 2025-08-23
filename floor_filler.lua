@@ -494,6 +494,12 @@ function FloorScanState:run()
 		self.player_start_yaw = yaw
 		self.current_yaw_rad = yaw + math.pi / 2
 		self.player_pos = round(player:get_pos())
+		local pos_offset = self.player_pos - player:get_pos()
+		if pos_offset.y < -0.3 then
+			self.player_pos.y = self.player_pos.y + 1
+		end
+		pos_offset = self.player_pos - player:get_pos()
+		core.log("pos diff " .. tostring(pos_offset))
 		self.line_start = self.player_pos + down
 		self.current_line_y = self.line_start.y
 		core.log("action", "start line floor placing at " .. self.current_line_y)
@@ -506,7 +512,7 @@ function FloorScanState:run()
 		end
 	end
 
-	if self.player_pos == nil then self.player_pos = player:get_pos() end
+	if self.player_pos == nil then self.player_pos = round(player:get_pos()) end
 
 	-- Inventory scan: find a valid node to place
 	-- so we can ignore support provided by this node
@@ -597,7 +603,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 
 	if self.yaw_update_disabled then
 		if ctrl.zoom then self.skip_after_yaw = true end
-		local player_pos = vector.round(player:get_pos())
+		local player_pos = round(player:get_pos())
 		player_pos.y = self.current_line_y + 1
 		self.player_pos = player_pos
 		self.line_start.y = self.current_line_y
