@@ -158,7 +158,6 @@ local normal_nodes = {
 	["default:stone_with_copper"] = true,
 	["default:tree"] = true,
 	["default:jungletree"] = true,
-
 }
 local normal_nodes_new = {}
 
