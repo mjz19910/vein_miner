@@ -391,5 +391,6 @@ add_rec_light(dirt.grass.snow)
 add_rec_light("default:cave_ice")
 add_rec_light("default:snowblock")
 add_rec_light("default:snow")
+add_rec_light(dirt.grass.coniferous)
 
 return CFG

@@ -690,9 +690,16 @@ function FloorScanState:main_loop(player, placeable_node_name)
 		if math.floor(target_pos.y) <= math.floor(player_pos.y) - 1 then target_pos.y = target_pos.y + 1 end
 		local cur = get_node_or_nil(target_pos)
 		if not cur then break end
-		if not is_passable(cur) and not dig_anyway_set[cur.name] then goto next end
+		if dig_anyway_set[cur.name] then goto try_dig end
+		if not is_passable(cur) then goto next end
 		if target_pos.y ~= -1 and not is_supported(target_pos, placeable_node_name) then goto next end
 		if cur.name == "ignore" then goto next end
+		do
+			local def = registered_nodes[cur.name]
+			if def.liquidtype == "source" then goto next end
+			if def.walkable then goto next end
+		end
+		::try_dig::
 		last_place_pos = line_start + vector.new(offset.x, 0, offset.z) + up / 2
 		if not try_place_block_from_inventory(player, playing_sounds, target_pos, place_limit) then goto next end
 		if not self.last_length or cur_len > self.last_length + 0.1 then
@@ -707,7 +714,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 	end
 	if self.nodes_this_loop > 0 then self.nodes_this_tick = self.nodes_this_tick + self.nodes_this_loop end
 	if last_place_pos ~= nil and not self.yaw_update_disabled then safe_set_player_pos(player, last_place_pos) end
-	if last_place_pos ~= nil and self.yaw_update_disabled and self.nodes_per_tick_avg < 3 then safe_set_player_pos(player, last_place_pos) end
+	if last_place_pos ~= nil and self.yaw_update_disabled and self.nodes_per_tick_avg < 0.5 then safe_set_player_pos(player, last_place_pos) end
 	-- Handle yaw rotation if few blocks placed
 	self:_maybe_update_yaw(player, ctrl)
 	-- Handle timers + counters
