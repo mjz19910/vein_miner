@@ -50,7 +50,7 @@ local stone = {
 }
 
 local sand = {
-	"default:sand",
+	normal = "default:sand",
 	silver = "default:silver_sand",
 	desert = "default:desert_sand",
 	with_kelp = "default:sand_with_kelp",
@@ -155,6 +155,11 @@ local butterfly = {
 
 local firefly = "fireflies:firefly"
 
+local wool = {
+	green = "wool:green",
+	orange = "wool:orange",
+}
+
 ---@class VeinMinerConfig
 local CFG = {}
 
@@ -165,7 +170,7 @@ CFG.light_scan_dist = 1
 local LIGHT_NODES = {mese_post_light.pine, mese_post_light.acacia}
 CFG.LIGHT_NODES = LIGHT_NODES
 ---@type string[]
-local target_list = {"default:stone_block", "fire:basic_flame", "wool:green", "wool:orange"}
+local target_list = {"default:stone_block", "fire:basic_flame", wool.green, wool.orange}
 table.insert(target_list, obsidian.value)
 CFG.target_list = target_list
 ---@type string[]
@@ -193,7 +198,7 @@ local mg = {
 	fern = grass.fern,
 	blueberry = {blueberry.leaves, blueberry.with_berries},
 	gravel = {gravel},
-	sand = {sand[1]},
+	sand = {sand.normal},
 	silver_sand = {sand.silver},
 	desert_sand = {sand.desert},
 	flower = flower.common,
@@ -217,7 +222,7 @@ local mg = {
 	butterfly = {butterfly.white, butterfly.red, butterfly.violet},
 	papyrus = {papyrus},
 	firefly = {firefly},
-	green_wool = {"wool:green"},
+	green_wool = {wool.green},
 }
 ---@type MiningGroups
 CFG.mining_groups = mg
@@ -361,20 +366,25 @@ CFG.SUPPORT_DIRS = support_dirs
 local vertical_offsets = {down, new_vec(0, 0, 0), up, up * 2}
 CFG.VERTICAL_OFFSETS = vertical_offsets
 
-add_light_node("default:cobble")
-light_nodes_set["default:cobble"] = true
 add_light_node("default:jungletree")
 add_light_node("default:junglegrass")
 add_light_node("default:dirt_with_rainforest_litter")
-add_light_node(firefly)
-light_nodes_set[firefly] = true
-for _, butterfly_color in pairs(butterfly) do
-	add_light_node(butterfly_color)
-	light_nodes_set[butterfly_color] = true
+
+local function add_rec_light(nn)
+	add_light_node(nn)
+	light_nodes_set[nn] = true
 end
-add_light_node("wool:green")
-light_nodes_set["wool:green"] = true
-add_light_node("default:stone")
-light_nodes_set["default:stone"] = true
+
+add_rec_light(cobble[1])
+add_rec_light(firefly)
+for _, butterfly_color in pairs(butterfly) do add_rec_light(butterfly_color) end
+add_rec_light(wool.green)
+add_rec_light(stone[1])
+add_rec_light(stone.sandstone)
+add_rec_light(stone.desert)
+add_rec_light(dirt[1])
+add_rec_light(sand.normal)
+add_rec_light(sand.silver)
+add_rec_light(gravel)
 
 return CFG
