@@ -572,6 +572,9 @@ function VeinMinerState:add_pos_to_queue(node_name, pos, options)
 	return item
 end
 
+local vec_up = vec_new(0, 1, 0)
+local vec_down = vec_new(0, -1, 0)
+
 ---@param self VeinMinerState
 ---@param item ScanItem
 ---@param player_name string
@@ -623,6 +626,11 @@ function VeinMinerState:process_queue_item(item, player_name)
 	end
 
 	local target_nodes = {node_name}
+	if options.user then
+		local extra_node = core.get_node(pos + vec_down)
+		local extra_target = extra_node.name
+		target_nodes[2] = extra_target
+	end
 	if options.user and options.light then self.found_light_count = self.found_light_count + 1 end
 	if not utils.has_empty_main_inv_slot(player) then core.chat_send_player(player_name, "Waiting for empty inventory slot for digging") end
 	while not utils.has_empty_main_inv_slot(player) do async_wait(1) end
