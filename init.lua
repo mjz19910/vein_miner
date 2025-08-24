@@ -630,6 +630,14 @@ function VeinMinerState:process_queue_item(item, player_name)
 		local extra_node = core.get_node(pos + vec_down)
 		local extra_target = extra_node.name
 		target_nodes[2] = extra_target
+		if options.light then
+			self.pending_light_scan:push_left({
+				pos = pos,
+				name = extra_target,
+				options = options,
+			})
+			scanner.scan_nearby_lights(self, pos, extra_target, options)
+		end
 	end
 	if options.user and options.light then self.found_light_count = self.found_light_count + 1 end
 	if not utils.has_empty_main_inv_slot(player) then core.chat_send_player(player_name, "Waiting for empty inventory slot for digging") end
