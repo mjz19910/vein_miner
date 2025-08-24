@@ -15,8 +15,7 @@ local log_action = vein_miner.h.log_action
 ---@class Scanner
 local scanner = {}
 
-local region_scan_fmt2 = " [LightScan] scanned region (%d) %s [%s]"
-local region_scan_fmt1 = "[LightScan] scanned region (%d) %s"
+local region_scan_fmt = "[LightScan] scanned region (%d) %s for %s"
 
 local is_valid_pos_to_iter = vein_miner.is_valid_pos_to_iter
 
@@ -48,16 +47,7 @@ local function count_found_nodes(state, iter, orig_pos, config)
 	end
 	return count
 end
-
-local function scan_nearby_region(state, r1, offset_vec, offset_str, pos, node_name, config)
-	local r2 = aabb.new_region(r1.min + offset_vec, r1.max + offset_vec)
-	local list = core.find_nodes_in_area(r2.min, r2.max, node_name, false)
-	local count = count_found_nodes(state, list, pos, config)
-	if count > 0 then log_action(region_scan_fmt2:format(count, r2, offset_str)) end
-end
-
 local VeinMinerState = vein_miner.mt
-
 local function mark_near_light(self, node_name, pos)
 	if not is_valid_pos_to_iter(pos, self.player_name) then return end
 	local h = core.hash_node_position(pos)
@@ -78,14 +68,10 @@ local p = vector.new
 local function scan_region_for_node(state, regions, r, pos, node_name, config)
 	local scan_nodes = core.find_nodes_in_area(r.min, r.max, node_name, false)
 	local count = 0
-	for _, p in pairs(scan_nodes) do
-		if mark_near_light(state, node_name, p) then
-			count = count + 1
-		end
-	end
+	for _, p in pairs(scan_nodes) do if mark_near_light(state, node_name, p) then count = count + 1 end end
 	if count > 0 then
 		state.found_light_count = state.found_light_count + count
-		log_warning(region_scan_fmt1:format(count, r))
+		log_warning(region_scan_fmt:format(count, r, node_name))
 	end
 end
 
