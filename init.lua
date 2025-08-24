@@ -630,7 +630,7 @@ function VeinMinerState:process_queue_item(item, player_name)
 		local extra_node = core.get_node(pos + vec_down)
 		local extra_target = extra_node.name
 		target_nodes[2] = extra_target
-		if options.light then
+		if l_utils.get_scan_options(extra_target).light then
 			self.pending_light_scan:push_left({
 				pos = pos,
 				name = extra_target,
