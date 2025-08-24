@@ -5,6 +5,7 @@ local math = math
 
 local ipairs = ipairs
 local pairs = pairs
+local type = type
 
 local new_vec = vector.new
 
@@ -337,11 +338,6 @@ end
 ---@type table<string, string>
 CFG.node_to_group = node_to_group
 
-local function add_light_node(node_name)
-	table.insert(LIGHT_NODES, node_name)
-	-- light_nodes_set[node_name] = true
-end
-
 ---@type Vector[]
 local vec_dirs = {}
 table.insert(vec_dirs, new_vec(0, 0, 0))
@@ -369,40 +365,16 @@ CFG.SUPPORT_DIRS = support_dirs
 local vertical_offsets = {down, new_vec(0, 0, 0), up, up * 2}
 CFG.VERTICAL_OFFSETS = vertical_offsets
 
-add_light_node("default:jungletree")
-add_light_node("default:junglegrass")
-add_light_node("default:dirt_with_rainforest_litter")
-
 local function add_rec_light(nn)
-	add_light_node(nn)
+	table.insert(LIGHT_NODES, nn)
 	light_nodes_set[nn] = true
 end
 
-add_rec_light(cobble[1])
-add_rec_light(firefly)
-for _, butterfly_color in pairs(butterfly) do add_rec_light(butterfly_color) end
-add_rec_light(wool.green)
-add_rec_light(stone[1])
-add_rec_light(stone.sandstone)
-add_rec_light(stone.desert)
-add_rec_light(dirt[1])
-add_rec_light(sand.normal)
-add_rec_light(sand.silver)
-add_rec_light(gravel)
-add_rec_light(dirt.grass.normal)
-add_rec_light(dirt.grass.snow)
-add_rec_light("default:cave_ice")
-add_rec_light("default:snowblock")
-add_rec_light("default:snow")
-add_rec_light(dirt.grass.coniferous)
-for _, trunk in ipairs(trees.trunk) do add_rec_light(trunk) end
-for _, stem in ipairs(trees.stem) do add_rec_light(stem) end
-for _, stone_with_ore in pairs(stone.ore) do add_rec_light(stone_with_ore) end
-add_rec_light("flowers:waterlily_waving")
-add_rec_light(dirt.permafrost.moss)
-add_rec_light(dirt.permafrost.stones)
-add_rec_light(dirt.permafrost.normal)
+local function add_mg_groups(table)
+	for k, v in pairs(table) do local t = type(v) == "table" and add_mg_groups(v) or add_rec_light(v) end
+	for i, v in ipairs(table) do add_rec_light(v) end
+end
 
-add_rec_light(ice)
+add_mg_groups(mg)
 
 return CFG
