@@ -263,9 +263,9 @@ local sound_params = {
 ---@field buildable_to boolean
 ---@field floodable boolean
 ---@field air_equivalent boolean
----@field liquidtype '"source"' | '"flowing"'
----@type RegNode
-local reg_node = {}
+---@field liquidtype LiquidTypeStr
+
+---@alias LiquidTypeStr '"source"' | '"flowing"'
 
 ---@type VoxelManip
 local vm = core.get_voxel_manip()

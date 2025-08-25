@@ -611,7 +611,8 @@ function VeinMinerState:process_queue_item(item, player_name)
 	if self.pos_mod_seen[chunk_hash] then return end
 	if not scanner.is_pos_in_player_bounds(pos, config) then return end
 
-	if is_liquid(node_name, "water") or is_liquid(node_name, "lava") then
+		local def = core.registered_nodes[node_name]
+	if def.liquidtype == "source" or def.liquidtype == "flowing" then
 		fill_liquid_at_pos(self, pos, l_utils.handle_pos_notify)
 		return
 	end
@@ -629,6 +630,9 @@ function VeinMinerState:process_queue_item(item, player_name)
 	if options.user then
 		local extra_node = core.get_node(pos + vec_down)
 		local extra_target = extra_node.name
+		local def = core.registered_nodes[extra_target]
+		if def.liquidtype == "source" then goto skip_below_light_scan end
+		if def.liquidtype == "flowing" then goto skip_below_light_scan end
 		if node_name ~= extra_target then
 			target_nodes[2] = extra_target
 			if l_utils.get_scan_options(extra_target).light then
@@ -640,6 +644,7 @@ function VeinMinerState:process_queue_item(item, player_name)
 				scanner.scan_nearby_lights(self, pos, extra_target, options)
 			end
 		end
+		::skip_below_light_scan::
 	end
 	if options.user and options.light then self.found_light_count = self.found_light_count + 1 end
 	if not utils.has_empty_main_inv_slot(player) then core.chat_send_player(player_name, "Waiting for empty inventory slot for digging") end
