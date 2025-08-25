@@ -680,7 +680,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 			if def.walkable then goto next end
 		end
 		::try_dig::
-		last_place_pos = line_start + vector.new(offset.x, 0, offset.z)
+		last_place_pos = target_pos
 		if not try_place_block_from_inventory(player, playing_sounds, target_pos, place_limit) then goto next end
 		self:on_node_placed(target_pos, cur_len)
 		self.break_on_next = false
