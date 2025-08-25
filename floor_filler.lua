@@ -671,7 +671,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 		local cur = get_node_or_nil(target_pos)
 		if not cur then goto next end
 		if cur.name == placeable_node_name then goto next end
-		core.log("action", "enter raycast loop " .. core.pos_to_string(target_pos) .. " cast offset " .. core.pos_to_string(offset))
+		-- core.log("action", "enter raycast loop " .. core.pos_to_string(target_pos) .. " cast offset " .. core.pos_to_string(offset))
 		if self.nodes_this_loop >= max_nodes then break end
 		local cur = get_node_or_nil(target_pos)
 		if not cur then break end
