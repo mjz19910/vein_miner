@@ -666,12 +666,15 @@ function FloorScanState:main_loop(player, placeable_node_name)
 	local last_place_pos = nil
 	for offset in raycast(forward_dir) do
 		local target_pos = line_start + vec_new(offset.x, 0, offset.y)
+		local cur = get_node_or_nil(target_pos)
+		if not cur then goto next end
+		if cur.name == placeable_node_name then goto next end
+		core.log("action", "enter raycast loop " .. core.pos_to_string(target_pos))
 		local cur_len = offset:length()
 		if cur_len > self:get_place_limit() then break end
 		if self.nodes_this_loop >= max_nodes then break end
 		local cur = get_node_or_nil(target_pos)
 		if not cur then break end
-		if cur.name == placeable_node_name then goto next end
 		if dig_anyway_set[cur.name] then goto try_dig end
 		if not is_passable(cur) then goto next end
 		if target_pos.y ~= -1 and not is_supported(target_pos, placeable_node_name) then goto next end
