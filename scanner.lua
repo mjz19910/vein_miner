@@ -4,6 +4,7 @@ local pairs = pairs
 local core = core
 ---@type VeinMinerGlobal
 local vein_miner = vein_miner
+---@type AABB
 local aabb = vein_miner.aabb
 local CFG = vein_miner.CFG
 local l_utils = vein_miner.l_utils
