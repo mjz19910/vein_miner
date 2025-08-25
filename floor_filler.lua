@@ -666,7 +666,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 		local cur_len = offset:length()
 		if cur_len > self:get_place_limit() then break end
 		if self.nodes_this_loop >= max_nodes then break end
-		if math.floor(target_pos.y) <= math.floor(player_pos.y) - 1.1 then target_pos.y = target_pos.y + 1 end
+		if math.floor(target_pos.y) <= math.floor(player_pos.y) - 1 then target_pos.y = target_pos.y + 1 end
 		local cur = get_node_or_nil(target_pos)
 		if not cur then break end
 		if dig_anyway_set[cur.name] then goto try_dig end
