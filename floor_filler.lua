@@ -550,6 +550,7 @@ function FloorScanState:run()
 		end
 		self:main_loop(player, placeable_node_name)
 		if self.nodes_this_tick > self.nodes_per_tick then break end
+		do break end
 	end
 	if self.nodes_this_tick > 0 then
 		self.nodes_per_tick_avg = self.nodes_per_tick_avg / 2 + self.nodes_this_tick / 2
