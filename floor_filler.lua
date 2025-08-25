@@ -526,6 +526,8 @@ function FloorScanState:run()
 		end
 	end
 
+	if self.player_pos == nil then self.player_pos = round(player:get_pos()) end
+
 	-- Inventory scan: find a valid node to place
 	-- so we can ignore support provided by this node
 	local placeable_node_name = nil
@@ -601,7 +603,7 @@ local function safe_set_player_pos(player, target_pos)
 		for _, d in ipairs(dirs) do
 			local candidate = target_pos + d * r
 			if is_standable(candidate) then
-				player:set_pos(target_pos)
+				player:set_pos(candidate)
 				return candidate, true
 			end
 		end
@@ -686,8 +688,8 @@ function FloorScanState:main_loop(player, placeable_node_name)
 		::next::
 	end
 	if self.nodes_this_loop > 0 then self.nodes_this_tick = self.nodes_this_tick + self.nodes_this_loop end
-	if last_place_pos ~= nil and not self.yaw_update_disabled then player:set_pos(last_place_pos) end
-	if last_place_pos ~= nil and self.yaw_update_disabled and self.nodes_per_tick_avg < 0.5 then player:set_pos(last_place_pos) end
+	if last_place_pos ~= nil and not self.yaw_update_disabled then safe_set_player_pos(player, last_place_pos) end
+	if last_place_pos ~= nil and self.yaw_update_disabled and self.nodes_per_tick_avg < 0.5 then safe_set_player_pos(player, last_place_pos) end
 	-- Handle yaw rotation if few blocks placed
 	self:_maybe_update_yaw(player, ctrl)
 	-- Handle timers + counters
