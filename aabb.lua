@@ -21,7 +21,6 @@ local p = vector.new
 local add_particle = core.add_particle
 
 ---@class Region
----@field __index Region
 ---@field min Vector
 ---@field max Vector
 
@@ -99,9 +98,7 @@ end
 ---@param b Region
 ---@return Region[]
 local function subtract_box(a, b)
-	if not a:overlaps(b) then
-		return {a}
-	end
+	if not a:overlaps(b) then return {a} end
 
 	local results = {}
 
@@ -130,12 +127,8 @@ local function subtract_box(a, b)
 		insert(results, new_region(vector.new(xmin, by2 + 1, zmin), vector.new(xmax, ymax, zmax)))
 		ymax = by2
 	end
-	if zmin < bz1 then
-		insert(results, new_region(vector.new(xmin, ymin, zmin), vector.new(xmax, ymax, bz1 - 1)))
-	end
-	if zmax > bz2 then
-		insert(results, new_region(vector.new(xmin, ymin, bz2 + 1), vector.new(xmax, ymax, zmax)))
-	end
+	if zmin < bz1 then insert(results, new_region(vector.new(xmin, ymin, zmin), vector.new(xmax, ymax, bz1 - 1))) end
+	if zmax > bz2 then insert(results, new_region(vector.new(xmin, ymin, bz2 + 1), vector.new(xmax, ymax, zmax))) end
 
 	return results
 end
@@ -150,9 +143,7 @@ local function subtract_region(container, filled_list)
 		local new_remaining = {}
 		for _, r in ipairs(remaining) do
 			local parts = subtract_box(r, filler)
-			for _, part in ipairs(parts) do
-				insert(new_remaining, part)
-			end
+			for _, part in ipairs(parts) do insert(new_remaining, part) end
 		end
 		remaining = new_remaining
 	end
@@ -192,19 +183,76 @@ function vector.min(a, b) return vector.combine(a, b, min) end
 ---@return Vector
 function vector.max(a, b) return vector.combine(a, b, max) end
 
+local VOLUME_LIMIT = 160000000
+
 ---@param a Region
 ---@param b Region
----@return Region, Region[]
+---@return Region[] merged_regions
+---@return Region[] unknown_regions
 local function merge_regions(a, b)
+	-- Candidate merged region
 	local merged = new_region(vector.min(a.min, b.min), vector.max(a.max, b.max))
 
-	-- Compute filled volume from both regions
+	-- Gaps inside merged that aren't covered by a or b
 	local filled = {a, b}
-
-	-- Optionally subtract a and b from merged box to find unknown volume
 	local unknown_regions = subtract_region(merged, filled)
 
-	return merged, unknown_regions
+	-- Split if necessary
+	if merged:volume() > VOLUME_LIMIT then
+		return merged:split(), unknown_regions
+	else
+		return {merged}, unknown_regions
+	end
+end
+
+---@param self Region
+function Region:split()
+	local results = {}
+
+	---@param r Region
+	local function recurse(r)
+		if r:volume() <= VOLUME_LIMIT then
+			table.insert(results, r)
+			return
+		end
+
+		-- Side lengths
+		local dx = r.max.x - r.min.x + 1
+		local dy = r.max.y - r.min.y + 1
+		local dz = r.max.z - r.min.z + 1
+
+		-- Pick the longest axis
+		local axis, mid
+		if dx >= dy and dx >= dz then
+			axis, mid = "x", math.floor((r.min.x + r.max.x) / 2)
+		elseif dy >= dx and dy >= dz then
+			axis, mid = "y", math.floor((r.min.y + r.max.y) / 2)
+		else
+			axis, mid = "z", math.floor((r.min.z + r.max.z) / 2)
+		end
+
+		-- Split into two sub-regions
+		local r1 = r:clone()
+		local r2 = r:clone()
+
+		-- Split along chosen axis
+		if axis == "x" then
+			r1.max.x = mid
+			r2.min.x = mid + 1
+		elseif axis == "y" then
+			r1.max.y = mid
+			r2.min.y = mid + 1
+		else
+			r1.max.z = mid
+			r2.min.z = mid + 1
+		end
+
+		recurse(r1)
+		recurse(r2)
+	end
+
+	recurse(self)
+	return results
 end
 
 ---@param region_list Region[]
@@ -220,20 +268,21 @@ function aabb.compact_regions(region_list)
 				local a = region_list[i]
 				local b = region_list[j]
 				if a and b and mergeable(a, b) then
-					local merged, gaps = merge_regions(a, b)
-					region_list[i] = merged
-					remove(region_list, j)
-					-- Store the unknown "gap" regions created by the merge
-					for _, gap in ipairs(gaps or {}) do
-						insert(unknown_regions, gap)
+					local merged_list, gaps = merge_regions(a, b)
+					if #merged_list > 0 then
+						-- Remove old ones
+						remove(region_list, j)
+						remove(region_list, i)
+						-- Insert all merged subregions back
+						for _, sub in ipairs(merged_list) do insert(region_list, sub) end
+						-- Store gaps
+						for _, gap in ipairs(gaps or {}) do insert(unknown_regions, gap) end
+						changed = true
+						break
 					end
-					changed = true
-					break
 				end
 			end
-			if changed then
-				break
-			end
+			if changed then break end
 		end
 	end
 
@@ -245,9 +294,7 @@ end
 ---@param on_region fun(region: Region)
 local function subtract_scan(r, scanned, on_region)
 	local uncovered = subtract_region(r, scanned)
-	for _, r in ipairs(uncovered) do
-		on_region(r)
-	end
+	for _, r in ipairs(uncovered) do on_region(r) end
 end
 
 ---@class SubtractAndAccumulateOptions
@@ -284,9 +331,7 @@ function aabb.subtract_and_accumulate(r, scanned, opts)
 				local dist = dx + dy + dz
 
 				if dist > max_dist then
-					if ac:volume() >= max_volume then
-						on_flush(ac)
-					end
+					if ac:volume() >= max_volume then on_flush(ac) end
 					ac = r:clone()
 					ac_volume = vol
 				else
@@ -304,9 +349,7 @@ function aabb.subtract_and_accumulate(r, scanned, opts)
 		end
 	end
 
-	if ac then
-		on_flush(ac)
-	end
+	if ac then on_flush(ac) end
 end
 
 ---@param a Region
@@ -325,12 +368,8 @@ end
 ---@param max_distance number
 ---@return Region | nil
 function aabb.between(a, b, max_distance)
-	if a:overlaps(b) then
-		return nil
-	end
-	if get_gap_distance(a, b) > max_distance then
-		return nil
-	end
+	if a:overlaps(b) then return nil end
+	if get_gap_distance(a, b) > max_distance then return nil end
 	local min = vector.new(math.min(a.max.x, b.max.x) + 1, math.min(a.max.y, b.max.y) + 1, math.min(a.max.z, b.max.z) + 1)
 	local max = vector.new(math.max(a.min.x, b.min.x) - 1, math.max(a.min.y, b.min.y) - 1, math.max(a.min.z, b.min.z) - 1)
 	local r = new_region(min, max)
@@ -344,11 +383,7 @@ end
 ---@param region_list Region[]
 ---@return boolean
 function aabb.is_covered_by_any(target, region_list)
-	for _, r in ipairs(region_list) do
-		if target:is_inside(r) then
-			return true
-		end
-	end
+	for _, r in ipairs(region_list) do if target:is_inside(r) then return true end end
 	return false
 end
 
@@ -369,11 +404,7 @@ function Region:__tostring()
 end
 
 function Region:is_inside_any(region_list)
-	for _, other in ipairs(region_list) do
-		if self:is_inside(other) then
-			return true
-		end
-	end
+	for _, other in ipairs(region_list) do if self:is_inside(other) then return true end end
 	return false
 end
 
@@ -439,21 +470,9 @@ function Region:draw()
 	end
 
 	-- Draw axis lines through center
-	for i = 2, #x_vals - 1 do
-		if i ~= cx then
-			mese_blk_part(vector.new(x_vals[i], y_vals[cy], z_vals[cz]))
-		end
-	end
-	for i = 2, #y_vals - 1 do
-		if i ~= cy then
-			mese_blk_part(vector.new(x_vals[cx], y_vals[i], z_vals[cz]))
-		end
-	end
-	for i = 2, #z_vals - 1 do
-		if i ~= cz then
-			mese_blk_part(vector.new(x_vals[cx], y_vals[cy], z_vals[i]))
-		end
-	end
+	for i = 2, #x_vals - 1 do if i ~= cx then mese_blk_part(vector.new(x_vals[i], y_vals[cy], z_vals[cz])) end end
+	for i = 2, #y_vals - 1 do if i ~= cy then mese_blk_part(vector.new(x_vals[cx], y_vals[i], z_vals[cz])) end end
+	for i = 2, #z_vals - 1 do if i ~= cz then mese_blk_part(vector.new(x_vals[cx], y_vals[cy], z_vals[i])) end end
 end
 
 return aabb
