@@ -575,6 +575,22 @@ end
 local vec_up = vec_new(0, 1, 0)
 local vec_down = vec_new(0, -1, 0)
 
+local function add_below_target(pos, node_name, target_nodes, options)
+	local extra_node = core.get_node(pos + vec_down)
+	local extra_target = extra_node.name
+	local def = core.registered_nodes[extra_target]
+	if def.liquidtype == "source" then return end
+	if def.liquidtype == "flowing" then return end
+	if node_name == extra_target then return end
+	target_nodes[2] = extra_target
+	if not l_utils.get_scan_options(extra_target).light then return end
+	self.pending_light_scan:push_left({
+		pos = pos,
+		name = extra_target,
+		options = options,
+	})
+end
+
 ---@param self VeinMinerState
 ---@param item ScanItem
 ---@param player_name string
@@ -627,25 +643,7 @@ function VeinMinerState:process_queue_item(item, player_name)
 	end
 
 	local target_nodes = {node_name}
-	if options.user then
-		local extra_node = core.get_node(pos + vec_down)
-		local extra_target = extra_node.name
-		local def = core.registered_nodes[extra_target]
-		if def.liquidtype == "source" then goto skip_below_light_scan end
-		if def.liquidtype == "flowing" then goto skip_below_light_scan end
-		if node_name ~= extra_target then
-			target_nodes[2] = extra_target
-			if l_utils.get_scan_options(extra_target).light then
-				self.pending_light_scan:push_left({
-					pos = pos,
-					name = extra_target,
-					options = options,
-				})
-				scanner.scan_nearby_lights(self, pos, extra_target, options)
-			end
-		end
-		::skip_below_light_scan::
-	end
+	if options.user then add_below_target(pos, node_name, target_nodes, options) end
 	if options.user and options.light then self.found_light_count = self.found_light_count + 1 end
 	if not utils.has_empty_main_inv_slot(player) then core.chat_send_player(player_name, "Waiting for empty inventory slot for digging") end
 	while not utils.has_empty_main_inv_slot(player) do async_wait(1) end
@@ -657,7 +655,6 @@ function VeinMinerState:process_queue_item(item, player_name)
 			name = node_name,
 			options = options,
 		})
-		scanner.scan_nearby_lights(self, pos, node_name, options)
 	end
 
 	if not options.large and player_config_mgr:is_light_debug_enabled(player_name) then
@@ -796,7 +793,10 @@ local function vein_miner_step(state)
 			goto start
 		else
 			local function on_complete()
-				if not state.queue:is_empty() then return vein_miner_step(state) end
+				if not state.queue:is_empty() then
+					core.log("action", "scanned for lights, found more!")
+					return vein_miner_step(state)
+				end
 				dig_finish(state)
 				vein_miner_current_state[state.player_name] = nil
 			end

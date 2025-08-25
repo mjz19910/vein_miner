@@ -60,7 +60,6 @@ function Deque:pop_left()
 	if self:is_empty() then
 		return nil
 	end
-	local r = self[self.head + 1]
 	self.head = self.head + 1
 	local r = self[self.head]
 	self[self.head] = nil
