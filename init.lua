@@ -571,7 +571,7 @@ end
 local vec_up = vec_new(0, 1, 0)
 local vec_down = vec_new(0, -1, 0)
 
-local function add_below_target(pos, node_name, target_nodes, options)
+local function add_below_target(state, pos, node_name, target_nodes, options)
 	local extra_node = core.get_node(pos + vec_down)
 	local extra_target = extra_node.name
 	local def = core.registered_nodes[extra_target]
@@ -580,7 +580,7 @@ local function add_below_target(pos, node_name, target_nodes, options)
 	if node_name == extra_target then return end
 	target_nodes[2] = extra_target
 	if not l_utils.get_scan_options(extra_target).light then return end
-	self.pending_light_scan:push_left({
+	state.pending_light_scan:push_left({
 		pos = pos,
 		name = extra_target,
 		options = options,
@@ -639,7 +639,7 @@ function VeinMinerState:process_queue_item(item, player_name)
 	end
 
 	local target_nodes = {node_name}
-	if options.user then add_below_target(pos, node_name, target_nodes, options) end
+	if options.user then add_below_target(self, pos, node_name, target_nodes, options) end
 	if options.user and options.light then self.found_light_count = self.found_light_count + 1 end
 	if not utils.has_empty_main_inv_slot(player) then core.chat_send_player(player_name, "Waiting for empty inventory slot for digging") end
 	while not utils.has_empty_main_inv_slot(player) do async_wait(1) end
