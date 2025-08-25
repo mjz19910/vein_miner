@@ -503,6 +503,7 @@ for k, _ in pairs(cobble_target_groups) do table.insert_all(cobble_target_list, 
 ---@field player_name string
 ---@field skip_pos table<integer, boolean>
 ---@field pending_light_scan Deque
+---@field teleport_queue Deque
 ---@param player Player
 ---@param player_name string
 ---@param pos Vector
@@ -514,7 +515,7 @@ vein_miner.mt = VeinMinerState
 ---@param self VeinMinerState
 function VeinMinerState:do_update_pos()
 	if not self.teleport_queue:is_empty() then
-		for cur_pos in self.teleport_queue:iter_right() do
+		for cur_pos in self.teleport_queue:drain_right() do
 			local h = core.hash_node_position(cur_pos)
 			if not self.seen_teleports_set[h] then
 				self.seen_teleports_set[h] = true
@@ -529,8 +530,7 @@ function VeinMinerState:do_update_pos()
 		-- if time_left > 0 then
 		-- 	async_wait(time_left)
 		-- end
-		self.teleport_queue.head = 0
-		self.teleport_queue.tail = 0
+		self.teleport_queue:drain_storage()
 	end
 end
 
