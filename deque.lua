@@ -1,5 +1,7 @@
 --- Deque implementation by Pierre 'catwell' Chapuis
 --- MIT licensed (see LICENSE.txt)
+local type = type
+local pairs = pairs
 local assert = assert
 local setmetatable = setmetatable
 
@@ -44,9 +46,7 @@ function Deque:peek_left() return self[self.head + 1] end
 ---@generic T
 ---@return T | nil
 function Deque:pop_right()
-	if self:is_empty() then
-		return nil
-	end
+	if self:is_empty() then return nil end
 	local r = self[self.tail]
 	self[self.tail] = nil
 	self.tail = self.tail - 1
@@ -57,9 +57,7 @@ end
 ---@generic T
 ---@return T | nil
 function Deque:pop_left()
-	if self:is_empty() then
-		return nil
-	end
+	if self:is_empty() then return nil end
 	self.head = self.head + 1
 	local r = self[self.head]
 	self[self.head] = nil
@@ -72,12 +70,8 @@ end
 ---@return nil
 function Deque:rotate_right(n)
 	n = n or 1
-	if self:is_empty() then
-		return nil
-	end
-	for i = 1, n do
-		self:push_left(self:pop_right())
-	end
+	if self:is_empty() then return nil end
+	for i = 1, n do self:push_left(self:pop_right()) end
 end
 
 ---@param self Deque
@@ -86,20 +80,14 @@ end
 ---@return nil
 function Deque:rotate_left(n)
 	n = n or 1
-	if self:is_empty() then
-		return nil
-	end
-	for i = 1, n do
-		self:push_right(self:pop_left())
-	end
+	if self:is_empty() then return nil end
+	for i = 1, n do self:push_right(self:pop_left()) end
 end
 
 ---@param self Deque
 ---@param idx number
 local _remove_at_internal = function(self, idx)
-	for i = idx, self.tail do
-		self[i] = self[i + 1]
-	end
+	for i = idx, self.tail do self[i] = self[i + 1] end
 	self.tail = self.tail - 1
 end
 
@@ -141,9 +129,7 @@ function Deque:is_empty() return self:length() == 0 end
 ---@generic T
 function Deque:contents()
 	local r = {}
-	for i = self.head + 1, self.tail do
-		r[i - self.head] = self[i]
-	end
+	for i = self.head + 1, self.tail do r[i - self.head] = self[i] end
 	return r
 end
 
@@ -212,6 +198,17 @@ function deque.new()
 	return setmetatable(r, {
 		__index = Deque,
 	})
+end
+
+---@param self Deque
+function Deque:drain_storage()
+	if self:is_empty() then
+		-- remove all array slots
+		for k in pairs(self) do if type(k) == "number" then self[k] = nil end end
+		-- reset indices
+		self.head = 0
+		self.tail = 0
+	end
 end
 
 return deque

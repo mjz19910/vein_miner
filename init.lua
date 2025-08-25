@@ -802,9 +802,8 @@ local function vein_miner_step(state)
 			end
 			run_to_completion(coroutine.create(function()
 				---@type LightScanParams
-				for v in state.pending_light_scan:iter_right() do scanner.scan_nearby_lights(state, v.pos, v.name, v.options, true) end
-				state.pending_light_scan.head = 0
-				state.pending_light_scan.tail = 0
+				for v in state.pending_light_scan:drain_left() do scanner.scan_nearby_lights(state, v.pos, v.name, v.options, true) end
+				state.pending_light_scan:drain_storage()
 			end), on_complete)
 		end
 	else
