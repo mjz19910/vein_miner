@@ -611,7 +611,7 @@ function VeinMinerState:process_queue_item(item, player_name)
 	if self.pos_mod_seen[chunk_hash] then return end
 	if not scanner.is_pos_in_player_bounds(pos, config) then return end
 
-		local def = core.registered_nodes[node_name]
+	local def = core.registered_nodes[node_name]
 	if def.liquidtype == "source" or def.liquidtype == "flowing" then
 		fill_liquid_at_pos(self, pos, l_utils.handle_pos_notify)
 		return
