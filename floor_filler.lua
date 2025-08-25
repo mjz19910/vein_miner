@@ -526,8 +526,6 @@ function FloorScanState:run()
 		end
 	end
 
-	if self.player_pos == nil then self.player_pos = round(player:get_pos()) end
-
 	-- Inventory scan: find a valid node to place
 	-- so we can ignore support provided by this node
 	local placeable_node_name = nil
@@ -595,7 +593,7 @@ local function safe_set_player_pos(player, target_pos)
 
 	-- Check target position first
 	if is_standable(target_pos) then
-		player:set_pos(target_pos + vec_new(0, 0.5, 0))
+		player:set_pos(target_pos)
 		return target_pos, true
 	end
 
@@ -603,7 +601,7 @@ local function safe_set_player_pos(player, target_pos)
 		for _, d in ipairs(dirs) do
 			local candidate = target_pos + d * r
 			if is_standable(candidate) then
-				player:set_pos(candidate + vec_new(0, 0.5, 0))
+				player:set_pos(target_pos)
 				return candidate, true
 			end
 		end
@@ -681,7 +679,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 			if def.walkable then goto next end
 		end
 		::try_dig::
-		last_place_pos = line_start + vector.new(offset.x, 0, offset.z) + up
+		last_place_pos = line_start + vector.new(offset.x, 0, offset.z) + up / 2
 		if not try_place_block_from_inventory(player, playing_sounds, target_pos, place_limit) then goto next end
 		self:on_node_placed(target_pos, cur_len)
 		self.break_on_next = false
