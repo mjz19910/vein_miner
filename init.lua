@@ -523,7 +523,7 @@ function VeinMinerState:do_update_pos()
 				self.seen_teleports_set[h] = true
 				cur_pos.y = cur_pos.y - 0.5
 				self.player:set_pos(cur_pos)
-				async_wait(0.15)
+				async_wait(0.09 * 2)
 			end
 		end
 		self.teleport_queue:drain_storage()
