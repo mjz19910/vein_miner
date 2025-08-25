@@ -436,19 +436,6 @@ function FloorScanState:on_node_placed(pos, dist)
 end
 
 ---@param self FloorScanState
----@param target_pos Vector
----@param line_len number
----@param node_below MapNode
----@param placeable_node_name string
-function FloorScanState:iterate_offset(target_pos, line_len, node_below, placeable_node_name)
-	if target_pos.y == -1 or is_supported(target_pos, placeable_node_name) then
-		if try_place_block_from_inventory(self.player, self.playing_sounds, target_pos, self.place_limit) then
-			self:on_node_placed(target_pos, line_len)
-		end
-	end
-end
-
----@param self FloorScanState
 function FloorScanState:min_based_limit() return self.min_dist or self.place_limit end
 
 ---@param self FloorScanState
