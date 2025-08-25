@@ -512,24 +512,20 @@ local VeinMinerState = {}
 VeinMinerState.__index = VeinMinerState
 vein_miner.mt = VeinMinerState
 
+local mod_pos = h.mod_pos
+
 ---@param self VeinMinerState
 function VeinMinerState:do_update_pos()
 	if not self.teleport_queue:is_empty() then
 		for cur_pos in self.teleport_queue:drain_right() do
-			local h = core.hash_node_position(cur_pos)
+			local h = core.hash_node_position(mod_pos(cur_pos, 8))
 			if not self.seen_teleports_set[h] then
 				self.seen_teleports_set[h] = true
 				cur_pos.y = cur_pos.y - 0.5
 				self.player:set_pos(cur_pos)
-				-- async_wait(0)
-				-- async_wait(0.08)
-				-- async_wait(0.5)
+				async_wait(0.15)
 			end
 		end
-		-- local time_left = 0.4 - (0.06 * teleport_queue:length())
-		-- if time_left > 0 then
-		-- 	async_wait(time_left)
-		-- end
 		self.teleport_queue:drain_storage()
 	end
 end

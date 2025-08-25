@@ -25,7 +25,7 @@ function h.log_action(msg) core.log("action", msg) end
 local vec_unit = vector.new(1, 1, 1)
 
 ---@param pos Vector
----@param mod_size Vector
+---@param mod_size Vector | number
 function h.mod_pos(pos, mod_size) return vector.multiply(vec_floor(vector.divide(pos, mod_size)), mod_size) end
 
 function h.is_liquid(node_name, liquid_type)
