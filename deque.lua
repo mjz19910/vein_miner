@@ -173,6 +173,34 @@ function Deque:iter_left()
 	end
 end
 
+---@param self Deque
+---@return fun(): T | nil
+---@generic T
+function Deque:drain_left()
+	return function()
+		if not self:is_empty() then
+			self.head = self.head + 1
+			local r = self[self.head]
+			self[self.head] = nil
+			return r
+		end
+	end
+end
+
+---@param self Deque
+---@return fun(): T | nil
+---@generic T
+function Deque:drain_right()
+	return function()
+		if not self:is_empty() then
+			local r = self[self.tail]
+			self[self.tail] = nil
+			self.tail = self.tail - 1
+			return r
+		end
+	end
+end
+
 ---@return Deque
 ---@generic T
 function deque.new()
