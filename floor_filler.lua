@@ -685,8 +685,8 @@ function FloorScanState:main_loop(player, placeable_node_name)
 		if not try_place_block_from_inventory(player, playing_sounds, target_pos, place_limit) then goto next end
 		self:on_node_placed(target_pos, cur_len)
 		self.break_on_next = false
-		break
 		::next::
+		break
 	end
 	if self.nodes_this_loop > 0 then self.nodes_this_tick = self.nodes_this_tick + self.nodes_this_loop end
 	if last_place_pos ~= nil and not self.yaw_update_disabled then player:set_pos(last_place_pos + up / 2) end
