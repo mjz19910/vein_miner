@@ -681,15 +681,15 @@ function FloorScanState:main_loop(player, placeable_node_name)
 			if def.walkable then goto next end
 		end
 		::try_dig::
-		last_place_pos = line_start + vector.new(offset.x, 0, offset.z) + up / 2
+		last_place_pos = line_start + vector.new(offset.x, 0, offset.z)
 		if not try_place_block_from_inventory(player, playing_sounds, target_pos, place_limit) then goto next end
 		self:on_node_placed(target_pos, cur_len)
 		self.break_on_next = false
 		::next::
 	end
 	if self.nodes_this_loop > 0 then self.nodes_this_tick = self.nodes_this_tick + self.nodes_this_loop end
-	if last_place_pos ~= nil and not self.yaw_update_disabled then safe_set_player_pos(player, last_place_pos) end
-	if last_place_pos ~= nil and self.yaw_update_disabled and self.nodes_per_tick_avg < 0.5 then safe_set_player_pos(player, last_place_pos) end
+	if last_place_pos ~= nil and not self.yaw_update_disabled then player:set_pos(last_place_pos + up) end
+	if last_place_pos ~= nil and self.yaw_update_disabled and self.nodes_per_tick_avg < 0.5 then player:set_pos(last_place_pos + up) end
 	-- Handle yaw rotation if few blocks placed
 	self:_maybe_update_yaw(player, ctrl)
 	-- Handle timers + counters
