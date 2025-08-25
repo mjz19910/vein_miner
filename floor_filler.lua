@@ -671,6 +671,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 		if self.nodes_this_loop >= max_nodes then break end
 		local cur = get_node_or_nil(target_pos)
 		if not cur then break end
+		if cur.name == placeable_node_name then goto next end
 		if dig_anyway_set[cur.name] then goto try_dig end
 		if not is_passable(cur) then goto next end
 		if target_pos.y ~= -1 and not is_supported(target_pos, placeable_node_name) then goto next end
