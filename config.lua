@@ -8,6 +8,8 @@ local pairs = pairs
 local type = type
 
 local new_vec = vector.new
+local insert = table.insert
+local insert_all = table.insert_all
 
 ---@type VeinMinerGlobal
 local vein_miner = vein_miner
@@ -88,6 +90,7 @@ local grass = {
 local flower = {
 	common = {"flowers:chrysanthemum_green", "flowers:dandelion_yellow", "flowers:dandelion_white", "flowers:tulip_black", "flowers:tulip",
 		"flowers:viola", "flowers:rose", "flowers:geranium"},
+	water = "flowers:waterlily_waving",
 	mushroom = {"flowers:mushroom_brown", "flowers:mushroom_red"},
 }
 
@@ -174,20 +177,20 @@ local LIGHT_NODES = {mese_post_light.pine, mese_post_light.acacia}
 CFG.LIGHT_NODES = LIGHT_NODES
 ---@type string[]
 local target_list = {"default:stone_block", "fire:basic_flame", wool.green, wool.orange}
-table.insert(target_list, obsidian.value)
+insert(target_list, obsidian.value)
 CFG.target_list = target_list
 ---@type string[]
 local ignore_list_default = {leaves[1], leaves.acacia, leaves.aspen, leaves.jungle, leaves.pine, "default:chest"}
-table.insert(ignore_list_default, obsidian.glass)
+insert(ignore_list_default, obsidian.glass)
 ---@type string[]
 local digtron_parts = {"digtron:axle", "digtron:light", "digtron:pusher", "digtron:digger", "digtron:builder", "digtron:structure",
 	"digtron:inventory", "digtron:fuelstore", "digtron:empty_crate", "digtron:auto_controller", "digtron:combined_storage",
 	"digtron:inventory_ejector", "digtron:intermittent_digger", "digtron:master_builder", "digtron:controller"}
 ---@type string[]
 local ignored_nodes = {}
-table.insert_all(ignored_nodes, ignore_list_default)
-table.insert_all(ignored_nodes, digtron_parts)
-table.insert_all(ignored_nodes, {"drawers:trim", "drawers:pine_wood1", "drawers:controller"})
+insert_all(ignored_nodes, ignore_list_default)
+insert_all(ignored_nodes, digtron_parts)
+insert_all(ignored_nodes, {"drawers:trim", "drawers:pine_wood1", "drawers:controller"})
 CFG.ignored_nodes = ignored_nodes
 ---@type string[]
 local exclusive_nodes = {}
@@ -204,7 +207,7 @@ local mg = {
 	sand = {sand.normal},
 	silver_sand = {sand.silver},
 	desert_sand = {sand.desert},
-	flower = flower.common,
+	flower = {},
 	mushroom = flower.mushroom,
 	stem = trees.stem,
 	tree_trunk = trees.trunk,
@@ -228,6 +231,10 @@ local mg = {
 	green_wool = {wool.green},
 	ice = {ice},
 }
+
+insert_all(mg.flower, flower.common)
+insert(mg.flower, flower.water)
+
 ---@type MiningGroups
 CFG.mining_groups = mg
 
@@ -251,9 +258,9 @@ local sticky_nodes = {
 CFG.sticky_nodes = sticky_nodes
 CFG.MAX_MINED_NODES = 188
 
-table.insert_all(CFG.target_list, {cobble[1], cobble.mossy, cobble.stair})
+insert_all(CFG.target_list, {cobble[1], cobble.mossy, cobble.stair})
 
-table.insert(CFG.ignored_nodes, mese_post_light[1])
+insert(CFG.ignored_nodes, mese_post_light[1])
 
 -- go to the next nodeid (ex.: 01000011 --> 01000100)
 local nid_inc = function() end
@@ -279,8 +286,8 @@ local function register_wires_group()
 		local nodeid = (nid[0] or "0") .. (nid[1] or "0") .. (nid[2] or "0") .. (nid[3] or "0") .. (nid[4] or "0") .. (nid[5] or "0") ..
 			               (nid[6] or "0") .. (nid[7] or "0")
 
-		table.insert(mesecon.wire, "mesecons:wire_" .. nodeid .. "_off")
-		table.insert(mesecon.wire, "mesecons:wire_" .. nodeid .. "_on")
+		insert(mesecon.wire, "mesecons:wire_" .. nodeid .. "_off")
+		insert(mesecon.wire, "mesecons:wire_" .. nodeid .. "_on")
 
 		if (nid_inc(nid) == false) then return end
 	end
@@ -289,9 +296,9 @@ end
 register_wires_group()
 
 local mine_only_set = CFG.target_list
-table.insert(mine_only_set, "mesecons_powerplant:power_plant")
-table.insert_all(mine_only_set, {"mesecons_movestones:sticky_movestone_vertical", "mesecons_stickyblocks:sticky_block_all"})
-table.insert_all(mine_only_set, {"mesecons_movestones:sticky_movestone"})
+insert(mine_only_set, "mesecons_powerplant:power_plant")
+insert_all(mine_only_set, {"mesecons_movestones:sticky_movestone_vertical", "mesecons_stickyblocks:sticky_block_all"})
+insert_all(mine_only_set, {"mesecons_movestones:sticky_movestone"})
 
 local coral = {
 	brown = "default:coral_brown",
@@ -317,10 +324,10 @@ for k, v in pairs(CFG.exclusive_nodes) do exclusive_node_set[v] = true end
 CFG.exclusive_node_set = exclusive_node_set
 
 mg.surface = {dirt.dry, dirt.grass.dry}
-table.insert_all(mg.surface, {dirt.grass.normal})
-table.insert_all(mg.surface, {dirt.grass.snow, dirt.grass.rainforest, dirt.grass.coniferous})
-table.insert_all(mg.surface, {dirt.permafrost.moss, dirt.permafrost.stones})
-table.insert_all(mg.surface, {sand.with_kelp})
+insert_all(mg.surface, {dirt.grass.normal})
+insert_all(mg.surface, {dirt.grass.snow, dirt.grass.rainforest, dirt.grass.coniferous})
+insert_all(mg.surface, {dirt.permafrost.moss, dirt.permafrost.stones})
+insert_all(mg.surface, {sand.with_kelp})
 
 local mining_groups = CFG.mining_groups
 ---@type table<string, boolean>
@@ -340,9 +347,9 @@ CFG.node_to_group = node_to_group
 
 ---@type Vector[]
 local vec_dirs = {}
-table.insert(vec_dirs, new_vec(0, 0, 0))
+insert(vec_dirs, new_vec(0, 0, 0))
 -- distance limited to 3.1622776601684, ie 3.32
-table.insert_all(vec_dirs, voxel_util.gen_euclidean_offsets_3d(3.32))
+insert_all(vec_dirs, voxel_util.gen_euclidean_offsets_3d(3.32))
 CFG.VEC_DIRS = vec_dirs
 ---@type Vector[]
 local FLOATING_DIRS = {new_vec(1, 0, 0), new_vec(-1, 0, 0), new_vec(0, 1, 0), new_vec(0, -1, 0), new_vec(0, 0, 1), new_vec(0, 0, -1)}
@@ -359,14 +366,14 @@ local diagonal_dirs = {new_vec(1, 0, 1), new_vec(-1, 0, 1), new_vec(1, 0, -1), n
 
 ---@type Vector[]
 local support_dirs = {new_vec(0, 0, 0), new_vec(1, 0, 0), new_vec(-1, 0, 0), new_vec(0, 0, 1), new_vec(0, 0, -1)}
-table.insert_all(support_dirs, diagonal_dirs)
+insert_all(support_dirs, diagonal_dirs)
 CFG.SUPPORT_DIRS = support_dirs
 ---@type Vector[]
 local vertical_offsets = {down, new_vec(0, 0, 0), up, up * 2}
 CFG.VERTICAL_OFFSETS = vertical_offsets
 
 local function add_rec_light(nn)
-	table.insert(LIGHT_NODES, nn)
+	insert(LIGHT_NODES, nn)
 	light_nodes_set[nn] = true
 end
 
