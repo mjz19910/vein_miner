@@ -551,7 +551,6 @@ function FloorScanState:run()
 		end
 		self:main_loop(player, placeable_node_name)
 		if self.nodes_this_tick > self.nodes_per_tick then break end
-		do break end
 	end
 	if self.nodes_this_tick > 0 then
 		self.nodes_per_tick_avg = self.nodes_per_tick_avg / 2 + self.nodes_this_tick / 2
@@ -688,7 +687,6 @@ function FloorScanState:main_loop(player, placeable_node_name)
 		if not try_place_block_from_inventory(player, playing_sounds, target_pos, place_limit) then goto next end
 		self:on_node_placed(target_pos, cur_len)
 		self.break_on_next = false
-		do break end
 		::next::
 	end
 	if self.nodes_this_loop > 0 then self.nodes_this_tick = self.nodes_this_tick + self.nodes_this_loop end
