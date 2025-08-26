@@ -382,6 +382,6 @@ local function add_mg_groups(table)
 	for i, v in ipairs(table) do add_rec_light(v) end
 end
 
-add_mg_groups(mg)
+-- add_mg_groups(mg)
 
 return CFG
