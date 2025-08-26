@@ -639,6 +639,7 @@ function VeinMinerState:process_queue_item(item, player_name)
 	end
 
 	local target_nodes = {node_name}
+	if node_name == "wool:green" then table.insert(target_nodes, "default:water_source") end
 	if options.user then add_below_target(self, pos, node_name, target_nodes, options) end
 	if options.user and options.light then self.found_light_count = self.found_light_count + 1 end
 	if not utils.has_empty_main_inv_slot(player) then core.chat_send_player(player_name, "Waiting for empty inventory slot for digging") end
