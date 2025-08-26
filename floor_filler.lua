@@ -628,6 +628,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 		self.line_start = self.player_pos + down
 		self.current_line_y = self.line_start.y
 		self.current_yaw_rad = player:get_look_horizontal() + math.pi / 2
+		self.main_break_on_next = true
 	end
 
 	local line_start = self.line_start
