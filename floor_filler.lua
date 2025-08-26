@@ -555,12 +555,12 @@ function FloorScanState:run()
 		if self.nodes_this_tick > self.nodes_per_tick then break end
 	end
 	if self.nodes_this_tick > 0 then
-		self.nodes_per_tick_avg = (self.nodes_per_tick_avg + self.nodes_this_tick) / 1.25
+		self.nodes_per_tick_avg = (self.nodes_per_tick_avg + self.nodes_this_tick) / 2
 		self.nodes_this_tick = 0
 	elseif self.nodes_per_tick_avg < 1e-13 then
 		self.nodes_per_tick_avg = 0
 	else
-		self.nodes_per_tick_avg = self.nodes_per_tick_avg / 1.05
+		self.nodes_per_tick_avg = self.nodes_per_tick_avg / 1.25
 	end
 end
 
@@ -625,33 +625,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 		local player_pos = round(player:get_pos())
 		local pos_offset = self.player_pos - player:get_pos()
 		if pos_offset.y < -0.3 then self.player_pos.y = self.player_pos.y + 1 end
-		if not self.skip_after_yaw then
-			local yaw_speed = get_yaw_speed_for_distance(self:get_rotate_distance()) * 2.5
-			self.scan_radians = self.scan_radians + yaw_speed
-			self.current_yaw_rad = self.scan_radians + self.player_start_yaw + math.pi / 2
-			player:set_look_horizontal(self.scan_radians + self.player_start_yaw + yaw_speed)
-			local prev = self:get_angle_rad() % (TAU * 2)
-			local curr = (self:get_angle_rad() + yaw_speed) % (TAU * 2)
-			local step = TAU / 2 -- 180° in radians
-			local prev_sector = math.floor(prev / step)
-			local curr_sector = math.floor(curr / step)
-
-			if prev_sector ~= curr_sector then
-				core.log("action", "avg " .. self.nodes_per_tick_avg)
-				local has_big_max = self.max_dist and self.max_dist >= 64
-				if self.nodes_per_tick_avg < 6 or (has_big_max and self.nodes_per_tick_avg < 14) then
-					local avg_rounded = math.floor(self.nodes_per_tick_avg * 1e7) / 1e7
-					self.current_line_y = self.current_line_y - 1
-					self.player_pos.y = self.current_line_y + 1
-					self.player_pos = safe_set_player_pos(player, self.player_pos)
-					self.line_start = vector.new(self.player_pos)
-					self.line_start.y = self.current_line_y
-					self.main_break_on_next = true
-				end
-			end
-		else
-			self.current_yaw_rad = player:get_look_horizontal() + math.pi / 2
-		end
+		self.current_yaw_rad = player:get_look_horizontal() + math.pi / 2
 	end
 
 	local line_start = self.line_start
