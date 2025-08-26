@@ -625,8 +625,8 @@ function FloorScanState:main_loop(player, placeable_node_name)
 		local player_pos = round(player:get_pos())
 		local pos_offset = self.player_pos - player:get_pos()
 		if pos_offset.y < -0.3 then self.player_pos.y = self.player_pos.y + 1 end
-		self.line_start = vector.new(self.player_pos)
-		self.line_start.y = self.player_pos.y - 1
+		self.line_start = self.player_pos + down
+		self.current_line_y = self.line_start.y
 		self.current_yaw_rad = player:get_look_horizontal() + math.pi / 2
 	end
 
