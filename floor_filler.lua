@@ -553,12 +553,12 @@ function FloorScanState:run()
 		if self.nodes_this_tick > self.nodes_per_tick then break end
 	end
 	if self.nodes_this_tick > 0 then
-		self.nodes_per_tick_avg = self.nodes_per_tick_avg / 2 + self.nodes_this_tick / 2
+		self.nodes_per_tick_avg = (self.nodes_per_tick_avg + self.nodes_this_tick) / 1.25
 		self.nodes_this_tick = 0
-	elseif self.nodes_per_tick_avg < 1e-9 then
+	elseif self.nodes_per_tick_avg < 1e-13 then
 		self.nodes_per_tick_avg = 0
 	else
-		self.nodes_per_tick_avg = self.nodes_per_tick_avg / 1.01
+		self.nodes_per_tick_avg = self.nodes_per_tick_avg / 1.05
 	end
 end
 
@@ -596,7 +596,8 @@ local function safe_set_player_pos(player, target_pos)
 
 	-- Check target position first
 	if is_standable(target_pos) then
-		player:set_pos(target_pos)
+		local feet_pos = vector.offset(target_pos, 0, 0.5, 0)
+		player:set_pos(feet_pos)
 		return target_pos, true
 	end
 
@@ -604,7 +605,8 @@ local function safe_set_player_pos(player, target_pos)
 		for _, d in ipairs(dirs) do
 			local candidate = target_pos + d * r
 			if is_standable(candidate) then
-				player:set_pos(candidate)
+				local feet_pos = vector.offset(candidate, 0, 0.5, 0)
+				player:set_pos(feet_pos)
 				return candidate, true
 			end
 		end
@@ -634,8 +636,8 @@ function FloorScanState:main_loop(player, placeable_node_name)
 
 			if prev_sector ~= curr_sector then
 				local has_big_max = self.max_dist and self.max_dist >= 64
-				if self.nodes_per_tick_avg < 0.4 or (has_big_max and self.nodes_per_tick_avg < 1.5) then
-					local avg_rounded = math.floor(self.nodes_per_tick_avg * 1e5) / 1e5
+				if self.nodes_per_tick_avg < 0.01 or (has_big_max and self.nodes_per_tick_avg < 0.3) then
+					local avg_rounded = math.floor(self.nodes_per_tick_avg * 1e7) / 1e7
 					self.current_line_y = self.current_line_y - 1
 					self.player_pos.y = self.current_line_y + 1
 					self.player_pos = safe_set_player_pos(player, self.player_pos)
