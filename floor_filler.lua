@@ -3,8 +3,8 @@ local math = math
 local TAU = 2 * math.pi
 
 local TARGET_RADIANS = math.rad(360) * 4
-local LINE_LENGTH = 48 * 8
-local DISTANCE_INCREASE = 3 * 8
+local LINE_LENGTH = 56 * 8
+local DISTANCE_INCREASE = 8 * 8
 
 local assert = assert
 
@@ -443,6 +443,7 @@ function FloorScanState:max_based_limit() return self.max_dist or self.all_max_d
 
 ---@param self FloorScanState
 function FloorScanState:get_place_limit() return self:max_based_limit() + DISTANCE_INCREASE end
+function FloorScanState:get_rotate_distance() return self:max_based_limit() + 4 * 8 end
 
 -- Traces from line_start in forward_dir until limit
 -- yields node positions along the ray
@@ -622,7 +623,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 		local pos_offset = self.player_pos - player:get_pos()
 		if pos_offset.y < -0.3 then self.player_pos.y = self.player_pos.y + 1 end
 		if not self.skip_after_yaw then
-			local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit()) * 1.5
+			local yaw_speed = get_yaw_speed_for_distance(self:get_rotate_distance()) * 1.5
 			self.scan_radians = self.scan_radians + yaw_speed
 			self.current_yaw_rad = self.scan_radians + self.player_start_yaw + math.pi / 2
 			player:set_look_horizontal(self.scan_radians + self.player_start_yaw + yaw_speed)
@@ -736,7 +737,7 @@ function FloorScanState:_maybe_update_yaw(player, ctrl)
 		player:set_fov(10, false, 0)
 		self.tool_active = true
 	end
-	local yaw_speed = get_yaw_speed_for_distance(self:get_place_limit()) * 1.25
+	local yaw_speed = get_yaw_speed_for_distance(self:get_rotate_distance()) * 1.25
 	if ctrl.sneak then yaw_speed = -yaw_speed end
 
 	local prev = self:get_angle_rad() % TAU
