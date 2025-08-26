@@ -637,14 +637,16 @@ function FloorScanState:main_loop(player, placeable_node_name)
 			local curr_sector = math.floor(curr / step)
 
 			if prev_sector ~= curr_sector then
+				core.log("action", "avg " .. self.nodes_per_tick_avg)
 				local has_big_max = self.max_dist and self.max_dist >= 64
-				if self.nodes_per_tick_avg < 0.01 or (has_big_max and self.nodes_per_tick_avg < 0.3) then
+				if self.nodes_per_tick_avg < 6 or (has_big_max and self.nodes_per_tick_avg < 14) then
 					local avg_rounded = math.floor(self.nodes_per_tick_avg * 1e7) / 1e7
 					self.current_line_y = self.current_line_y - 1
 					self.player_pos.y = self.current_line_y + 1
 					self.player_pos = safe_set_player_pos(player, self.player_pos)
 					self.line_start = vector.new(self.player_pos)
 					self.line_start.y = self.current_line_y
+					self.main_break_on_next = true
 				end
 			end
 		else
