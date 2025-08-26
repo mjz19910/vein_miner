@@ -443,7 +443,9 @@ function FloorScanState:max_based_limit() return self.max_dist or self.all_max_d
 
 ---@param self FloorScanState
 function FloorScanState:get_place_limit() return self:max_based_limit() + DISTANCE_INCREASE end
-function FloorScanState:get_rotate_distance() return self:max_based_limit() + 4 * 8 end
+
+---@param self FloorScanState
+function FloorScanState:get_rotate_distance() return self:max_based_limit() + 8 end
 
 -- Traces from line_start in forward_dir until limit
 -- yields node positions along the ray
@@ -624,7 +626,7 @@ function FloorScanState:main_loop(player, placeable_node_name)
 		local pos_offset = self.player_pos - player:get_pos()
 		if pos_offset.y < -0.3 then self.player_pos.y = self.player_pos.y + 1 end
 		if not self.skip_after_yaw then
-			local yaw_speed = get_yaw_speed_for_distance(self:get_rotate_distance()) * 1.5
+			local yaw_speed = get_yaw_speed_for_distance(self:get_rotate_distance()) * 2.5
 			self.scan_radians = self.scan_radians + yaw_speed
 			self.current_yaw_rad = self.scan_radians + self.player_start_yaw + math.pi / 2
 			player:set_look_horizontal(self.scan_radians + self.player_start_yaw + yaw_speed)
@@ -648,7 +650,6 @@ function FloorScanState:main_loop(player, placeable_node_name)
 		else
 			self.current_yaw_rad = player:get_look_horizontal() + math.pi / 2
 		end
-		self.main_break_on_next = true
 	end
 
 	local line_start = self.line_start
