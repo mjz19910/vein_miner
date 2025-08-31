@@ -571,8 +571,8 @@ end
 local vec_up = vec_new(0, 1, 0)
 local vec_down = vec_new(0, -1, 0)
 
-local function add_below_target(state, pos, node_name, target_nodes, options)
-	local extra_node = core.get_node(pos + vec_down)
+local function add_offset_target(state, pos, offset, node_name, target_nodes, options)
+	local extra_node = core.get_node(pos + offset)
 	local extra_target = extra_node.name
 	local def = core.registered_nodes[extra_target]
 	if def.liquidtype == "source" then return end
@@ -585,6 +585,11 @@ local function add_below_target(state, pos, node_name, target_nodes, options)
 		name = extra_target,
 		options = options,
 	})
+end
+
+local function add_below_target(state, pos, node_name, target_nodes, options)
+	add_offset_target(state, pos, vec_down, node_name, target_nodes, options)
+	add_offset_target(state, pos, vec_up, node_name, target_nodes, options)
 end
 
 ---@param self VeinMinerState
