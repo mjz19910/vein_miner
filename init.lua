@@ -578,7 +578,7 @@ local function add_offset_target(state, pos, offset, node_name, target_nodes, op
 	if def.liquidtype == "source" then return end
 	if def.liquidtype == "flowing" then return end
 	if node_name == extra_target then return end
-	target_nodes[2] = extra_target
+	table.insert(target_nodes, extra_target)
 	if not l_utils.get_scan_options(extra_target).light then return end
 	state.pending_light_scan:push_left({
 		pos = pos,
