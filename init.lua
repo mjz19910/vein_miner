@@ -592,6 +592,30 @@ local function add_below_target(state, pos, node_name, target_nodes, options)
 	add_offset_target(state, pos, vec_up, node_name, target_nodes, options)
 end
 
+
+-- Helper function to check if pos is inside the region
+local function is_pos_inside(pos, minvec, maxvec)
+	return pos.x >= minvec.x and pos.x <= maxvec.x
+	   and pos.y >= minvec.y and pos.y <= maxvec.y
+	   and pos.z >= minvec.z and pos.z <= maxvec.z
+end
+
+-- If pos is outside region, slide region by full vec_size until pos is inside
+local function ensure_pos_in_region(pos, minvec, maxvec, vec_size)
+	-- Check each axis independently
+	for _, axis in ipairs({ "x", "y", "z" }) do
+		if pos[axis] < minvec[axis] then
+			-- pos is below region → shift backward by one region
+			minvec[axis] = minvec[axis] - vec_size[axis]
+			maxvec[axis] = maxvec[axis] - vec_size[axis]
+		elseif pos[axis] > maxvec[axis] then
+			-- pos is above region → shift forward by one region
+			minvec[axis] = minvec[axis] + vec_size[axis]
+			maxvec[axis] = maxvec[axis] + vec_size[axis]
+		end
+	end
+end
+
 ---@param self VeinMinerState
 ---@param item ScanItem
 ---@param player_name string
@@ -617,13 +641,18 @@ function VeinMinerState:process_queue_item(item, player_name)
 	if not options.large then options.small = true end
 
 	local vec_size = vector.new(xz_len, y_len, xz_len)
-	vec_size = vec_new(8, 8, 8)
+	vec_size = vec_new(80, 8, 80)
 
 	local minvec = h.mod_pos(pos, vec_size)
+	local shift = vec_new(-32, 0, -32)
+	minvec = vector.add(minvec, shift)
 	minvec = scanner.clamp_vec_to_player_bounds(minvec, config)
-	local chunk_hash = core.hash_node_position(minvec)
 	local maxvec = vector.add(minvec, vector.subtract(vec_size, 1))
 	maxvec = scanner.clamp_vec_to_player_bounds(maxvec, config)
+
+	ensure_pos_in_region(pos, minvec, maxvec, vec_size)
+
+	local chunk_hash = core.hash_node_position(minvec)
 
 	if self.pos_mod_seen[chunk_hash] then return end
 	if not scanner.is_pos_in_player_bounds(pos, config) then return end
